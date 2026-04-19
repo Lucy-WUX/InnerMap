@@ -28,6 +28,9 @@ out
 
 *.local
 
+# 旧子目录残留（可手动删除）
+PrivateSocialSphere/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
