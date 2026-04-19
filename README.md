@@ -30,4 +30,6 @@ npm run dev
 
 设置后，构建日志里应出现 **`next build`**，耗时通常 **数十秒**。
 
+**若网页上无法改掉带 `cd PrivateSocialSphere` 的命令：** 仓库里已在 **`PrivateSocialSphere/vercel.json`** 写明 `npm install` / `npm run build`（无 `cd`）。推送后重新部署；若仪表板仍强制旧命令，请 **删除该 Vercel 项目** 并 **重新 Import 同一 GitHub 仓库**，导入时只设 **Root Directory = `PrivateSocialSphere`**、**Next.js**，**不要**展开修改 Build/Install。
+
 **环境变量：** 在 Vercel → **Settings** → **Environment Variables** 中配置与 `.env.local.example` 对应的变量（含 `NEXT_PUBLIC_*`），并对 **Production** 勾选保存后再 **Redeploy**。
