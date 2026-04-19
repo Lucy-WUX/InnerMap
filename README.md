@@ -20,18 +20,14 @@ npm run dev
 
 本仓库的 Next 应用在子目录 **`PrivateSocialSphere`**，根目录没有 `package.json`。若 Vercel 仍使用仓库根目录作为项目根，构建会异常短（例如几秒），线上会出现 **404: NOT_FOUND**。
 
-请任选其一（推荐 A）：
-
-**A. 在 Vercel 项目里设置子目录（推荐）**
+**在 Vercel 项目里设置子目录（必须）**
 
 1. Vercel → 项目 → **Settings** → **General** → **Root Directory** → **Edit**  
 2. 填 **`PrivateSocialSphere`** 并保存。  
-3. **Deployments** → 最新部署 **⋯** → **Redeploy**（建议先不勾选 “Use existing Build Cache”）。
+3. **Framework Preset** 选 **Next.js**。  
+4. **Build / Install Command**：保持默认，**不要**填写 `cd PrivateSocialSphere && ...`（工作目录已在 `PrivateSocialSphere` 内，再加 `cd` 会报错 `No such file or directory`）。  
+5. **Deployments** → **Redeploy**（可先不勾选 “Use existing Build Cache”）。
 
-设置后，构建时间通常会有 **数十秒**，且日志里能看到 `next build`。
-
-**B. 使用仓库根目录的 `vercel.json`**
-
-已提供根目录 `vercel.json`，在子目录执行 `npm install` 与 `npm run build`。推送到 Git 后重新部署；若仍 404，请再按 **A** 设置 Root Directory。
+设置后，构建日志里应出现 **`next build`**，耗时通常 **数十秒**。
 
 **环境变量：** 在 Vercel → **Settings** → **Environment Variables** 中配置与 `.env.local.example` 对应的变量（含 `NEXT_PUBLIC_*`），并对 **Production** 勾选保存后再 **Redeploy**。
