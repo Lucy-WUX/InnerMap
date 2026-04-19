@@ -1,0 +1,39 @@
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node / Next（对仓库内任意子目录生效）
+node_modules
+dist
+dist-ssr
+.next
+out
+.vercel
+*.tsbuildinfo
+
+# 环境变量（勿提交密钥；保留 *.example 模板）
+.env
+.env.*
+!.env*.example
+
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
