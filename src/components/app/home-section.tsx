@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react"
 
 import { Button } from "../ui/button"
@@ -466,7 +467,11 @@ export function HomeSection({
       </div>
       <div className="mt-ds-lg hidden rounded-ds border-2 border-[#2e7d32]/35 bg-[#e8f5e9] px-ds-md py-ds-md text-center shadow-sm sm:block">
         <p className="text-ds-body font-semibold leading-relaxed text-[#1b5e20]">
-          🔒 所有数据本地存储，不上传服务器，你的隐私完全由你掌控
+          🔒 内容与账户绑定，经 Supabase 安全同步至云端，仅你本人可访问；AI 与数据处理以{" "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-[#145214]">
+            《隐私政策》
+          </Link>{" "}
+          为准。
         </p>
       </div>
     </section>

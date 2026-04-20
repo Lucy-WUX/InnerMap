@@ -6,8 +6,8 @@ import { AppShell } from "@/components/app-shell"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "PrivateSocialSphere",
-  description: "私密关系认知教练工具",
+  title: "InnerMap",
+  description: "私密关系认知空间 · AI 辅助人际关系复盘",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

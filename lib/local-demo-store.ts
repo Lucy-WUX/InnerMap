@@ -85,3 +85,9 @@ export function createLocalRelationship(input: {
 export function getLocalRelationshipById(id: string) {
   return listLocalRelationships().find((item) => item.id === id) ?? null
 }
+
+export function clearLocalDemoStore() {
+  if (!hasWindow()) return
+  window.localStorage.removeItem(ENTRIES_KEY)
+  window.localStorage.removeItem(RELATIONSHIPS_KEY)
+}

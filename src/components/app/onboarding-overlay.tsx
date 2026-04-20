@@ -107,7 +107,7 @@ export function OnboardingOverlay({
           <>
             <h2 className="mt-ds-xs text-ds-title">体验一次 AI 咨询</h2>
             <p className="mt-1 text-ds-body text-soft">
-              AI 关系教练会结合你的记录，帮你理清模式与边界（不上传服务器时仅在本地演示）。
+              AI 会结合你的记录给出参考。已连接 Supabase 与 AI 服务时，请求会经服务端处理；完整数据与隐私说明以应用内《隐私政策》为准。
             </p>
             <div className="mt-ds-md flex flex-wrap gap-2">
               <Button

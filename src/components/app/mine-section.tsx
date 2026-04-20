@@ -1,11 +1,19 @@
 "use client"
 
+import Link from "next/link"
 import { useRef, useState } from "react"
+
+import { ACCOUNT_DELETION_CONFIRM_PHRASE } from "@/lib/account-constants"
+import { clearPersistedAuth, useAuthStore } from "@/lib/stores/auth-store"
+import { getSupabaseBrowserClient, isBrowserSupabaseReady } from "@/lib/supabase-browser"
 
 import type { AppDataSnapshot, LockSettings } from "../../lib/app-local-storage"
 import {
+  buildExportCsv,
+  clearAllScopedLocalData,
   createLockFromPin,
   createLockWebAuthnOnly,
+  downloadCsv,
   downloadJson,
   lockHasWebAuthn,
   setSessionUnlocked,
@@ -35,10 +43,22 @@ export function MineSection({
   lockSettings,
 }: MineSectionProps) {
   const fileRef = useRef<HTMLInputElement>(null)
+  const accessToken = useAuthStore((s) => s.accessToken)
+  const authUserId = useAuthStore((s) => s.userId)
+  const isLoggedIn = Boolean(accessToken && authUserId)
+
   const [importTip, setImportTip] = useState("")
   const [pinA, setPinA] = useState("")
   const [pinB, setPinB] = useState("")
   const [lockBusy, setLockBusy] = useState(false)
+  const [dataActionBusy, setDataActionBusy] = useState(false)
+  const [accountDeleteConfirm, setAccountDeleteConfirm] = useState("")
+
+  function showTip(message: string, ms = 2800) {
+    setImportTip(message)
+    setTimeout(() => setImportTip(""), ms)
+  }
+
   function handleExport() {
     const core = buildExportSnapshot()
     const payload: AppDataSnapshot = {
@@ -47,6 +67,97 @@ export function MineSection({
       exportedAt: new Date().toISOString(),
     }
     downloadJson(`观系备份-${new Date().toISOString().slice(0, 10)}.json`, payload)
+  }
+
+  function handleExportCsv() {
+    const core = buildExportSnapshot()
+    const csv = buildExportCsv(core)
+    downloadCsv(`观系备份-${new Date().toISOString().slice(0, 10)}.csv`, csv)
+  }
+
+  function handleClearLocalData() {
+    const ok = window.confirm(
+      "将删除本设备上当前用户名下的本地数据（联系人、互动、日记、评分历史、草稿、引导与应用锁设置等）。登录状态会保留。此操作无法撤销，是否继续？",
+    )
+    if (!ok) return
+    setSessionUnlocked(true, storageScope)
+    onLockSettingsChange(null)
+    clearAllScopedLocalData(storageScope)
+    showTip("已清除本地数据，即将刷新…", 4000)
+    window.setTimeout(() => window.location.reload(), 400)
+  }
+
+  async function handleClearCloudData() {
+    if (!isLoggedIn || !accessToken) {
+      showTip("请先登录后再清空云端数据。")
+      return
+    }
+    if (!isBrowserSupabaseReady()) {
+      showTip("当前环境未配置云端同步，无需清空。")
+      return
+    }
+    const ok = window.confirm(
+      "将永久删除服务器上与当前账户关联的同步数据（日记条目、关系记录、AI 用量统计）。不会影响您已下载到本机的 JSON/CSV 备份。此操作无法撤销，是否继续？",
+    )
+    if (!ok) return
+    setDataActionBusy(true)
+    try {
+      const res = await fetch("/api/account/delete-cloud-data", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        showTip(body.error ?? "云端清理失败", 4000)
+        return
+      }
+      showTip("云端数据已清空。")
+    } finally {
+      setDataActionBusy(false)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!isLoggedIn || !accessToken || !authUserId) {
+      showTip("请先登录后再注销账号。")
+      return
+    }
+    if (accountDeleteConfirm.trim() !== ACCOUNT_DELETION_CONFIRM_PHRASE) {
+      showTip(`请在输入框中完整填写「${ACCOUNT_DELETION_CONFIRM_PHRASE}」。`)
+      return
+    }
+    const ok = window.confirm(
+      "最后确认：注销后您的账户将被立即永久删除，云端关联数据一并清除，且无法恢复。是否继续？",
+    )
+    if (!ok) return
+    setDataActionBusy(true)
+    try {
+      const res = await fetch("/api/account/delete-account", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ confirmText: accountDeleteConfirm.trim() }),
+      })
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        showTip(body.error ?? "注销失败", 5000)
+        return
+      }
+      const scope = authUserId
+      clearAllScopedLocalData(scope)
+      clearPersistedAuth()
+      try {
+        const supabase = getSupabaseBrowserClient()
+        await supabase.auth.signOut()
+      } catch {
+        /* 配置异常时仍跳转登录 */
+      }
+      window.location.href = "/login"
+    } finally {
+      setDataActionBusy(false)
+    }
   }
 
   async function handleEnableLock() {
@@ -138,14 +249,39 @@ export function MineSection({
         <h2 className="text-ds-title">我的</h2>
         <p className="mt-1 text-ds-body text-soft">数据、安全与备份</p>
       </Card>
+      <Card className="rounded-ds border border-[#2e7d32]/30 bg-[#f1f8f2] p-ds-lg">
+        <h3 className="text-ds-body font-semibold text-[#1b5e20]">隐私与信任</h3>
+        <p className="mt-1 text-ds-caption leading-relaxed text-[#2f5b39]">
+          你在这里写下的内容，可能比银行密码更敏感。InnerMap 把隐私当作生死线：记录与账户绑定，经加密连接与托管云端同步，
+          <strong className="font-medium text-[#1b5e20]">不向其他用户公开</strong>
+          。你可随时导出 JSON/CSV 自备份，一键清理本机或云端数据；注销账号后相关数据将立即永久删除。更细的说明见信任中心。
+        </p>
+        <div className="mt-ds-xs flex flex-wrap gap-2">
+          <Link
+            href="/privacy-hub"
+            className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#2e7d32]/45 bg-white px-4 text-sm font-medium text-[#1b5e20] shadow-sm transition-colors hover:bg-[#e8f5e9]"
+          >
+            打开隐私与信任中心
+          </Link>
+          <Link
+            href="/privacy"
+            className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#d8c9b9] bg-paper px-4 text-sm font-medium text-[#795548] transition-colors hover:bg-[#f3ece4]"
+          >
+            阅读《隐私政策》
+          </Link>
+        </div>
+      </Card>
       <Card className="rounded-ds border border-warm-base p-ds-lg">
         <h3 className="text-ds-body font-semibold text-ink">数据备份与恢复</h3>
         <p className="mt-1 text-ds-caption text-soft">
-          将所有联系人、互动记录、日记与评分历史导出为 JSON；换机或重装后可导入还原。
+          将所有联系人、互动记录、日记与评分历史导出为 JSON 或 CSV；换机或重装后可导入 JSON 还原。
         </p>
         <div className="mt-ds-xs flex flex-wrap gap-2">
           <Button type="button" onClick={handleExport}>
             导出全部数据 (JSON)
+          </Button>
+          <Button type="button" variant="outline" onClick={handleExportCsv}>
+            导出全部数据 (CSV)
           </Button>
           <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
             从文件恢复
@@ -185,6 +321,61 @@ export function MineSection({
           并刷新，可解除免费版 20 人上限。
         </p>
       </Card>
+
+      <Card className="rounded-ds border border-warm-base p-ds-lg">
+        <h3 className="text-ds-body font-semibold text-ink">数据控制权</h3>
+        <p className="mt-1 text-ds-caption text-soft">
+          由你决定数据留在本机、同步云端或彻底删除。清除本地仅影响此浏览器；清空云端与注销账号需登录，且依赖服务端配置 Service Role。
+        </p>
+        <div className="mt-ds-xs flex flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={dataActionBusy} onClick={handleClearLocalData}>
+            清除本设备全部本地数据
+          </Button>
+          {isLoggedIn ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={dataActionBusy || !isBrowserSupabaseReady()}
+              onClick={() => void handleClearCloudData()}
+            >
+              清空云端同步数据
+            </Button>
+          ) : null}
+        </div>
+        {!isLoggedIn ? (
+          <p className="mt-ds-xs text-ds-caption text-soft">登录后可清空与您账户绑定的云端数据或注销账号。</p>
+        ) : !isBrowserSupabaseReady() ? (
+          <p className="mt-ds-xs text-ds-caption text-soft">当前未连接 Supabase，云端相关按钮不可用。</p>
+        ) : null}
+        {isLoggedIn && isBrowserSupabaseReady() ? (
+          <div className="mt-ds-md rounded-ds border border-red-200/80 bg-red-50/80 p-ds-md">
+            <p className="text-ds-caption font-medium text-red-900">注销账号（不可恢复）</p>
+            <p className="mt-1 text-ds-caption leading-relaxed text-red-800/90">
+              提交后立即永久删除登录账户及数据库中与该账户关联的同步数据（与「清空云端」范围一致）。本机若仍有 JSON/CSV 导出文件，请自行处理。
+            </p>
+            <p className="mt-ds-xs text-ds-caption text-red-800/90">
+              请输入「{ACCOUNT_DELETION_CONFIRM_PHRASE}」以确认：
+            </p>
+            <Input
+              className="mt-ds-xs max-w-sm"
+              value={accountDeleteConfirm}
+              onChange={(e) => setAccountDeleteConfirm(e.target.value)}
+              placeholder={ACCOUNT_DELETION_CONFIRM_PHRASE}
+              autoComplete="off"
+            />
+            <Button
+              type="button"
+              className="mt-ds-xs"
+              variant="danger"
+              disabled={dataActionBusy}
+              onClick={() => void handleDeleteAccount()}
+            >
+              永久注销账号
+            </Button>
+          </div>
+        ) : null}
+      </Card>
+
       <Card className="rounded-ds border border-warm-base p-ds-lg">
         <h3 className="text-ds-body font-semibold text-ink">应用锁（密码 / WebAuthn）</h3>
         <p className="mt-1 text-ds-caption text-soft">

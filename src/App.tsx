@@ -39,7 +39,8 @@ import {
   computeWeeklyDigest,
   type ScoreHistoryPoint,
 } from "./lib/relationship-ai-demo"
-import { useUserSession } from "@/lib/use-user-session"
+import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuthHydration } from "@/lib/use-user-session"
 
 type InteractionLog = {
   id: string
@@ -80,7 +81,9 @@ function buildDefaultInteractionForm() {
 
 function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const router = useRouter()
-  const { loading: sessionLoading, userId } = useUserSession()
+  const userId = useAuthStore((s) => s.userId)
+  const authHydrated = useAuthHydration()
+  const sessionLoading = !authHydrated
   const storageScope = userId ?? "guest"
   const [tab, setTab] = useState<TabKey>(initialTab)
   const [overlay, setOverlay] = useState<OverlayPage>("none")

@@ -1,4 +1,4 @@
-const WEBAUTHN_USER_KEY = "pss-webauthn-user-id"
+export const WEBAUTHN_BROWSER_USER_KEY = "pss-webauthn-user-id"
 
 function bufferToBase64url(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf)
@@ -23,12 +23,12 @@ function getOrCreateWebAuthnUserId(): ArrayBuffer {
     crypto.getRandomValues(b)
     return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)
   }
-  let s = localStorage.getItem(WEBAUTHN_USER_KEY)
+  let s = localStorage.getItem(WEBAUTHN_BROWSER_USER_KEY)
   if (!s) {
     const b = new Uint8Array(16)
     crypto.getRandomValues(b)
     s = bufferToBase64url(b.buffer)
-    localStorage.setItem(WEBAUTHN_USER_KEY, s)
+    localStorage.setItem(WEBAUTHN_BROWSER_USER_KEY, s)
   }
   return base64urlToBuffer(s)
 }

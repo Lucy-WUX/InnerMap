@@ -5,13 +5,16 @@ import { useEffect, useState } from "react"
 
 import { getLocalRelationshipById, listLocalEntries } from "@/lib/local-demo-store"
 import { getSupabaseBrowserClient, isBrowserSupabaseReady } from "@/lib/supabase-browser"
+import { useAuthStore } from "@/lib/stores/auth-store"
 import type { Entry, Relationship } from "@/lib/types"
-import { useUserSession } from "@/lib/use-user-session"
+import { useAuthHydration } from "@/lib/use-user-session"
 
 export default function RelationshipDetailPage() {
   const params = useParams<{ id: string }>()
-  const { userId, token } = useUserSession()
-  const offlineMode = !userId || !isBrowserSupabaseReady()
+  const userId = useAuthStore((s) => s.userId)
+  const token = useAuthStore((s) => s.accessToken)
+  const authHydrated = useAuthHydration()
+  const offlineMode = !authHydrated || !userId || !isBrowserSupabaseReady()
   const [relationship, setRelationship] = useState<Relationship | null>(null)
   const [entries, setEntries] = useState<Entry[]>([])
   const [analysis, setAnalysis] = useState("")

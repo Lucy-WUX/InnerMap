@@ -2,18 +2,32 @@
 
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { PublicLanding } from "@/components/public-landing"
 import { getSupabaseBrowserClient, isBrowserSupabaseReady, isDemoModeEnabled } from "@/lib/supabase-browser"
+import { clearPersistedAuth, useAuthStore } from "@/lib/stores/auth-store"
+import type { Session } from "@supabase/supabase-js"
+
+/** 未登录可访问：封面、登录、注册、隐私/条款/信任中心；带「关系 / 我的」Tab 的首页需登录 */
+function isPublicUnauthedRoute(pathname: string, tab: string | null) {
+  const isPublicCover = pathname === "/" && tab !== "relations" && tab !== "mine"
+  const isAuthEntry = pathname === "/login" || pathname === "/register"
+  const isPublicInfo = pathname === "/privacy" || pathname === "/terms" || pathname === "/privacy-hub"
+  return isPublicCover || isAuthEntry || isPublicInfo
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isPublicHome = pathname === "/"
+  const isPublicLegal = pathname === "/privacy" || pathname === "/terms" || pathname === "/privacy-hub"
   const router = useRouter()
   const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const isPublicCover = pathname === "/" && tabParam !== "relations" && tabParam !== "mine"
+  const routeRef = useRef({ pathname, tab: tabParam })
+  routeRef.current = { pathname, tab: tabParam }
+  const accessToken = useAuthStore((s) => s.accessToken)
   const [authed, setAuthed] = useState<boolean | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const [envError, setEnvError] = useState("")
   const [envHint, setEnvHint] = useState("")
   const [envMissing, setEnvMissing] = useState<string[]>([])
@@ -52,42 +66,83 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         else setEnvHint("")
       })
       .catch(() => undefined)
+  }, [])
 
+  useEffect(() => {
     if (!isBrowserSupabaseReady()) {
       if (isDemoModeEnabled()) {
         setEnvError("当前为演示模式：未连接 Supabase，登录与云端数据能力不可用。")
         setAuthed(true)
+        useAuthStore.getState().clearAuth()
         return
       }
       setEnvError("未检测到 Supabase 配置，已停用演示模式。请先配置环境变量后登录。")
       setAuthed(false)
-      if (pathname !== "/login" && !isPublicHome) router.replace("/login")
+      clearPersistedAuth()
+      const { pathname: p, tab } = routeRef.current
+      if (!isPublicUnauthedRoute(p, tab)) router.replace("/login")
       return
     }
 
-    // 客户端校验会话，未登录则跳转到登录页
     const supabase = getSupabaseBrowserClient()
-    supabase.auth.getSession().then(({ data, error }) => {
+
+    function syncSession(session: Session | null) {
+      if (session?.access_token && session.user) {
+        useAuthStore.getState().setAuth({
+          accessToken: session.access_token,
+          userId: session.user.id,
+        })
+      } else {
+        useAuthStore.getState().clearAuth()
+      }
+      setAuthed(Boolean(session))
+      const at = session?.access_token
+      if (at) void refreshUsage(at)
+      const { pathname: p, tab } = routeRef.current
+      if (!session && !isPublicUnauthedRoute(p, tab)) {
+        router.replace("/login")
+      }
+    }
+
+    void supabase.auth.getSession().then(({ data, error }) => {
       if (error) {
         setEnvError(`Supabase 会话检测失败：${error.message}`)
       }
-      setAuthed(Boolean(data.session))
-      const accessToken = data.session?.access_token ?? null
-      setToken(accessToken)
-      if (accessToken) {
-        void refreshUsage(accessToken)
-      }
-      if (!data.session && pathname !== "/login" && !isPublicHome) router.replace("/login")
+      syncSession(data.session ?? null)
     })
-  }, [isPublicHome, pathname, router])
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
 
   useEffect(() => {
-    if (!token) return
+    if (authed === false) {
+      const allow = isPublicUnauthedRoute(pathname, tabParam)
+      if (!allow) router.replace("/login")
+    }
+  }, [authed, pathname, tabParam, router])
+
+  useEffect(() => {
+    if (authed !== true) return
+    const onCover = pathname === "/" && tabParam !== "relations" && tabParam !== "mine"
+    const onAuthEntry = pathname === "/login" || pathname === "/register"
+    if (onAuthEntry || onCover) {
+      router.replace("/?tab=home")
+    }
+  }, [authed, pathname, tabParam, router])
+
+  useEffect(() => {
+    if (!accessToken) return
     const timer = setInterval(() => {
-      void refreshUsage(token)
+      void refreshUsage(accessToken)
     }, 15000)
     return () => clearInterval(timer)
-  }, [token])
+  }, [accessToken])
 
   function closeProModalWithNudge() {
     setShowProModal(false)
@@ -111,7 +166,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [])
 
-  if (pathname === "/login") return <>{children}</>
+  if (pathname === "/login" || pathname === "/register" || isPublicLegal) return <>{children}</>
   if (authed === null) {
     return (
       <div className="mx-auto min-h-screen max-w-5xl p-ds-md md:p-ds-lg">
@@ -124,11 +179,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     )
   }
   if (!authed) {
-    if (isPublicHome) return <PublicLanding />
+    if (isPublicCover) return <PublicLanding />
     return <div className="p-ds-lg text-ds-body text-soft">正在跳转登录页...</div>
   }
 
-  const tabParam = searchParams.get("tab")
   const onMainTabs = pathname === "/"
   const navHome = onMainTabs && tabParam !== "relations" && tabParam !== "mine"
   const navRelations = onMainTabs && tabParam === "relations"
@@ -189,7 +243,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               👤
             </button>
             {showUserMenu ? (
-              <div className="absolute right-0 top-11 z-20 w-40 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">
+              <div className="absolute right-0 top-11 z-20 w-48 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">
+                <Link
+                  href="/privacy-hub"
+                  className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  隐私与信任
+                </Link>
                 <button className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]">
                   账户设置
                 </button>
@@ -206,9 +267,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
                   onClick={async () => {
                     setShowUserMenu(false)
-                    if (!isBrowserSupabaseReady()) return
-                    const supabase = getSupabaseBrowserClient()
-                    await supabase.auth.signOut()
+                    if (isBrowserSupabaseReady()) {
+                      const supabase = getSupabaseBrowserClient()
+                      await supabase.auth.signOut()
+                    }
+                    clearPersistedAuth()
                     router.replace("/login")
                   }}
                 >
@@ -371,8 +434,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   🔐
                 </span>
                 <div>
-                  <p className="font-semibold text-ink">数据完全掌控</p>
-                  <p className="mt-1">随时导出联系人与互动（CSV / JSON）。你的数据永远属于你。</p>
+                  <p className="font-semibold text-ink">导出与归属清晰</p>
+                  <p className="mt-1">
+                    可随时导出联系人与互动（CSV / JSON）。记录与账户绑定并由 Supabase 托管同步，不向其他用户公开；存储与 AI 处理方式以《隐私政策》为准。
+                  </p>
                 </div>
               </div>
             </div>

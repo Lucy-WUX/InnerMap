@@ -1,5 +1,8 @@
+import { clearLocalDemoStore } from "@/lib/local-demo-store"
+
 import type { GroupKey, RelationContact } from "../components/app/types"
 import type { ScoreHistoryPoint } from "./relationship-ai-demo"
+import { WEBAUTHN_BROWSER_USER_KEY } from "./webauthn-lock"
 
 export const PERSISTENCE_KEY = "pss-app-snapshot-v1"
 export const ONBOARDING_KEY = "pss-onboarding-v1"
@@ -170,6 +173,139 @@ export function downloadJson(filename: string, data: unknown) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+function csvEscapeCell(value: string | number | undefined | null): string {
+  const s = value === undefined || value === null ? "" : String(value)
+  if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+  return s
+}
+
+/** 与 JSON 导出同源：联系人、互动、日记、评分历史、自定义分组及界面状态 */
+export function buildExportCsv(core: Omit<AppDataSnapshot, "version" | "exportedAt">): string {
+  const lines: string[] = []
+
+  lines.push("contacts")
+  lines.push(
+    "id,name,group,stars,trueFriendScore,surfaceRelationScore,lastContact,note,tags,traits,background,privateNote",
+  )
+  for (const c of core.contacts) {
+    lines.push(
+      [
+        csvEscapeCell(c.id),
+        csvEscapeCell(c.name),
+        csvEscapeCell(c.group),
+        csvEscapeCell(c.stars),
+        csvEscapeCell(c.trueFriendScore),
+        csvEscapeCell(c.surfaceRelationScore),
+        csvEscapeCell(c.lastContact),
+        csvEscapeCell(c.note),
+        csvEscapeCell((c.tags ?? []).join(";")),
+        csvEscapeCell(c.traits),
+        csvEscapeCell(c.background),
+        csvEscapeCell(c.privateNote),
+      ].join(","),
+    )
+  }
+
+  lines.push("")
+  lines.push("interactionLogs")
+  lines.push("id,contactId,date,type,what,reaction,feel,energy,meaningful,aiInsight")
+  for (const log of core.interactionLogs) {
+    lines.push(
+      [
+        csvEscapeCell(log.id),
+        csvEscapeCell(log.contactId),
+        csvEscapeCell(log.date),
+        csvEscapeCell(log.type),
+        csvEscapeCell(log.what),
+        csvEscapeCell(log.reaction),
+        csvEscapeCell(log.feel),
+        csvEscapeCell(log.energy),
+        csvEscapeCell(log.meaningful === undefined ? "" : log.meaningful ? "1" : "0"),
+        csvEscapeCell(log.aiInsight),
+      ].join(","),
+    )
+  }
+
+  lines.push("")
+  lines.push("diary")
+  lines.push("date,content,emotion")
+  const diaryDates = new Set([
+    ...Object.keys(core.diaryRecords ?? {}),
+    ...Object.keys(core.diaryEmotionRecords ?? {}),
+  ])
+  for (const d of [...diaryDates].sort()) {
+    lines.push(
+      [
+        csvEscapeCell(d),
+        csvEscapeCell(core.diaryRecords[d]),
+        csvEscapeCell(core.diaryEmotionRecords[d] ?? ""),
+      ].join(","),
+    )
+  }
+
+  lines.push("")
+  lines.push("scoreHistory")
+  lines.push("contactId,date,trueFriend,surface")
+  for (const [contactId, points] of Object.entries(core.scoreHistory ?? {})) {
+    for (const p of points) {
+      lines.push(
+        [csvEscapeCell(contactId), csvEscapeCell(p.date), csvEscapeCell(p.trueFriend), csvEscapeCell(p.surface)].join(
+          ",",
+        ),
+      )
+    }
+  }
+
+  lines.push("")
+  lines.push("customGroups")
+  lines.push(core.customGroups.map((g) => csvEscapeCell(g)).join(","))
+
+  lines.push("")
+  lines.push("uiState")
+  lines.push("selectedContactId,diarySelectedDate,diaryViewMonth")
+  lines.push(
+    [
+      csvEscapeCell(core.selectedContactId),
+      csvEscapeCell(core.diarySelectedDate),
+      csvEscapeCell(core.diaryViewMonth),
+    ].join(","),
+  )
+
+  return lines.join("\r\n")
+}
+
+export function downloadCsv(filename: string, csv: string) {
+  const BOM = "\uFEFF"
+  const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * 清除当前 scope 下与本应用相关的本地数据（不含登录态 innermap-auth、不含演示用订阅标记 pss-subscription）。
+ * 清除后建议刷新页面以重置内存状态。
+ */
+export function clearAllScopedLocalData(scope: string) {
+  if (typeof localStorage === "undefined") return
+  const keys = [
+    scopedKey(PERSISTENCE_KEY, scope),
+    scopedKey(ONBOARDING_KEY, scope),
+    scopedKey(LOCK_STORAGE_KEY, scope),
+    `pss-diary-drafts:${scope}`,
+    `pss-interaction-draft:${scope}`,
+    WEBAUTHN_BROWSER_USER_KEY,
+  ]
+  for (const k of keys) localStorage.removeItem(k)
+  clearLocalDemoStore()
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(scopedKey(SESSION_UNLOCK, scope))
+  }
 }
 
 export function onboardingDone(scope?: string): boolean {

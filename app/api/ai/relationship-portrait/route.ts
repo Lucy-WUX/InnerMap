@@ -1,19 +1,30 @@
 import { NextResponse } from "next/server"
 
 import { coachCorePrompt, consumeDailyQuota, getAiClient, getRecentEntryContext } from "@/lib/ai"
+import { aiJsonError, logAiRouteEvent, newAiRequestId } from "@/lib/ai-route-helpers"
 import { getUserIdFromRequest } from "@/lib/api-auth"
 
 export async function POST(request: Request) {
+  const requestId = newAiRequestId()
+  let userId: string | null = null
   try {
-    const userId = await getUserIdFromRequest(request)
+    userId = await getUserIdFromRequest(request)
     if (!userId) return NextResponse.json({ error: "未登录或鉴权失败" }, { status: 401 })
+
     const quota = await consumeDailyQuota(userId)
     if (!quota.allowed) return NextResponse.json({ error: "今日次数已用完" }, { status: 429 })
 
     const client = getAiClient()
-    if (!client) return NextResponse.json({ error: "服务端未配置 AI_API_KEY" }, { status: 500 })
+    if (!client) {
+      logAiRouteEvent("ai/relationship-portrait", requestId, {
+        userId,
+        ok: false,
+        meta: { reason: "missing_ai_client" },
+      })
+      return NextResponse.json({ error: "AI 服务暂时不可用", requestId }, { status: 503 })
+    }
 
-    const body = (await request.json()) as {
+    let body: {
       relationship?: {
         name?: string
         group_type?: string
@@ -24,7 +35,13 @@ export async function POST(request: Request) {
       }
       relatedEntries?: Array<{ content: string; mood: string; created_at?: string }>
     }
+    try {
+      body = (await request.json()) as typeof body
+    } catch {
+      return NextResponse.json({ error: "请求格式无效", requestId }, { status: 400 })
+    }
 
+    const relatedCount = body.relatedEntries?.length ?? 0
     const recentEntries = await getRecentEntryContext(userId)
     const relatedEntries =
       body.relatedEntries
@@ -47,11 +64,20 @@ export async function POST(request: Request) {
       ],
     })
 
+    logAiRouteEvent("ai/relationship-portrait", requestId, {
+      userId,
+      ok: true,
+      meta: {
+        relatedEntriesCount: relatedCount,
+        hasRelationshipPayload: Boolean(body.relationship?.name),
+      },
+    })
+
     return NextResponse.json({
       reply: completion.choices[0]?.message?.content ?? "画像线索不足，建议补充更多互动场景。",
       remaining: quota.remaining,
     })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "请求失败" }, { status: 500 })
+    return aiJsonError(requestId, 500, "服务暂时不可用，请稍后再试", "ai/relationship-portrait", error, userId)
   }
 }

@@ -13,7 +13,10 @@ const config: Config = {
         base: "#faf8f5",
         paper: "#faf8f5",
         ink: "#795548",
-        soft: "#86868b",
+        soft: "#8c7e71",
+        "land-border": "#e9e2d8",
+        "land-input-border": "#ddcfbe",
+        "land-error": "#a64432",
         "warm-base": "#e7dbc9",
         "warm-soft": "#e9dfd0",
         "warm-strong": "#d8c9b8",
@@ -24,10 +27,14 @@ const config: Config = {
       borderRadius: {
         ds: "12px",
         "btn-ds": "8px",
+        "landing-card": "28px",
       },
       boxShadow: {
         "ds-card": "0 2px 12px rgba(0, 0, 0, 0.06)",
         "ds-card-hover": "0 4px 20px rgba(0, 0, 0, 0.08)",
+        landing: "0 10px 25px -5px rgba(0, 0, 0, 0.05)",
+        "landing-hover": "0 16px 32px -8px rgba(0, 0, 0, 0.08)",
+        "landing-hero-img": "0 12px 32px -8px rgba(93, 64, 55, 0.12)",
       },
       spacing: {
         "ds-xs": "8px",
