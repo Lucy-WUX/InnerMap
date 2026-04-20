@@ -4,10 +4,12 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import { PublicLanding } from "@/components/public-landing"
 import { getSupabaseBrowserClient, isBrowserSupabaseReady, isDemoModeEnabled } from "@/lib/supabase-browser"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const isPublicHome = pathname === "/"
   const router = useRouter()
   const searchParams = useSearchParams()
   const [authed, setAuthed] = useState<boolean | null>(null)
@@ -59,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       setEnvError("未检测到 Supabase 配置，已停用演示模式。请先配置环境变量后登录。")
       setAuthed(false)
-      if (pathname !== "/login") router.replace("/login")
+      if (pathname !== "/login" && !isPublicHome) router.replace("/login")
       return
     }
 
@@ -75,9 +77,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (accessToken) {
         void refreshUsage(accessToken)
       }
-      if (!data.session && pathname !== "/login") router.replace("/login")
+      if (!data.session && pathname !== "/login" && !isPublicHome) router.replace("/login")
     })
-  }, [pathname, router])
+  }, [isPublicHome, pathname, router])
 
   useEffect(() => {
     if (!token) return
@@ -121,7 +123,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     )
   }
-  if (!authed) return <div className="p-ds-lg text-ds-body text-soft">正在跳转登录页...</div>
+  if (!authed) {
+    if (isPublicHome) return <PublicLanding />
+    return <div className="p-ds-lg text-ds-body text-soft">正在跳转登录页...</div>
+  }
 
   const tabParam = searchParams.get("tab")
   const onMainTabs = pathname === "/"
