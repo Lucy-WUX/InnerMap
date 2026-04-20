@@ -2,6 +2,8 @@
 
 import { Lock, Mail } from "lucide-react"
 import Link from "next/link"
+
+import { LOCAL_MODE_HREF } from "@/lib/local-mode"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, type FormEvent } from "react"
 
@@ -17,6 +19,17 @@ const SIGNUP_PASSWORD_TOO_SHORT = "密码长度至少为 6 位"
 const PASSWORD_MISMATCH = "两次输入的密码不一致"
 const CONFIRM_PASSWORD_EMPTY = "请再次输入密码"
 const EMAIL_ALREADY_REGISTERED = "该邮箱已被注册，请直接登录"
+
+const ANONYMOUS_DISABLED_FRIENDLY =
+  "当前未开放匿名或游客登录。请使用邮箱登录或注册；也可以无需注册，在本机直接使用本地模式（页面下方有入口）。"
+
+function mapAnonymousDisabledMessage(raw: string): string | null {
+  const m = raw.toLowerCase()
+  if (m.includes("anonymous") && m.includes("disabled")) return ANONYMOUS_DISABLED_FRIENDLY
+  if (m.includes("anonymous sign-ins are disabled")) return ANONYMOUS_DISABLED_FRIENDLY
+  if (m.includes("anonymous sign-in")) return ANONYMOUS_DISABLED_FRIENDLY
+  return null
+}
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
@@ -42,6 +55,8 @@ function mapSignInError(err: { message?: string; code?: string }): string {
   if (msg.includes("user_banned") || msg.includes("banned")) {
     return "该账号暂时无法登录，请联系支持"
   }
+  const anon = mapAnonymousDisabledMessage(err.message || "")
+  if (anon) return anon
   return SIGNIN_WRONG
 }
 
@@ -190,7 +205,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       ) {
         setError(EMAIL_ALREADY_REGISTERED)
       } else {
-        setError(msg || "注册失败，请稍后再试")
+        setError(mapAnonymousDisabledMessage(msg) ?? (msg || "注册失败，请稍后再试"))
       }
     } else if (!data.session) {
       setShowOtpPanel(true)
@@ -225,7 +240,10 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       type: "signup",
     })
     if (otpError) {
-      setError(otpError.message || "验证码无效或已过期")
+      setError(
+        mapAnonymousDisabledMessage(otpError.message || "") ??
+          (otpError.message || "验证码无效或已过期"),
+      )
     } else {
       setStatus("邮箱验证成功，正在进入应用…")
       router.replace("/?tab=home")
@@ -251,7 +269,11 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       type: "signup",
       email: email.trim(),
     })
-    if (resendError) setError(resendError.message || "重发失败")
+    if (resendError)
+      setError(
+        mapAnonymousDisabledMessage(resendError.message || "") ??
+          (resendError.message || "重发失败"),
+      )
     else setStatus("验证码已重新发送，请检查邮箱。")
     setResendingOtp(false)
   }
@@ -296,20 +318,68 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
   }
 
   const inputShell =
-    "w-full rounded-2xl border border-land-input-border bg-white py-3 text-sm text-ink outline-none ring-0 transition-shadow placeholder:text-soft/60 focus:border-[#c4b5a4] focus:shadow-[0_0_0_3px_rgba(121,85,72,0.12)]"
+    "w-full rounded-2xl border border-land-input-border bg-white py-3 text-sm text-ink outline-none ring-0 transition-shadow placeholder:text-[#6b5d52] focus:border-[#c4b5a4] focus:shadow-[0_0_0_3px_rgba(121,85,72,0.12)]"
 
   const brandPanel = (
-    <div className="relative flex min-h-[220px] flex-col justify-center px-8 py-12 text-[#5d4037] sm:px-12 lg:min-h-screen lg:py-16">
+    <div className="relative flex min-h-[280px] flex-col justify-center px-8 py-12 sm:px-12 lg:min-h-screen lg:py-16">
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#efe6dc] via-[#e5d9cc] to-[#d4c2b0] opacity-95"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#efe6dc] via-[#e8dfd4] to-[#d9c8b8]"
         aria-hidden
       />
-      <div className="relative">
-        <p className="text-lg font-semibold tracking-tight text-[#6d5443]">InnerMap</p>
-        <h1 className="mt-4 max-w-lg text-2xl font-bold leading-snug sm:text-3xl lg:text-[1.85rem] lg:leading-tight">
+      <div className="relative max-w-lg">
+        <p className="text-lg font-semibold tracking-tight text-[#5d4037]">InnerMap</p>
+        <h1 className="mt-4 text-2xl font-bold leading-snug text-ink sm:text-3xl lg:text-[1.85rem] lg:leading-tight">
           绘制你的人际地图，导航每一段关系
         </h1>
-        <p className="mt-4 max-w-md text-sm leading-7 text-[#6d5433]/90 sm:text-base">私密关系认知空间，仅你可见</p>
+        <p className="mt-3 max-w-md text-sm font-medium leading-7 text-ink sm:text-base">
+          私密关系认知空间，仅你可见。
+        </p>
+
+        <ul className="mt-8 space-y-3 text-sm leading-relaxed text-ink">
+          <li className="flex gap-3">
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8d6e63]" aria-hidden />
+            <span>
+              <strong className="font-semibold">看清每一段关系</strong>
+              ：谁值得深交、谁在消耗你，写下来才不容易自欺。
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8d6e63]" aria-hidden />
+            <span>
+              <strong className="font-semibold">只属于你</strong>
+              ：记录经加密连接同步，不向其他用户公开；导出与删除由你在「我的」中掌控。
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8d6e63]" aria-hidden />
+            <span>
+              <strong className="font-semibold">温和复盘</strong>
+              ：用日记与互动时间轴梳理情绪与边界，为下一次相处做准备。
+            </span>
+          </li>
+        </ul>
+
+        <div
+          className="mt-10 hidden max-w-xs text-[#8d6e63] sm:block"
+          aria-hidden
+        >
+          <svg viewBox="0 0 320 200" className="h-auto w-full opacity-90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M160 36 L248 92 L216 176 L104 176 L72 92 Z"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeOpacity="0.45"
+            />
+            <circle cx="160" cy="36" r="10" fill="currentColor" fillOpacity="0.35" />
+            <circle cx="248" cy="92" r="10" fill="currentColor" fillOpacity="0.28" />
+            <circle cx="216" cy="176" r="10" fill="currentColor" fillOpacity="0.28" />
+            <circle cx="104" cy="176" r="10" fill="currentColor" fillOpacity="0.28" />
+            <circle cx="72" cy="92" r="10" fill="currentColor" fillOpacity="0.28" />
+            <circle cx="160" cy="108" r="14" fill="currentColor" fillOpacity="0.5" />
+            <path d="M160 46 L160 94 M152 100 L96 168 M168 100 L224 168 M138 98 L82 98 M182 98 L238 98" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35" />
+          </svg>
+          <p className="mt-2 text-center text-xs text-[#6d5443]">关系像一张地图：你在中心，连结重要的人与故事。</p>
+        </div>
       </div>
     </div>
   )
@@ -329,8 +399,20 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
 
           {!isRegister ? (
             <>
-              <h2 className="text-xl font-semibold text-[#5d4037]">登录</h2>
-              <p className="mt-1 text-xs text-soft">登录状态会保存在本浏览器，下次打开将自动保持登录。</p>
+              <h2 className="text-xl font-semibold text-ink">登录</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#5c4d42]">登录状态会保存在本浏览器，下次打开将自动保持登录。</p>
+              <div className="mt-3 rounded-xl border border-[#c8e6c9] bg-[#f1f8f2] px-3 py-3 text-xs leading-relaxed text-[#1b5e20]">
+                <p className="font-semibold">无需注册，直接使用</p>
+                <p className="mt-1.5 text-[#2e7d32]">
+                  可先在本机体验全部基础功能，数据默认只保存在当前设备。也可随时在下方一键进入本地模式。
+                </p>
+                <Link
+                  href={LOCAL_MODE_HREF}
+                  className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-full border-2 border-[#2e7d32] bg-white px-4 text-sm font-bold text-[#1b5e20] transition-colors hover:bg-[#e8f5e9]"
+                >
+                  进入本地模式（无需账号）→
+                </Link>
+              </div>
 
               <form className="mt-6 space-y-4" onSubmit={onLoginSubmit}>
                 <div className="relative">
@@ -362,7 +444,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[#d3c3b1] bg-white px-3 py-1.5 text-xs font-medium text-soft transition-colors hover:bg-[#f8f1e7]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[#d3c3b1] bg-white px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
                     onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? "隐藏" : "显示"}
@@ -383,12 +465,12 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                 {forgotConfirmOpen ? (
                   <div className="rounded-2xl border border-land-border bg-[#fffaf2] p-4 text-sm shadow-sm">
                     <p className="font-medium text-ink">确认发送重置邮件</p>
-                    <p className="mt-2 leading-relaxed text-soft">
+                    <p className="mt-2 leading-relaxed text-[#5c4d42]">
                       我们将向{" "}
                       <span className="break-all font-medium text-ink">{email.trim()}</span>{" "}
                       发送一封用于重置密码的邮件。请稍后在邮箱中打开链接，并在安全、私密的环境下设置新密码。
                     </p>
-                    <p className="mt-2 text-xs leading-relaxed text-soft">
+                    <p className="mt-2 text-xs leading-relaxed text-[#5c4d42]">
                       若邮箱填写有误，请先关闭本提示，修改上方邮箱后再点击「忘记密码」。邮件可能出现在垃圾箱，请一并查看。
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -424,21 +506,27 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
 
               <div className="my-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-land-border" />
-                <span className="text-xs text-soft">或者</span>
+                <span className="text-xs font-medium text-[#5c4d42]">或者</span>
                 <div className="h-px flex-1 bg-land-border" />
               </div>
 
-              <p className="text-center text-sm text-soft">
+              <p className="text-center text-sm text-[#5c4d42]">
                 还没有账号？{" "}
-                <Link href="/register" className="font-medium text-ink underline-offset-4 hover:underline">
+                <Link
+                  href="/register"
+                  className="font-semibold text-ink underline-offset-4 hover:text-[#5d4037] hover:underline"
+                >
                   立即注册
                 </Link>
               </p>
             </>
           ) : (
             <>
-              <h2 className="text-xl font-semibold text-[#5d4037]">注册</h2>
-              <p className="mt-1 text-xs text-soft">创建账号后即可在私密空间中记录关系与复盘。</p>
+              <h2 className="text-xl font-semibold text-ink">注册</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#5c4d42]">创建账号后即可在私密空间中记录关系与复盘。</p>
+              <p className="mt-2 text-xs font-medium leading-relaxed text-[#5c4d42]">
+                注册仅用于多设备数据同步，是完全可选的。
+              </p>
 
               <form className="mt-6 space-y-4" onSubmit={onSignupSubmit}>
                 <div className="relative">
@@ -469,7 +557,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[#d3c3b1] bg-white px-3 py-1.5 text-xs font-medium text-soft transition-colors hover:bg-[#f8f1e7]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[#d3c3b1] bg-white px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
                     onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? "隐藏" : "显示"}
@@ -490,23 +578,12 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[#d3c3b1] bg-white px-3 py-1.5 text-xs font-medium text-soft transition-colors hover:bg-[#f8f1e7]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[#d3c3b1] bg-white px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                   >
                     {showConfirmPassword ? "隐藏" : "显示"}
                   </button>
                 </div>
-
-                <p className="text-center text-[11px] leading-relaxed text-soft sm:text-xs">
-                  点击注册即表示你同意我们的{" "}
-                  <Link href="/terms" className="font-medium text-ink underline-offset-2 hover:underline">
-                    服务条款
-                  </Link>{" "}
-                  和{" "}
-                  <Link href="/privacy" className="font-medium text-ink underline-offset-2 hover:underline">
-                    隐私政策
-                  </Link>
-                </p>
 
                 <button
                   type="submit"
@@ -517,9 +594,12 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-sm text-soft">
+              <p className="mt-6 text-center text-sm text-[#5c4d42]">
                 已有账号？{" "}
-                <Link href="/login" className="font-medium text-ink underline-offset-4 hover:underline">
+                <Link
+                  href="/login"
+                  className="font-semibold text-ink underline-offset-4 hover:text-[#5d4037] hover:underline"
+                >
                   立即登录
                 </Link>
               </p>
@@ -527,7 +607,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
               {showOtpPanel ? (
                 <div className="mt-5 rounded-2xl border border-land-border bg-[#fffaf2] p-4 shadow-sm">
                   <p className="text-sm font-medium text-ink">填写邮箱验证码</p>
-                  <p className="mt-1 text-xs text-soft">已向该邮箱发送验证码，输入后完成验证并登录。</p>
+                  <p className="mt-1 text-xs text-[#5c4d42]">已向该邮箱发送验证码，输入后完成验证并登录。</p>
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
                     <input
                       className={`${inputShell} px-4`}
@@ -560,6 +640,32 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
               {error ? <p className="mt-3 text-center text-sm text-land-error">{error}</p> : null}
             </>
           )}
+
+          <div className="mt-8 rounded-2xl border-2 border-[#43a047] bg-gradient-to-br from-[#e8f5e9] via-[#f1f8f4] to-[#e8f5e9] p-5 shadow-md sm:p-6">
+            <p className="text-base font-bold text-[#1b5e20]">💡 不想注册？</p>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-[#2e7d32]">
+              你可以完全不注册账号，纯本地使用所有基础功能。数据默认只保存在本浏览器，不会上传到服务器。
+            </p>
+            <Link
+              href={LOCAL_MODE_HREF}
+              className="mt-5 flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-4 py-3 text-center text-sm font-bold text-white shadow-lg transition-colors hover:bg-[#6d4c41]"
+            >
+              直接进入本地模式 →
+            </Link>
+          </div>
+
+          {isRegister ? (
+            <p className="mt-6 text-center text-[11px] leading-relaxed text-[#9ca3af]">
+              点击注册即表示你同意我们的{" "}
+              <Link href="/terms" className="text-[#6b7280] underline-offset-2 hover:text-ink hover:underline">
+                服务条款
+              </Link>{" "}
+              和{" "}
+              <Link href="/privacy" className="text-[#6b7280] underline-offset-2 hover:text-ink hover:underline">
+                隐私政策
+              </Link>
+            </p>
+          ) : null}
 
           {demoMode ? (
             <div className="mt-6 border-t border-land-border pt-4 text-center">

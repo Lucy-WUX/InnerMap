@@ -21,7 +21,7 @@ export default function PrivacyHubPage() {
         </header>
 
         <section className="rounded-landing-card border border-land-border bg-white p-6 shadow-landing sm:p-8">
-          <h2 className="text-base font-semibold text-[#5d4037]">我们为什么把隐私当作生死线</h2>
+          <h2 className="text-base font-bold leading-snug text-ink">我们为什么把隐私当作生死线</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-soft">
             <li>你会在这里记录：谁值得深交、谁让你消耗、矛盾与不满、脆弱与秘密、对职场关系的真实看法。</li>
             <li>任何「可能被他人看见」的怀疑，都会摧毁信任；我们把<strong className="font-medium text-ink">杜绝非授权访问</strong>当作产品底线。</li>
@@ -30,7 +30,7 @@ export default function PrivacyHubPage() {
         </section>
 
         <section className="rounded-landing-card border border-land-border bg-white p-6 shadow-landing sm:p-8">
-          <h2 className="text-base font-semibold text-[#5d4037]">四条信任支柱（用户感知 → 产品 → 技术 → 合规）</h2>
+          <h2 className="text-base font-bold leading-snug text-ink">四条信任支柱（用户感知 → 产品 → 技术 → 合规）</h2>
           <ol className="mt-4 list-decimal space-y-4 pl-5 text-sm leading-7 text-soft">
             <li>
               <strong className="font-medium text-ink">你能感知</strong>
@@ -52,7 +52,7 @@ export default function PrivacyHubPage() {
         </section>
 
         <section className="rounded-landing-card border border-[#d7e7d9] bg-[#f3fbf4] p-6 sm:p-8">
-          <h2 className="text-base font-semibold text-[#1f6a32]">你现在已经可以做的事</h2>
+          <h2 className="text-base font-bold leading-snug text-[#14532d]">你现在已经可以做的事</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-[#2f5b39]">
             <li>
               在应用内打开<strong className="font-medium">「我的」</strong>，可将联系人、互动、日记与评分历史
@@ -72,7 +72,7 @@ export default function PrivacyHubPage() {
         </section>
 
         <section className="rounded-landing-card border border-land-border bg-[#fffaf5] p-6 sm:p-8">
-          <h2 className="text-base font-semibold text-[#5d4037]">路线图（诚实预告）</h2>
+          <h2 className="text-base font-bold leading-snug text-ink">路线图（诚实预告）</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-soft">
             <li>
               <strong className="font-medium text-ink">更细粒度的按条目删除与审计日志</strong>：便于在保留账号的前提下精确管理单条记录（规划中）。

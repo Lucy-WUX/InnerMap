@@ -16,6 +16,7 @@ import {
   downloadCsv,
   downloadJson,
   lockHasWebAuthn,
+  recordBackupExportComplete,
   setSessionUnlocked,
 } from "../../lib/app-local-storage"
 import { registerWebAuthnCredential, isWebAuthnAvailable } from "../../lib/webauthn-lock"
@@ -31,6 +32,8 @@ type MineSectionProps = {
   onLockSettingsChange: (settings: LockSettings | null) => void
   lockEnabled: boolean
   lockSettings: LockSettings | null
+  /** 在「我的」成功导出 JSON/CSV 后调用（用于刷新顶栏备份提醒等） */
+  onExportComplete?: () => void
 }
 
 export function MineSection({
@@ -41,6 +44,7 @@ export function MineSection({
   onLockSettingsChange,
   lockEnabled,
   lockSettings,
+  onExportComplete,
 }: MineSectionProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const accessToken = useAuthStore((s) => s.accessToken)
@@ -67,12 +71,16 @@ export function MineSection({
       exportedAt: new Date().toISOString(),
     }
     downloadJson(`观系备份-${new Date().toISOString().slice(0, 10)}.json`, payload)
+    recordBackupExportComplete()
+    onExportComplete?.()
   }
 
   function handleExportCsv() {
     const core = buildExportSnapshot()
     const csv = buildExportCsv(core)
     downloadCsv(`观系备份-${new Date().toISOString().slice(0, 10)}.csv`, csv)
+    recordBackupExportComplete()
+    onExportComplete?.()
   }
 
   function handleClearLocalData() {
@@ -251,7 +259,10 @@ export function MineSection({
       </Card>
       <Card className="rounded-ds border border-[#2e7d32]/30 bg-[#f1f8f2] p-ds-lg">
         <h3 className="text-ds-body font-semibold text-[#1b5e20]">隐私与信任</h3>
-        <p className="mt-1 text-ds-caption leading-relaxed text-[#2f5b39]">
+        <p className="mt-2 text-ds-body font-semibold leading-relaxed text-[#1b5e20]">
+          宁可少一个花哨功能，也不牺牲你的安全感。
+        </p>
+        <p className="mt-ds-xs text-ds-caption leading-relaxed text-[#2f5b39]">
           你在这里写下的内容，可能比银行密码更敏感。InnerMap 把隐私当作生死线：记录与账户绑定，经加密连接与托管云端同步，
           <strong className="font-medium text-[#1b5e20]">不向其他用户公开</strong>
           。你可随时导出 JSON/CSV 自备份，一键清理本机或云端数据；注销账号后相关数据将立即永久删除。更细的说明见信任中心。
@@ -261,7 +272,7 @@ export function MineSection({
             href="/privacy-hub"
             className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#2e7d32]/45 bg-white px-4 text-sm font-medium text-[#1b5e20] shadow-sm transition-colors hover:bg-[#e8f5e9]"
           >
-            打开隐私与信任中心
+            查看完整隐私承诺
           </Link>
           <Link
             href="/privacy"

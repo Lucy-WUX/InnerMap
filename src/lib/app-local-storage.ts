@@ -326,3 +326,66 @@ export function isAppDataEmpty(
 ): boolean {
   return contactCount === 0 && interactionLogCount === 0 && diaryEntryCount === 0
 }
+
+/** 本地模式首次进入欢迎弹窗 */
+export const LOCAL_MODE_WELCOME_KEY = "innermap-local-welcome-v1"
+
+/** 最近一次在「我的」导出 JSON/CSV 的时间（ISO） */
+export const LAST_BACKUP_EXPORT_AT_KEY = "innermap-last-backup-export-at"
+
+export function hasSeenLocalModeWelcome(): boolean {
+  if (typeof localStorage === "undefined") return true
+  return localStorage.getItem(LOCAL_MODE_WELCOME_KEY) === "1"
+}
+
+export function markLocalModeWelcomeSeen() {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(LOCAL_MODE_WELCOME_KEY, "1")
+}
+
+export function recordBackupExportComplete() {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(LAST_BACKUP_EXPORT_AT_KEY, new Date().toISOString())
+}
+
+function currentMonthBackupBannerKey() {
+  const d = new Date()
+  return `innermap-backup-banner-month-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+}
+
+/** 本月尚未关闭过备份提醒，且已超过 30 天未导出（或从未导出） */
+export function shouldShowMonthlyBackupBanner(): boolean {
+  if (typeof localStorage === "undefined") return false
+  if (localStorage.getItem(currentMonthBackupBannerKey()) === "1") return false
+  const last = localStorage.getItem(LAST_BACKUP_EXPORT_AT_KEY)
+  if (last) {
+    const days = (Date.now() - new Date(last).getTime()) / 86400000
+    if (days < 30) return false
+  }
+  return true
+}
+
+export function dismissMonthlyBackupBannerForMonth() {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(currentMonthBackupBannerKey(), "1")
+}
+
+/** 快照中是否有值得迁移/备份的实质数据 */
+export function snapshotHasMigratableData(snap: AppDataSnapshot | null): boolean {
+  if (!snap || snap.version !== 1) return false
+  const diaryFilled = Object.values(snap.diaryRecords ?? {}).some((t) => (t ?? "").trim().length > 0)
+  return snap.contacts.length > 0 || (snap.interactionLogs?.length ?? 0) > 0 || diaryFilled
+}
+
+/** 登录用户本地库为空，且访客 guest 库有数据时，可提供一键合并 */
+export function userScopeShouldOfferGuestMerge(userScope: string): boolean {
+  const guest = loadSnapshot("guest")
+  const userSnap = loadSnapshot(userScope)
+  if (!snapshotHasMigratableData(guest)) return false
+  if (snapshotHasMigratableData(userSnap)) return false
+  return true
+}
+
+export function guestMergePromptKey(userId: string) {
+  return `innermap-guest-merge-prompt-${userId}`
+}

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { AiAnalysisOverlay } from "./components/app/ai-analysis-overlay"
 import { AppDialogs } from "./components/app/app-dialogs"
@@ -19,15 +19,24 @@ import {
 } from "./components/app/types"
 import { AppLockScreen } from "./components/app/app-lock-screen"
 import { OnboardingOverlay } from "./components/app/onboarding-overlay"
+import { Button } from "./components/ui/button"
 import {
+  clearAllScopedLocalData,
+  dismissMonthlyBackupBannerForMonth,
+  guestMergePromptKey,
+  hasSeenLocalModeWelcome,
   isAppDataEmpty,
   isSessionUnlocked,
   loadLockSettings,
   loadSnapshot,
+  markLocalModeWelcomeSeen,
   onboardingDone,
   saveLockSettings,
   saveSnapshot,
   setOnboardingDone,
+  shouldShowMonthlyBackupBanner,
+  snapshotHasMigratableData,
+  userScopeShouldOfferGuestMerge,
   type AppDataSnapshot,
   type LockSettings,
 } from "./lib/app-local-storage"
@@ -81,6 +90,8 @@ function buildDefaultInteractionForm() {
 
 function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isLocalModeUrl = searchParams.get("local") === "1"
   const userId = useAuthStore((s) => s.userId)
   const authHydrated = useAuthHydration()
   const sessionLoading = !authHydrated
@@ -146,6 +157,11 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [saveSuccessTip, setSaveSuccessTip] = useState("")
   const [contentVisible, setContentVisible] = useState(true)
   const [diaryDrafts, setDiaryDrafts] = useState<Record<string, string>>({})
+  const [showLocalWelcomeModal, setShowLocalWelcomeModal] = useState(false)
+  const showLocalWelcomeRef = useRef(false)
+  showLocalWelcomeRef.current = showLocalWelcomeModal
+  const [showGuestMergeModal, setShowGuestMergeModal] = useState(false)
+  const [, setBackupBannerTick] = useState(0)
 
   function showSaveSuccess(message = "保存成功 ✓") {
     setSaveSuccessTip(message)
@@ -159,8 +175,11 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
   function navigateToTab(next: TabKey) {
     setOverlay("none")
-    if (next === "home") router.push("/")
-    else router.push(`/?tab=${next}`)
+    if (next === "home") {
+      router.push(isLocalModeUrl ? "/?local=1" : "/")
+    } else {
+      router.push(isLocalModeUrl ? `/?tab=${next}&local=1` : `/?tab=${next}`)
+    }
   }
 
   function openAiPage(seedText?: string) {
@@ -692,10 +711,39 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
   useEffect(() => {
     if (!appReady || lockVisible) return
+    if (!isLocalModeUrl || userId) return
+    if (hasSeenLocalModeWelcome()) return
+    setShowLocalWelcomeModal(true)
+  }, [appReady, lockVisible, isLocalModeUrl, userId])
+
+  useEffect(() => {
+    if (!appReady || !userId || lockVisible) {
+      setShowGuestMergeModal(false)
+      return
+    }
+    if (typeof localStorage === "undefined") return
+    if (localStorage.getItem(guestMergePromptKey(userId))) return
+    if (!userScopeShouldOfferGuestMerge(userId)) return
+    setShowGuestMergeModal(true)
+  }, [appReady, userId, lockVisible])
+
+  useEffect(() => {
+    if (!appReady || lockVisible) return
+    if (isLocalModeUrl && !userId && !hasSeenLocalModeWelcome()) return
     if (onboardingDone(storageScope)) return
     if (!isAppDataEmpty(contacts.length, interactionLogs.length, Object.keys(diaryRecords).length)) return
     setShowOnboarding(true)
-  }, [appReady, lockVisible, unlockTick, contacts.length, interactionLogs.length, diaryRecords, storageScope])
+  }, [
+    appReady,
+    lockVisible,
+    unlockTick,
+    contacts.length,
+    interactionLogs.length,
+    diaryRecords,
+    storageScope,
+    isLocalModeUrl,
+    userId,
+  ])
 
   useEffect(() => {
     setTab(initialTab)
@@ -705,6 +753,10 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return
+      if (showLocalWelcomeRef.current) {
+        markLocalModeWelcomeSeen()
+      }
+      setShowLocalWelcomeModal(false)
       setOverlay("none")
       setShowInteractionDialog(false)
       setShowContactDialog(false)
@@ -835,9 +887,38 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     return <AppLockScreen settings={lockSettings} storageScope={storageScope} onUnlocked={() => setUnlockTick((n) => n + 1)} />
   }
 
+  const showBackupReminder =
+    shouldShowMonthlyBackupBanner() && snapshotHasMigratableData(loadSnapshot(storageScope))
+
   return (
     <>
     <main className="min-h-screen bg-[#F8FAFC] px-ds-md pb-ds-lg pt-ds-md text-[#0F172A]">
+      {showBackupReminder ? (
+        <div className="mb-3 flex items-start gap-2 rounded-ds border border-[#d8c9b9] bg-[#f8f1e8] px-3 py-2.5 text-sm text-[#4a3728] shadow-sm">
+          <button
+            type="button"
+            className="flex-1 text-left leading-snug hover:underline"
+            onClick={() => {
+              dismissMonthlyBackupBannerForMonth()
+              setBackupBannerTick((n) => n + 1)
+              navigateToTab("mine")
+            }}
+          >
+            📅 本月备份提醒：你已经一个月没有备份数据了，点击这里导出备份。
+          </button>
+          <button
+            type="button"
+            className="shrink-0 rounded px-2 py-0.5 text-[#795548] hover:bg-[#ece4d8]"
+            aria-label="关闭提醒"
+            onClick={() => {
+              dismissMonthlyBackupBannerForMonth()
+              setBackupBannerTick((n) => n + 1)
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
       <div
         className={`transition-all duration-200 ease-out ${
           contentVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
@@ -954,6 +1035,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
             setLockSettings(s)
             saveLockSettings(s, storageScope)
           }}
+          onExportComplete={() => setBackupBannerTick((n) => n + 1)}
         />
       ) : null}
 
@@ -1006,6 +1088,85 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     {saveSuccessTip ? (
       <div className="fixed right-4 top-4 z-[95] rounded-ds border border-[#b7e4c7] bg-[#ecfdf3] px-3 py-2 text-ds-caption font-medium text-[#166534] shadow-md">
         {saveSuccessTip}
+      </div>
+    ) : null}
+
+    {showLocalWelcomeModal ? (
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="local-welcome-title"
+      >
+        <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-ds border border-[#d8c9b9] bg-paper p-6 shadow-xl">
+          <h2 id="local-welcome-title" className="text-lg font-semibold text-[#3b2f2f]">
+            🎉 欢迎使用 InnerMap！
+          </h2>
+          <div className="mt-4 space-y-3 text-sm leading-relaxed text-[#4a3728]">
+            <p>你的所有数据都将存储在这台设备的浏览器中，不会上传到任何服务器。</p>
+            <p>
+              💡 建议：定期点击右上角 &quot;我的&quot;→&quot;导出所有数据&quot; 备份你的数据，防止意外丢失。
+            </p>
+            <p>如果你需要在多设备之间同步数据，可以随时注册一个账号。</p>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <Button
+              type="button"
+              onClick={() => {
+                markLocalModeWelcomeSeen()
+                setShowLocalWelcomeModal(false)
+              }}
+            >
+              知道了
+            </Button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+
+    {showGuestMergeModal && userId ? (
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guest-merge-title"
+      >
+        <div className="w-full max-w-md rounded-ds border border-[#d8c9b9] bg-paper p-6 shadow-xl">
+          <h2 id="guest-merge-title" className="text-lg font-semibold text-[#3b2f2f]">
+            同步本地数据
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[#4a3728]">
+            检测到你有本地数据，是否要将这些数据同步到你的新账号？
+          </p>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="sm:order-1"
+              onClick={() => {
+                clearAllScopedLocalData("guest")
+                localStorage.setItem(guestMergePromptKey(userId), "skip")
+                setShowGuestMergeModal(false)
+              }}
+            >
+              否，创建空账号
+            </Button>
+            <Button
+              type="button"
+              className="sm:order-2"
+              onClick={() => {
+                const guestSnap = loadSnapshot("guest")
+                if (guestSnap) restoreSnapshot(guestSnap)
+                clearAllScopedLocalData("guest")
+                localStorage.setItem(guestMergePromptKey(userId), "merged")
+                setShowGuestMergeModal(false)
+                showSaveSuccess("已同步本地数据 ✓")
+              }}
+            >
+              是，同步所有数据
+            </Button>
+          </div>
+        </div>
       </div>
     ) : null}
     </>

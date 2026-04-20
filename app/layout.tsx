@@ -3,18 +3,23 @@ import { Suspense } from "react"
 
 import { AppShell } from "@/components/app-shell"
 
+import Loading from "./loading"
+
 import "./globals.css"
 
 export const metadata: Metadata = {
   title: "InnerMap",
   description: "私密关系认知空间 · AI 辅助人际关系复盘",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
       <body>
-        <Suspense fallback={<div className="min-h-screen bg-base" />}>
+        <Suspense fallback={<Loading />}>
           <AppShell>{children}</AppShell>
         </Suspense>
       </body>

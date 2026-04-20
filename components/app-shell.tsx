@@ -9,8 +9,9 @@ import { getSupabaseBrowserClient, isBrowserSupabaseReady, isDemoModeEnabled } f
 import { clearPersistedAuth, useAuthStore } from "@/lib/stores/auth-store"
 import type { Session } from "@supabase/supabase-js"
 
-/** 未登录可访问：封面、登录、注册、隐私/条款/信任中心；带「关系 / 我的」Tab 的首页需登录 */
-function isPublicUnauthedRoute(pathname: string, tab: string | null) {
+/** 未登录可访问：封面、本地模式 `/?local=1`、登录、注册、隐私/条款/信任中心 */
+function isPublicUnauthedRoute(pathname: string, tab: string | null, localMode: boolean) {
+  if (pathname === "/" && localMode) return true
   const isPublicCover = pathname === "/" && tab !== "relations" && tab !== "mine"
   const isAuthEntry = pathname === "/login" || pathname === "/register"
   const isPublicInfo = pathname === "/privacy" || pathname === "/terms" || pathname === "/privacy-hub"
@@ -23,9 +24,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
+  const localParam = searchParams.get("local") === "1"
   const isPublicCover = pathname === "/" && tabParam !== "relations" && tabParam !== "mine"
-  const routeRef = useRef({ pathname, tab: tabParam })
-  routeRef.current = { pathname, tab: tabParam }
+  const routeRef = useRef({ pathname, tab: tabParam, local: localParam })
+  routeRef.current = { pathname, tab: tabParam, local: localParam }
   const accessToken = useAuthStore((s) => s.accessToken)
   const [authed, setAuthed] = useState<boolean | null>(null)
   const [envError, setEnvError] = useState("")
@@ -79,8 +81,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setEnvError("未检测到 Supabase 配置，已停用演示模式。请先配置环境变量后登录。")
       setAuthed(false)
       clearPersistedAuth()
-      const { pathname: p, tab } = routeRef.current
-      if (!isPublicUnauthedRoute(p, tab)) router.replace("/login")
+      const { pathname: p, tab, local } = routeRef.current
+      if (!isPublicUnauthedRoute(p, tab, local)) router.replace("/login")
       return
     }
 
@@ -98,8 +100,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setAuthed(Boolean(session))
       const at = session?.access_token
       if (at) void refreshUsage(at)
-      const { pathname: p, tab } = routeRef.current
-      if (!session && !isPublicUnauthedRoute(p, tab)) {
+      const { pathname: p, tab, local } = routeRef.current
+      if (!session && !isPublicUnauthedRoute(p, tab, local)) {
         router.replace("/login")
       }
     }
@@ -122,10 +124,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (authed === false) {
-      const allow = isPublicUnauthedRoute(pathname, tabParam)
+      const allow = isPublicUnauthedRoute(pathname, tabParam, localParam)
       if (!allow) router.replace("/login")
     }
-  }, [authed, pathname, tabParam, router])
+  }, [authed, pathname, tabParam, localParam, router])
 
   useEffect(() => {
     if (authed !== true) return
@@ -178,9 +180,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     )
   }
-  if (!authed) {
+  const localGuest = authed === false && pathname === "/" && localParam
+
+  if (!authed && !localGuest) {
     if (isPublicCover) return <PublicLanding />
     return <div className="p-ds-lg text-ds-body text-soft">正在跳转登录页...</div>
+  }
+
+  const useLocalQs = Boolean(localParam && !authed)
+  function tabHref(tabKey: "home" | "relations" | "mine") {
+    if (!useLocalQs) {
+      if (tabKey === "home") return "/"
+      return `/?tab=${tabKey}`
+    }
+    if (tabKey === "home") return "/?local=1"
+    return `/?tab=${tabKey}&local=1`
   }
 
   const onMainTabs = pathname === "/"
@@ -201,7 +215,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-warm-base bg-paper/90">
         <nav className="mx-auto flex max-w-5xl items-center gap-1 px-3 py-2 sm:gap-ds-xs sm:px-ds-md sm:py-ds-xs">
           <Link
-            href="/"
+            href={tabHref("home")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
               navHome ? "bg-[#eadfce] text-ink" : "text-soft hover:bg-[#f4ebdf]"
             }`}
@@ -209,7 +223,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             首页
           </Link>
           <Link
-            href="/?tab=relations"
+            href={tabHref("relations")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
               navRelations ? "bg-[#eadfce] text-ink" : "text-soft hover:bg-[#f4ebdf]"
             }`}
@@ -217,7 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             关系
           </Link>
           <Link
-            href="/?tab=mine"
+            href={tabHref("mine")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
               navMine ? "bg-[#eadfce] text-ink" : "text-soft hover:bg-[#f4ebdf]"
             }`}
@@ -243,45 +257,79 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               👤
             </button>
             {showUserMenu ? (
-              <div className="absolute right-0 top-11 z-20 w-48 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">
-                <Link
-                  href="/privacy-hub"
-                  className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  隐私与信任
-                </Link>
-                <button className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]">
-                  账户设置
-                </button>
-                <button
-                  className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
-                  onClick={() => {
-                    setShowUserMenu(false)
-                    setShowProModal(true)
-                  }}
-                >
-                  订阅管理
-                </button>
-                <button
-                  className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
-                  onClick={async () => {
-                    setShowUserMenu(false)
-                    if (isBrowserSupabaseReady()) {
-                      const supabase = getSupabaseBrowserClient()
-                      await supabase.auth.signOut()
-                    }
-                    clearPersistedAuth()
-                    router.replace("/login")
-                  }}
-                >
-                  退出登录
-                </button>
+              <div className="absolute right-0 top-11 z-20 w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">
+                {localGuest ? (
+                  <>
+                    <Link
+                      href="/login"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7]"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      登录
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7]"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      注册 · 多设备同步
+                    </Link>
+                    <Link
+                      href="/privacy-hub"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      隐私与信任
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/privacy-hub"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      隐私与信任
+                    </Link>
+                    <button className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]">
+                      账户设置
+                    </button>
+                    <button
+                      className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        setShowProModal(true)
+                      }}
+                    >
+                      订阅管理
+                    </button>
+                    <button
+                      className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7]"
+                      onClick={async () => {
+                        setShowUserMenu(false)
+                        if (isBrowserSupabaseReady()) {
+                          const supabase = getSupabaseBrowserClient()
+                          await supabase.auth.signOut()
+                        }
+                        clearPersistedAuth()
+                        router.replace("/login")
+                      }}
+                    >
+                      退出登录
+                    </button>
+                  </>
+                )}
               </div>
             ) : null}
           </div>
         </nav>
       </header>
+      {useLocalQs ? (
+        <div className="mx-auto mt-ds-xs max-w-5xl rounded-ds border border-[#b7e4c7] bg-[#f0fdf4] px-3 py-2.5 text-ds-caption leading-relaxed text-[#166534]">
+          <strong>无需注册</strong>
+          ：当前为<strong>本地模式</strong>，联系人、日记等默认只保存在本浏览器，不会上传到服务器。注册并登录后可选择加密同步、多设备使用。
+        </div>
+      ) : null}
       {envBannerText ? (
         <div className="mx-auto mt-ds-xs flex max-w-5xl flex-wrap items-center gap-ds-xs rounded-ds border border-[#f0d7ad] bg-[#fff8ea] px-3 py-2 text-ds-caption text-[#8d6a3f]">
           <span>{envBannerText}</span>
