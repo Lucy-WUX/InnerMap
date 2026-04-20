@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
-import { getSupabaseBrowserClient, isBrowserSupabaseReady } from "@/lib/supabase-browser"
+import { getSupabaseBrowserClient, isBrowserSupabaseReady, isDemoModeEnabled } from "@/lib/supabase-browser"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -14,6 +14,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [envError, setEnvError] = useState("")
   const [envHint, setEnvHint] = useState("")
+  const [envMissing, setEnvMissing] = useState<string[]>([])
   const [showProModal, setShowProModal] = useState(false)
   const [copiedEnv, setCopiedEnv] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -43,21 +44,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetch("/api/env-check")
       .then((res) => res.json())
-      .then((data: { ok?: boolean; message?: string }) => {
+      .then((data: { ok?: boolean; message?: string; missing?: string[] }) => {
+        setEnvMissing(data.missing ?? [])
         if (!data.ok) setEnvHint(data.message || "")
+        else setEnvHint("")
       })
       .catch(() => undefined)
 
     if (!isBrowserSupabaseReady()) {
-      // 演示模式：未配置 Supabase 时也允许进入应用，不强制登录。
-      setEnvError("当前为演示模式：未连接 Supabase，登录与云端数据能力不可用。")
-      setAuthed(true)
+      if (isDemoModeEnabled()) {
+        setEnvError("当前为演示模式：未连接 Supabase，登录与云端数据能力不可用。")
+        setAuthed(true)
+        return
+      }
+      setEnvError("未检测到 Supabase 配置，已停用演示模式。请先配置环境变量后登录。")
+      setAuthed(false)
+      if (pathname !== "/login") router.replace("/login")
       return
     }
 
     // 客户端校验会话，未登录则跳转到登录页
     const supabase = getSupabaseBrowserClient()
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        setEnvError(`Supabase 会话检测失败：${error.message}`)
+      }
       setAuthed(Boolean(data.session))
       const accessToken = data.session?.access_token ?? null
       setToken(accessToken)
@@ -88,8 +99,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("open-pro-modal", openPro)
   }, [])
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return
+      setShowUserMenu(false)
+      setShowProModal(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
+
   if (pathname === "/login") return <>{children}</>
-  if (!authed) return <div className="p-ds-lg text-ds-body text-soft">正在检查登录状态...</div>
+  if (authed === null) {
+    return (
+      <div className="mx-auto min-h-screen max-w-5xl p-ds-md md:p-ds-lg">
+        <div className="space-y-ds-md animate-pulse">
+          <div className="h-10 w-full rounded-ds bg-[#efe6d9]" />
+          <div className="h-28 rounded-ds bg-[#f4ecdf]" />
+          <div className="h-64 rounded-ds bg-[#f4ecdf]" />
+        </div>
+      </div>
+    )
+  }
+  if (!authed) return <div className="p-ds-lg text-ds-body text-soft">正在跳转登录页...</div>
 
   const tabParam = searchParams.get("tab")
   const onMainTabs = pathname === "/"
@@ -97,10 +129,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navRelations = onMainTabs && tabParam === "relations"
   const navMine = onMainTabs && tabParam === "mine"
 
+  const hasSupabaseMissing = envMissing.some((item) => item.includes("SUPABASE"))
+  const hasAiMissing = envMissing.includes("AI_API_KEY")
+  const envBannerText = hasSupabaseMissing
+    ? "⚠️ Supabase 环境变量未配置完整，当前无法使用登录与云端数据。"
+    : hasAiMissing
+      ? "⚠️ AI_API_KEY 未配置，AI 功能暂不可用，基础记录功能可继续使用。"
+      : envError || envHint
+
   return (
     <div className="min-h-screen bg-base text-ink">
       <header className="border-b border-warm-base bg-paper/90">
-        <nav className="mx-auto flex max-w-5xl items-center gap-ds-xs px-ds-md py-ds-xs">
+        <nav className="mx-auto flex max-w-5xl items-center gap-1 px-3 py-2 sm:gap-ds-xs sm:px-ds-md sm:py-ds-xs">
           <Link
             href="/"
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
@@ -127,10 +167,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="ml-auto" />
           <button
-            className="mr-ds-xs rounded-btn-ds border border-[#b6905e] bg-[#fff3dc] px-3.5 py-1.5 text-ds-body font-semibold text-[#7a5a2e] shadow-[0_2px_6px_rgba(122,90,46,0.18)] hover:bg-[#ffeac8]"
+            className="mr-1 rounded-btn-ds border border-[#b6905e] bg-[#fff3dc] px-2 py-1.5 text-ds-body font-semibold text-[#7a5a2e] shadow-[0_2px_6px_rgba(122,90,46,0.18)] hover:bg-[#ffeac8] sm:mr-ds-xs sm:px-3.5"
             onClick={() => setShowProModal(true)}
           >
-            👑 升级 Pro
+            <span className="sm:hidden">👑</span>
+            <span className="hidden sm:inline">👑 升级 Pro</span>
           </button>
           <div className="relative">
             <button
@@ -173,9 +214,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
-      {envError || envHint || !token ? (
+      {envBannerText ? (
         <div className="mx-auto mt-ds-xs flex max-w-5xl flex-wrap items-center gap-ds-xs rounded-ds border border-[#f0d7ad] bg-[#fff8ea] px-3 py-2 text-ds-caption text-[#8d6a3f]">
-          <span>⚠️ 演示模式：未连接 Supabase 与 AI 服务</span>
+          <span>{envBannerText}</span>
           <a
             className="underline underline-offset-2 hover:text-[#6f4f2e]"
             href="https://vercel.com/docs/environment-variables"
@@ -185,7 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             查看部署指南
           </a>
           <button
-            className="ml-auto rounded-btn-ds border border-[#e2cba4] bg-surface-warm-soft px-2.5 py-1 text-ds-caption hover:bg-[#fff4df]"
+            className="ml-auto hidden rounded-btn-ds border border-[#e2cba4] bg-surface-warm-soft px-2.5 py-1 text-ds-caption hover:bg-[#fff4df] sm:inline-flex"
             onClick={() => void copyEnvExample()}
           >
             {copiedEnv ? "已复制" : "复制环境变量示例"}
@@ -204,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClick={() => setShowProModal(false)}
         >
           <div
-            className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-ds border border-warm-base bg-paper p-ds-lg shadow-xl"
+            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-ds border border-warm-base bg-paper p-4 shadow-xl sm:max-h-[88vh] sm:p-ds-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between gap-3 border-b border-warm-soft pb-ds-xs pt-1">
@@ -220,7 +261,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
 
-            <div className="mb-ds-md flex items-center gap-2 rounded-ds border border-[#0f766e]/30 bg-[#ecfdf5] px-ds-md py-ds-sm text-ds-body text-[#0f5132]">
+            <div className="mb-ds-md hidden items-center gap-2 rounded-ds border border-[#0f766e]/30 bg-[#ecfdf5] px-ds-md py-ds-sm text-ds-body text-[#0f5132] sm:flex">
               <span className="text-lg" aria-hidden>
                 ✨
               </span>
@@ -358,7 +399,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 管理订阅
               </button>
             </p>
-            <p className="mt-1 text-center text-[12px] font-medium text-[#0f5132]">
+            <p className="mt-1 hidden text-center text-[12px] font-medium text-[#0f5132] sm:block">
               🔥 已有 127 位用户选择终身 Pro+
             </p>
           </div>

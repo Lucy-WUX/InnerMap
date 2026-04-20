@@ -11,7 +11,6 @@ import { PersonDetailOverlay } from "./components/app/person-detail-overlay"
 import { RelationsSection } from "./components/app/relations-section"
 import {
   BASE_GROUPS,
-  INITIAL_RELATION_CONTACTS,
   RELATION_HEALTH_DATA,
   type GroupKey,
   type OverlayPage,
@@ -28,6 +27,7 @@ import {
   onboardingDone,
   saveLockSettings,
   saveSnapshot,
+  setOnboardingDone,
   type AppDataSnapshot,
   type LockSettings,
 } from "./lib/app-local-storage"
@@ -37,9 +37,9 @@ import {
   buildPatternSummary,
   computeEnergyAlerts,
   computeWeeklyDigest,
-  seedScoreHistory,
   type ScoreHistoryPoint,
 } from "./lib/relationship-ai-demo"
+import { useUserSession } from "@/lib/use-user-session"
 
 type InteractionLog = {
   id: string
@@ -66,8 +66,22 @@ type ContactFormState = {
   privateNote: string
 }
 
+function buildDefaultInteractionForm() {
+  return {
+    date: new Date().toISOString().slice(0, 10),
+    type: "微信聊天",
+    what: "",
+    feel: "",
+    reaction: "",
+    energy: 0,
+    meaningful: false,
+  }
+}
+
 function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const router = useRouter()
+  const { loading: sessionLoading, userId } = useUserSession()
+  const storageScope = userId ?? "guest"
   const [tab, setTab] = useState<TabKey>(initialTab)
   const [overlay, setOverlay] = useState<OverlayPage>("none")
   const [showInteractionDialog, setShowInteractionDialog] = useState(false)
@@ -76,10 +90,8 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [interactionSaved, setInteractionSaved] = useState(false)
   const [interactionAiStatus, setInteractionAiStatus] = useState<"idle" | "analyzing" | "done">("idle")
   const [interactionLogs, setInteractionLogs] = useState<InteractionLog[]>([])
-  const [scoreHistory, setScoreHistory] = useState<Record<string, ScoreHistoryPoint[]>>(() =>
-    seedScoreHistory(INITIAL_RELATION_CONTACTS)
-  )
-  const [contacts, setContacts] = useState<RelationContact[]>(INITIAL_RELATION_CONTACTS)
+  const [scoreHistory, setScoreHistory] = useState<Record<string, ScoreHistoryPoint[]>>({})
+  const [contacts, setContacts] = useState<RelationContact[]>([])
   const [showContactDialog, setShowContactDialog] = useState(false)
   const [isEditingContact, setIsEditingContact] = useState(false)
   const [smartGrouping, setSmartGrouping] = useState(false)
@@ -99,9 +111,9 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     background: "",
     privateNote: "",
   })
-  const [selectedContactId, setSelectedContactId] = useState<string>("2")
-  const [diarySelectedDate, setDiarySelectedDate] = useState("2026-04-16")
-  const [diaryViewMonth, setDiaryViewMonth] = useState("2026-04")
+  const [selectedContactId, setSelectedContactId] = useState<string>("")
+  const [diarySelectedDate, setDiarySelectedDate] = useState(new Date().toISOString().slice(0, 10))
+  const [diaryViewMonth, setDiaryViewMonth] = useState(new Date().toISOString().slice(0, 7))
   const [diaryEditorText, setDiaryEditorText] = useState("")
   const [mentionActiveIndex, setMentionActiveIndex] = useState(0)
   const [calendarFadeIn, setCalendarFadeIn] = useState(true)
@@ -109,18 +121,8 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [diarySaveTip, setDiarySaveTip] = useState("")
   const [diaryViewMode, setDiaryViewMode] = useState<"calendar" | "list">("calendar")
   const [diarySearchQuery, setDiarySearchQuery] = useState("")
-  const [diaryRecords, setDiaryRecords] = useState<Record<string, string>>({
-    "2026-04-12": "边界表达练习",
-    "2026-04-16": "与张三沟通后反思",
-    "2026-04-30": "月底关系复盘",
-  })
-  const [diaryEmotionRecords, setDiaryEmotionRecords] = useState<
-    Record<string, "愉悦" | "平静" | "低落" | "愤怒">
-  >({
-    "2026-04-12": "平静",
-    "2026-04-16": "愉悦",
-    "2026-04-30": "低落",
-  })
+  const [diaryRecords, setDiaryRecords] = useState<Record<string, string>>({})
+  const [diaryEmotionRecords, setDiaryEmotionRecords] = useState<Record<string, "愉悦" | "平静" | "低落" | "愤怒">>({})
   const [hoveredHealthLabel, setHoveredHealthLabel] = useState<string | null>(null)
   const [healthChartReady, setHealthChartReady] = useState(false)
   const [autoHealthIndex, setAutoHealthIndex] = useState(0)
@@ -132,20 +134,20 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [animatedHealthRatios, setAnimatedHealthRatios] = useState<number[]>(
     RELATION_HEALTH_DATA.map(() => 0)
   )
-  const [interactionForm, setInteractionForm] = useState({
-    date: new Date().toISOString().slice(0, 10),
-    type: "微信聊天",
-    what: "",
-    feel: "",
-    reaction: "",
-    energy: 0,
-    meaningful: false,
-  })
+  const [interactionForm, setInteractionForm] = useState(buildDefaultInteractionForm)
   const [appReady, setAppReady] = useState(false)
   const [unlockTick, setUnlockTick] = useState(0)
   const [lockSettings, setLockSettings] = useState<LockSettings | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [contactFormError, setContactFormError] = useState("")
+  const [saveSuccessTip, setSaveSuccessTip] = useState("")
+  const [contentVisible, setContentVisible] = useState(true)
+  const [diaryDrafts, setDiaryDrafts] = useState<Record<string, string>>({})
+
+  function showSaveSuccess(message = "保存成功 ✓") {
+    setSaveSuccessTip(message)
+    setTimeout(() => setSaveSuccessTip(""), 2000)
+  }
 
   function setContactDialogOpen(value: boolean) {
     if (!value) setContactFormError("")
@@ -169,16 +171,6 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   }
 
   function openInteractionDialog() {
-    setInteractionForm((prev) => ({
-      ...prev,
-      date: new Date().toISOString().slice(0, 10),
-      type: "微信聊天",
-      what: "",
-      feel: "",
-      reaction: "",
-      energy: 0,
-      meaningful: false,
-    }))
     setShowInteractionDialog(true)
   }
 
@@ -289,6 +281,8 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       setInteractionSaved(false)
       setInteractionAiStatus("idle")
     }, 2200)
+    setInteractionForm(buildDefaultInteractionForm())
+    showSaveSuccess("保存成功 ✓")
   }
 
   function openCreateContact() {
@@ -417,7 +411,11 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   }
 
   function insertDiaryMention(name: string) {
-    setDiaryEditorText((prev) => prev.replace(/@([^\s@]*)$/, `@${name} `))
+    setDiaryEditorText((prev) => {
+      const next = prev.replace(/@([^\s@]*)$/, `@${name} `)
+      setDiaryDrafts((drafts) => ({ ...drafts, [diarySelectedDate]: next }))
+      return next
+    })
   }
 
   function handleSaveDiary() {
@@ -451,14 +449,19 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     }
 
     setDiarySaveTip(
-      mentionNames.length > 0
-        ? `已关联到${mentionNames.join("、")}的关系档案`
-        : "日记已保存"
+      mentionNames.length > 0 ? `保存成功 ✓（已关联：${mentionNames.join("、")}）` : "保存成功 ✓"
     )
-    setTimeout(() => setDiarySaveTip(""), 1800)
+    setTimeout(() => setDiarySaveTip(""), 2000)
+    setDiaryDrafts((prev) => {
+      const next = { ...prev }
+      delete next[diarySelectedDate]
+      return next
+    })
+    showSaveSuccess("保存成功 ✓")
   }
 
   function handleDeleteDiary(dateKey: string) {
+    if (!window.confirm("确认删除这条日记吗？删除后无法恢复。")) return
     setDiaryRecords((prev) => {
       const next = { ...prev }
       delete next[dateKey]
@@ -473,8 +476,19 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       setDiaryEditorText("")
       setDiaryEmotion("平静")
     }
+    setDiaryDrafts((prev) => {
+      const next = { ...prev }
+      delete next[dateKey]
+      return next
+    })
     setDiarySaveTip("日记已删除")
     setTimeout(() => setDiarySaveTip(""), 1400)
+  }
+
+  function handleDeleteInteraction(interactionId: string) {
+    if (!window.confirm("确认删除这条互动记录吗？删除后无法恢复。")) return
+    setInteractionLogs((prev) => prev.filter((item) => item.id !== interactionId))
+    showSaveSuccess("删除成功 ✓")
   }
 
   const linkedContacts = contacts
@@ -558,13 +572,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       if (l.energy < 0) sums.set(l.contactId, (sums.get(l.contactId) ?? 0) + l.energy)
     }
     let rows = [...sums.entries()].sort((a, b) => a[1] - b[1]).slice(0, 3)
-    if (rows.length === 0) {
-      rows = [
-        ["5", -1],
-        ["4", -1],
-        ["3", -1],
-      ]
-    }
+    if (rows.length === 0) return []
     return rows.map(([id]) => {
       const c = contacts.find((x) => x.id === id)
       const al = alertById.get(id)
@@ -584,9 +592,12 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const scoreTrendForDetail = selectedContactId ? scoreHistory[selectedContactId] ?? [] : []
 
   useEffect(() => {
-    const ls = loadLockSettings()
+    if (sessionLoading) return
+
+    setAppReady(false)
+    const ls = loadLockSettings(storageScope)
     setLockSettings(ls)
-    const snap = loadSnapshot()
+    const snap = loadSnapshot(storageScope)
     if (snap) {
       setContacts(snap.contacts)
       setInteractionLogs(snap.interactionLogs)
@@ -597,9 +608,55 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       setDiarySelectedDate(snap.diarySelectedDate)
       setDiaryViewMonth(snap.diaryViewMonth)
       setSelectedContactId(snap.selectedContactId)
+    } else {
+      setContacts([])
+      setInteractionLogs([])
+      setScoreHistory({})
+      setCustomGroups([])
+      setDiaryRecords({})
+      setDiaryEmotionRecords({})
+      setDiarySelectedDate(new Date().toISOString().slice(0, 10))
+      setDiaryViewMonth(new Date().toISOString().slice(0, 7))
+      setSelectedContactId("")
     }
+
+    if (typeof localStorage !== "undefined") {
+      const rawDiaryDrafts = localStorage.getItem(`pss-diary-drafts:${storageScope}`)
+      if (rawDiaryDrafts) {
+        try {
+          setDiaryDrafts(JSON.parse(rawDiaryDrafts) as Record<string, string>)
+        } catch {
+          setDiaryDrafts({})
+        }
+      } else {
+        setDiaryDrafts({})
+      }
+
+      const rawInteractionDraft = localStorage.getItem(`pss-interaction-draft:${storageScope}`)
+      if (rawInteractionDraft) {
+        try {
+          const parsed = JSON.parse(rawInteractionDraft) as ReturnType<typeof buildDefaultInteractionForm>
+          setInteractionForm({ ...buildDefaultInteractionForm(), ...parsed })
+        } catch {
+          setInteractionForm(buildDefaultInteractionForm())
+        }
+      } else {
+        setInteractionForm(buildDefaultInteractionForm())
+      }
+    }
+
     setAppReady(true)
-  }, [])
+  }, [sessionLoading, storageScope])
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return
+    localStorage.setItem(`pss-diary-drafts:${storageScope}`, JSON.stringify(diaryDrafts))
+  }, [diaryDrafts, storageScope])
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return
+    localStorage.setItem(`pss-interaction-draft:${storageScope}`, JSON.stringify(interactionForm))
+  }, [interactionForm, storageScope])
 
   useEffect(() => {
     if (!appReady) return
@@ -613,7 +670,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       diarySelectedDate,
       diaryViewMonth,
       selectedContactId,
-    })
+    }, storageScope)
   }, [
     appReady,
     contacts,
@@ -625,21 +682,41 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     diarySelectedDate,
     diaryViewMonth,
     selectedContactId,
+    storageScope,
   ])
 
-  const lockVisible = appReady && Boolean(lockSettings?.enabled && !isSessionUnlocked())
+  const lockVisible = appReady && Boolean(lockSettings?.enabled && !isSessionUnlocked(storageScope))
 
   useEffect(() => {
     if (!appReady || lockVisible) return
-    if (onboardingDone()) return
+    if (onboardingDone(storageScope)) return
     if (!isAppDataEmpty(contacts.length, interactionLogs.length, Object.keys(diaryRecords).length)) return
     setShowOnboarding(true)
-  }, [appReady, lockVisible, unlockTick, contacts.length, interactionLogs.length, diaryRecords])
+  }, [appReady, lockVisible, unlockTick, contacts.length, interactionLogs.length, diaryRecords, storageScope])
 
   useEffect(() => {
     setTab(initialTab)
     setOverlay("none")
   }, [initialTab])
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return
+      setOverlay("none")
+      setShowInteractionDialog(false)
+      setShowContactDialog(false)
+      setShowNewGroupDialog(false)
+      setShowOnboarding(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
+
+  useEffect(() => {
+    setContentVisible(false)
+    const timer = setTimeout(() => setContentVisible(true), 120)
+    return () => clearTimeout(timer)
+  }, [tab, overlay])
 
   useEffect(() => {
     const [year, month] = diarySelectedDate.split("-")
@@ -672,10 +749,10 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       setDiaryEditorText(saved)
       setDiaryEmotion(diaryEmotionRecords[diarySelectedDate] ?? "平静")
     } else {
-      setDiaryEditorText("")
+      setDiaryEditorText(diaryDrafts[diarySelectedDate] ?? "")
       setDiaryEmotion("平静")
     }
-  }, [diarySelectedDate, diaryRecords, diaryEmotionRecords])
+  }, [diarySelectedDate, diaryRecords, diaryEmotionRecords, diaryDrafts])
 
   useEffect(() => {
     const timer = setTimeout(() => setHealthChartReady(true), 80)
@@ -739,19 +816,30 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
   if (!appReady) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-ds-md text-ds-body text-soft">
-        正在加载本地数据…
+      <main className="min-h-screen bg-[#F8FAFC] px-ds-md pb-ds-lg pt-ds-md">
+        <div className="mx-auto max-w-5xl space-y-ds-md animate-pulse">
+          <div className="h-11 w-full rounded-ds bg-[#efe6d9]" />
+          <div className="grid gap-ds-md lg:grid-cols-[320px_1fr]">
+            <div className="h-56 rounded-ds bg-[#f4ecdf]" />
+            <div className="h-72 rounded-ds bg-[#f4ecdf]" />
+          </div>
+        </div>
       </main>
     )
   }
 
   if (lockVisible && lockSettings) {
-    return <AppLockScreen settings={lockSettings} onUnlocked={() => setUnlockTick((n) => n + 1)} />
+    return <AppLockScreen settings={lockSettings} storageScope={storageScope} onUnlocked={() => setUnlockTick((n) => n + 1)} />
   }
 
   return (
     <>
     <main className="min-h-screen bg-[#F8FAFC] px-ds-md pb-ds-lg pt-ds-md text-[#0F172A]">
+      <div
+        className={`transition-all duration-200 ease-out ${
+          contentVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+        }`}
+      >
       {overlay === "none" && tab === "relations" ? (
         <RelationsSection
           relationHealthData={relationHealthData}
@@ -800,6 +888,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           setDetailInput={setDetailInput}
           onClose={() => setOverlay("none")}
           interactionLogs={interactionLogs.filter((item) => item.contactId === selectedContactId)}
+          onDeleteInteraction={handleDeleteInteraction}
         />
       ) : null}
 
@@ -821,10 +910,14 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
             diarySearchQuery,
             setDiarySearchQuery,
             diarySearchResults,
+            totalDiaryCount: Object.keys(diaryRecords).length,
             diaryEmotion,
             setDiaryEmotion,
             diaryEditorText,
-            setDiaryEditorText,
+            setDiaryEditorText: (value: string) => {
+              setDiaryEditorText(value)
+              setDiaryDrafts((prev) => ({ ...prev, [diarySelectedDate]: value }))
+            },
             mentionKeyword,
             mentionSuggestions,
             mentionActiveIndex,
@@ -848,6 +941,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
       {overlay === "none" && tab === "mine" ? (
         <MineSection
+          storageScope={storageScope}
           openAiPage={openAiPage}
           buildExportSnapshot={buildExportCore}
           onRestoreSnapshot={restoreSnapshot}
@@ -855,7 +949,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           lockSettings={lockSettings}
           onLockSettingsChange={(s) => {
             setLockSettings(s)
-            saveLockSettings(s)
+            saveLockSettings(s, storageScope)
           }}
         />
       ) : null}
@@ -893,10 +987,12 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
         saveInteraction={saveInteraction}
         interactionAiStatus={interactionAiStatus}
       />
+      </div>
     </main>
     <OnboardingOverlay
       open={showOnboarding}
       onClose={() => setShowOnboarding(false)}
+      onFinishOnboarding={() => setOnboardingDone(storageScope)}
       setTab={navigateToTab}
       openCreateContact={openCreateContact}
       openInteractionForFirstContact={openInteractionForFirstContact}
@@ -904,6 +1000,11 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       contactCount={contacts.length}
       interactionCount={interactionLogs.length}
     />
+    {saveSuccessTip ? (
+      <div className="fixed right-4 top-4 z-[95] rounded-ds border border-[#b7e4c7] bg-[#ecfdf3] px-3 py-2 text-ds-caption font-medium text-[#166534] shadow-md">
+        {saveSuccessTip}
+      </div>
+    ) : null}
     </>
   )
 }

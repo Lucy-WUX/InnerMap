@@ -15,7 +15,11 @@ export function AiAnalysisOverlay({ aiInput, setAiInput, onClose }: AiAnalysisOv
     <section className="rounded-ds border border-warm-base bg-paper p-ds-lg">
       <div className="mb-ds-xs flex items-center justify-between">
         <h2 className="text-ds-title">AI 分析页</h2>
-        <button onClick={onClose}>
+        <button
+          className="rounded-md p-2 text-[#907f6f] hover:bg-[#f3eadf]"
+          aria-label="关闭 AI 分析弹窗"
+          onClick={onClose}
+        >
           <X className="h-5 w-5" />
         </button>
       </div>

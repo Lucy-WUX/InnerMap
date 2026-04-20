@@ -106,12 +106,12 @@ export function RelationsSection({
               />
               <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-white text-center">
                 {activeHealth ? (
-                  <div className="leading-tight">
+                  <div className="-translate-y-0.5 leading-tight">
                     <p className="text-ds-caption text-soft">{activeHealth.label}</p>
                     <p className="text-lg font-semibold text-ink">{activeHealth.count}</p>
                   </div>
                 ) : (
-                  <div className="leading-tight">
+                  <div className="-translate-y-0.5 leading-tight">
                     <p className="text-ds-caption text-soft">总联系</p>
                     <p className="text-lg font-semibold text-ink">15</p>
                   </div>
@@ -283,6 +283,7 @@ export function RelationsSection({
                   className="rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption"
                   onClick={() => {
                     if (selectedRelationIds.length === 0) return
+                    if (!window.confirm(`确认删除选中的 ${selectedRelationIds.length} 位联系人吗？删除后无法恢复。`)) return
                     setContacts((prev) => prev.filter((c) => !selectedRelationIds.includes(c.id)))
                     setSelectedRelationIds([])
                   }}
@@ -349,13 +350,20 @@ export function RelationsSection({
         <div className="rounded-ds border border-warm-base bg-paper p-ds-lg">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-ds-caption text-soft">已显示 {relationVisibleContacts.length} 位联系人</p>
-            <p className="text-ds-caption text-soft">点击卡片查看详情与 AI 建议</p>
+            <p className="hidden text-ds-caption text-soft sm:block">点击卡片查看详情与 AI 建议</p>
           </div>
-          <div className="grid gap-ds-xs md:grid-cols-2">
-            {relationVisibleContacts.map((c) => (
+          {relationVisibleContacts.length === 0 ? (
+            <div className="rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft p-ds-md text-ds-body text-soft">
+              {contacts.length === 0
+                ? "你还没有添加任何联系人，点击右上角 ' 新建联系人 ' 开始使用"
+                : "当前筛选条件下暂无联系人"}
+            </div>
+          ) : (
+            <div className="grid gap-ds-xs md:grid-cols-2">
+              {relationVisibleContacts.map((c) => (
               <button
                 key={c.id}
-                className="group rounded-xl bg-surface-warm-soft p-3 text-left shadow-ds-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-warm-hover hover:shadow-ds-card-hover"
+                className="group w-full rounded-xl bg-surface-warm-soft p-3 text-left shadow-ds-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-warm-hover hover:shadow-ds-card-hover"
                 onClick={() => openPage4WithContact(c.id)}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -404,8 +412,9 @@ export function RelationsSection({
                   最近联系：{c.lastContact?.trim() ? c.lastContact : "暂未联系"}
                 </p>
               </button>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

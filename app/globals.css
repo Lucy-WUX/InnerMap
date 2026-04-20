@@ -17,3 +17,10 @@ body {
 * {
   box-sizing: border-box;
 }
+
+@media (max-width: 640px) {
+  button,
+  a.rounded-btn-ds {
+    min-height: 44px;
+  }
+}

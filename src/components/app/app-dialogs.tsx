@@ -90,6 +90,9 @@ export function AppDialogs({
   const [groupSuggestLoading, setGroupSuggestLoading] = useState(false)
   const [liveSuggestedGroup, setLiveSuggestedGroup] = useState<GroupKey | "">("")
   const [interactionTemplates, setInteractionTemplates] = useState<Record<string, Pick<InteractionFormState, "what" | "reaction" | "feel">>>({})
+  const energy = interactionForm.energy
+  const energyTrackPercent = ((energy + 5) / 10) * 100
+  const energyAccentColor = energy > 0 ? "#16a34a" : energy < 0 ? "#dc2626" : "#9ca3af"
 
   const suggestSourceText = useMemo(
     () => `${contactForm.traits} ${contactForm.background}`.trim(),
@@ -117,6 +120,18 @@ export function AppDialogs({
     }, 450)
     return () => clearTimeout(timer)
   }, [showContactDialog, suggestSourceText])
+
+  useEffect(() => {
+    if (!showInteractionDialog) return
+    function onKeyDown(event: KeyboardEvent) {
+      const isSave = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s"
+      if (!isSave) return
+      event.preventDefault()
+      saveInteraction()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [saveInteraction, showInteractionDialog])
 
   return (
     <>
@@ -243,64 +258,26 @@ export function AppDialogs({
           <div className="grid gap-ds-xs sm:grid-cols-2">
             <label className="block text-ds-body font-medium">
               真朋友指数：{contactForm.trueFriendScore.toFixed(1)}
-              <div className="mt-1 flex items-center gap-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={contactForm.trueFriendScore}
-                  onChange={(e) =>
-                    setContactForm((prev) => ({ ...prev, trueFriendScore: Number(e.target.value) }))
-                  }
-                  className="w-full"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={contactForm.trueFriendScore}
-                  onChange={(e) =>
-                    setContactForm((prev) => ({
-                      ...prev,
-                      trueFriendScore: Number.isNaN(Number(e.target.value)) ? prev.trueFriendScore : Number(e.target.value),
-                    }))
-                  }
-                  className="w-16 rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption"
-                />
+              <div className="mt-1 space-y-1">
+                <div className="h-2 w-full rounded-full bg-[#efe7db]">
+                  <div
+                    className="h-full rounded-full bg-[#4f9d69]"
+                    style={{ width: `${Math.max(0, Math.min(100, contactForm.trueFriendScore * 10))}%` }}
+                  />
+                </div>
+                <p className="text-[11px] font-normal text-soft">由 AI 根据互动记录自动计算（只读）</p>
               </div>
             </label>
             <label className="block text-ds-body font-medium">
               表面关系指数：{contactForm.surfaceRelationScore.toFixed(1)}
-              <div className="mt-1 flex items-center gap-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={contactForm.surfaceRelationScore}
-                  onChange={(e) =>
-                    setContactForm((prev) => ({ ...prev, surfaceRelationScore: Number(e.target.value) }))
-                  }
-                  className="w-full"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={contactForm.surfaceRelationScore}
-                  onChange={(e) =>
-                    setContactForm((prev) => ({
-                      ...prev,
-                      surfaceRelationScore: Number.isNaN(Number(e.target.value))
-                        ? prev.surfaceRelationScore
-                        : Number(e.target.value),
-                    }))
-                  }
-                  className="w-16 rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption"
-                />
+              <div className="mt-1 space-y-1">
+                <div className="h-2 w-full rounded-full bg-[#efe7db]">
+                  <div
+                    className="h-full rounded-full bg-[#a18f7a]"
+                    style={{ width: `${Math.max(0, Math.min(100, contactForm.surfaceRelationScore * 10))}%` }}
+                  />
+                </div>
+                <p className="text-[11px] font-normal text-soft">由 AI 根据互动记录自动计算（只读）</p>
               </div>
             </label>
           </div>
@@ -439,7 +416,16 @@ export function AppDialogs({
               max={5}
               value={interactionForm.energy}
               onChange={(e) => setInteractionForm((prev) => ({ ...prev, energy: Number(e.target.value) }))}
-              className="w-full"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full"
+              style={{
+                background:
+                  energy === 0
+                    ? "#e5e7eb"
+                    : energy > 0
+                      ? `linear-gradient(90deg, #e5e7eb 0%, #e5e7eb 50%, #86efac ${50 + energyTrackPercent / 2}%, #16a34a 100%)`
+                      : `linear-gradient(90deg, #dc2626 0%, #fca5a5 ${energyTrackPercent}%, #e5e7eb 50%, #e5e7eb 100%)`,
+                accentColor: energyAccentColor,
+              }}
             />
             <div className="mt-1 flex justify-between text-ds-caption text-soft">
               <span>-5</span>

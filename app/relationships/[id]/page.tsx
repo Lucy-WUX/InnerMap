@@ -134,6 +134,11 @@ export default function RelationshipDetailPage() {
       </div>
       <div className="rounded-2xl border border-[#eadfce] bg-paper p-3">
         <p className="mb-2 text-sm text-soft">问我关于你和TA的关系问题</p>
+        {offlineMode ? (
+          <div className="mb-2 rounded-lg border border-[#f3d08a] bg-[#fff6de] px-3 py-2 text-xs text-[#8a5a00]">
+            ⚠️ 演示模式：AI 功能已禁用。连接 Supabase 和 AI 服务后即可使用
+          </div>
+        ) : null}
         <input
           className="w-full rounded-xl border border-[#ddcfbe] px-3 py-2 text-sm"
           value={question}

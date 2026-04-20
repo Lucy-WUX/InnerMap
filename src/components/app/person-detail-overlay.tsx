@@ -37,6 +37,7 @@ type PersonDetailOverlayProps = {
     meaningful?: boolean
     aiInsight?: string
   }>
+  onDeleteInteraction: (interactionId: string) => void
 }
 
 export function PersonDetailOverlay({
@@ -56,6 +57,7 @@ export function PersonDetailOverlay({
   onClose,
   interactionAiStatus,
   interactionLogs,
+  onDeleteInteraction,
 }: PersonDetailOverlayProps) {
   const [quickPrompts, setQuickPrompts] = useState([
     "🤔 我们之间的问题出在哪？",
@@ -69,6 +71,9 @@ export function PersonDetailOverlay({
   const [hasHistory, setHasHistory] = useState(false)
   const [activeTab, setActiveTab] = useState<"advisor" | "history">("advisor")
   const [showTrueFriendReport, setShowTrueFriendReport] = useState(false)
+  const [latestUserMessage, setLatestUserMessage] = useState("")
+  const [aiReplyText, setAiReplyText] = useState("")
+  const [isAiTyping, setIsAiTyping] = useState(false)
 
   const friendScoreValue = trueFriendScore
   const surfaceScoreValue = surfaceRelationScore
@@ -84,6 +89,9 @@ export function PersonDetailOverlay({
 
   useEffect(() => {
     setHasHistory(false)
+    setLatestUserMessage("")
+    setAiReplyText("")
+    setIsAiTyping(false)
   }, [selectedContactName])
 
   const welcomeMessage = `👋 我是观系。关于${selectedContactName ?? "TA"}，我看到你给 TA 标记了“${
@@ -93,6 +101,26 @@ export function PersonDetailOverlay({
   const scoreCircleStyle = (value: number, color: string) => ({
     background: `conic-gradient(${color} 0 ${(value / 10) * 100}%, #eee7dd ${(value / 10) * 100}% 100%)`,
   })
+
+  function triggerAiReply(input: string) {
+    const userMessage = input.trim()
+    if (!userMessage) return
+    setHasHistory(true)
+    setLatestUserMessage(userMessage)
+    setIsAiTyping(true)
+    setAiReplyText("")
+
+    const fullReply = `我看到了你的问题：「${userMessage.slice(0, 36)}${userMessage.length > 36 ? "..." : ""}」。建议先说事实和感受，再提出一个可执行的小请求，并约定一个简短回看时间点。`
+    let index = 0
+    const timer = window.setInterval(() => {
+      index += 2
+      setAiReplyText(fullReply.slice(0, index))
+      if (index >= fullReply.length) {
+        window.clearInterval(timer)
+        setIsAiTyping(false)
+      }
+    }, 32)
+  }
 
   return (
     <section>
@@ -108,7 +136,11 @@ export function PersonDetailOverlay({
               <h2 className="text-ds-title">{selectedContactName}</h2>
               <p className="text-ds-caption text-soft">页面4：已选中联系人</p>
             </div>
-            <button onClick={onClose}>
+            <button
+              className="rounded-md p-2 text-[#907f6f] hover:bg-[#f3eadf]"
+              aria-label="关闭详情弹窗"
+              onClick={onClose}
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -191,10 +223,17 @@ export function PersonDetailOverlay({
               {hasHistory ? (
                 <>
                 <div className="ml-auto w-[86%] rounded-ds bg-[#DBEAFE] p-ds-xs text-ds-body">
-                    我觉得最近和 TA 有点疏远了...
+                    {latestUserMessage}
                   </div>
                   <div className="w-[92%] rounded-ds bg-slate-100 p-ds-xs text-ds-body">
-                    我注意到你记录的上次互动是 3 天前，当时能量变化为 +2，TA 主动关心了你。疏远感可能来自你的内疚（备注中提到答应内推未做）。以下是两个小建议...
+                    {isAiTyping ? (
+                      <span>
+                        {aiReplyText}
+                        <span className="ml-0.5 inline-block animate-pulse">|</span>
+                      </span>
+                    ) : (
+                      aiReplyText
+                    )}
                     <p className="mt-1 text-ds-caption text-soft">基于你记录的 3 次互动生成</p>
                   </div>
                 </>
@@ -211,10 +250,18 @@ export function PersonDetailOverlay({
                 {interactionLogs.length > 0 ? (
                   interactionLogs.map((log) => (
                     <div key={log.id} className="rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs">
-                      <p className="text-ds-caption font-medium text-ink">
-                        {log.date} · {log.type} · 能量 {log.energy >= 0 ? `+${log.energy}` : log.energy}
-                        {log.meaningful ? " · 有意义" : ""}
-                      </p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-ds-caption font-medium text-ink">
+                          {log.date} · {log.type} · 能量 {log.energy >= 0 ? `+${log.energy}` : log.energy}
+                          {log.meaningful ? " · 有意义" : ""}
+                        </p>
+                        <button
+                          className="shrink-0 rounded-btn-ds border border-[#e7b7b2] bg-[#fff3f2] px-2 py-0.5 text-[11px] text-[#b42318] hover:bg-[#ffe8e6]"
+                          onClick={() => onDeleteInteraction(log.id)}
+                        >
+                          删除
+                        </button>
+                      </div>
                       <p className="mt-1 text-ds-caption text-soft">我：{log.what || "（未填写）"}</p>
                       <p className="text-ds-caption text-soft">TA：{log.reaction || "（未填写）"}</p>
                       {log.aiInsight ? (
@@ -225,21 +272,23 @@ export function PersonDetailOverlay({
                     </div>
                   ))
                 ) : (
-                  <p className="text-ds-caption text-soft">暂无互动记录</p>
+                  <p className="rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft p-ds-xs text-ds-caption text-soft">
+                    记录你与 TA 的每一次互动，AI 会自动评估关系变化
+                  </p>
                 )}
               </div>
             )}
           </Card>
 
           <div className="my-ds-xs space-y-ds-xs">
-            <div className="flex items-center gap-ds-xs overflow-x-auto pb-1">
+            <div className="flex items-center gap-ds-xs overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {quickPrompts.map((q) => (
                 <button
                   key={q}
                   className="shrink-0 rounded-full border border-warm-soft bg-[#f3f2ef] px-3 py-1 text-ds-caption transition-colors hover:bg-[#efe6d7]"
                   onClick={() => {
                     setDetailInput(q)
-                    setHasHistory(true)
+                    triggerAiReply(q)
                   }}
                 >
                   {q}
@@ -269,7 +318,7 @@ export function PersonDetailOverlay({
                     setDetailInput(next)
                     setCustomPrompt("")
                     setShowCustomPromptInput(false)
-                    setHasHistory(true)
+                    triggerAiReply(next)
                   }}
                 >
                   添加
@@ -284,11 +333,13 @@ export function PersonDetailOverlay({
             value={detailInput}
             onChange={(e) => {
               setDetailInput(e.target.value)
-              if (e.target.value.trim()) setHasHistory(true)
             }}
           />
           <div className="mt-ds-xs flex justify-end">
-            <Button className="transition-all hover:-translate-y-0.5 hover:shadow-ds-card-hover" onClick={() => setHasHistory(true)}>
+            <Button
+              className="transition-all hover:-translate-y-0.5 hover:shadow-ds-card-hover"
+              onClick={() => triggerAiReply(detailInput)}
+            >
               发送
             </Button>
           </div>

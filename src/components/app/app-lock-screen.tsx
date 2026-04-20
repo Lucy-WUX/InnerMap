@@ -10,10 +10,11 @@ import { Input } from "../ui/input"
 
 type AppLockScreenProps = {
   settings: LockSettings
+  storageScope: string
   onUnlocked: () => void
 }
 
-export function AppLockScreen({ settings, onUnlocked }: AppLockScreenProps) {
+export function AppLockScreen({ settings, storageScope, onUnlocked }: AppLockScreenProps) {
   const [pin, setPin] = useState("")
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
@@ -32,7 +33,7 @@ export function AppLockScreen({ settings, onUnlocked }: AppLockScreenProps) {
         setError("密码不正确")
         return
       }
-      setSessionUnlocked(true)
+      setSessionUnlocked(true, storageScope)
       onUnlocked()
     } finally {
       setBusy(false)
@@ -49,7 +50,7 @@ export function AppLockScreen({ settings, onUnlocked }: AppLockScreenProps) {
         setError("验证失败或已取消")
         return
       }
-      setSessionUnlocked(true)
+      setSessionUnlocked(true, storageScope)
       onUnlocked()
     } finally {
       setBusy(false)

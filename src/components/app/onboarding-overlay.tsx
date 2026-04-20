@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 
-import { setOnboardingDone } from "../../lib/app-local-storage"
 import type { TabKey } from "./types"
 import { Button } from "../ui/button"
 
@@ -15,6 +14,7 @@ type OnboardingOverlayProps = {
   openAiPage: (seedText?: string) => void
   contactCount: number
   interactionCount: number
+  onFinishOnboarding: () => void
 }
 
 export function OnboardingOverlay({
@@ -26,6 +26,7 @@ export function OnboardingOverlay({
   openAiPage,
   contactCount,
   interactionCount,
+  onFinishOnboarding,
 }: OnboardingOverlayProps) {
   const [step, setStep] = useState(1)
   const startContacts = useRef(contactCount)
@@ -49,7 +50,7 @@ export function OnboardingOverlay({
   }, [open, step, interactionCount])
 
   function finish() {
-    setOnboardingDone()
+    onFinishOnboarding()
     onClose()
   }
 

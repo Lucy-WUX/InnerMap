@@ -1,4 +1,4 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react"
 
 import { Button } from "../ui/button"
 import { Card } from "../ui/card"
@@ -33,6 +33,7 @@ type HomeSectionProps = {
   diarySearchQuery: string
   setDiarySearchQuery: Dispatch<SetStateAction<string>>
   diarySearchResults: [string, string][]
+  totalDiaryCount: number
   diaryEmotion: DiaryEmotion
   setDiaryEmotion: (value: DiaryEmotion) => void
   diaryEditorText: string
@@ -69,6 +70,7 @@ export function HomeSection({
   diarySearchQuery,
   setDiarySearchQuery,
   diarySearchResults,
+  totalDiaryCount,
   diaryEmotion,
   setDiaryEmotion,
   diaryEditorText,
@@ -94,6 +96,17 @@ export function HomeSection({
     () => contacts.filter((c) => c.name.includes(mentionSearch.trim())).slice(0, 8),
     [contacts, mentionSearch]
   )
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const isSave = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s"
+      if (!isSave) return
+      event.preventDefault()
+      handleSaveDiary()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [handleSaveDiary])
 
   return (
     <section className="space-y-ds-md">
@@ -228,7 +241,9 @@ export function HomeSection({
                   </div>
                 ))
               ) : (
-                <p className="text-ds-caption text-soft">暂无匹配日记</p>
+                <p className="text-ds-caption text-soft">
+                  {totalDiaryCount === 0 ? "记录你的人际感悟，AI 会帮你分析相关的关系" : "暂无匹配日记"}
+                </p>
               )}
             </div>
           ) : null}
@@ -317,7 +332,7 @@ export function HomeSection({
         </Card>
 
         <div className="space-y-ds-md">
-          <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
+          <Card className="hidden rounded-ds border border-warm-base bg-paper p-ds-lg sm:block">
             <div className="flex items-center justify-between text-ds-body text-soft">
               <p>本月记录：12 篇</p>
               <p>提及联系人：8 人</p>
@@ -326,6 +341,11 @@ export function HomeSection({
 
           <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
             <p className="text-[24px] font-semibold">{diarySelectedDate}</p>
+            {totalDiaryCount === 0 ? (
+              <p className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-soft">
+                记录你的人际感悟，AI 会帮你分析相关的关系
+              </p>
+            ) : null}
             <div className="mt-ds-xs flex flex-wrap gap-ds-xs">
               {["😊愉悦", "😐平静", "😞低落", "😠愤怒"].map((m) => (
                 <button
@@ -434,7 +454,7 @@ export function HomeSection({
                   </button>
                 ))
               ) : (
-                <span>张三、李四</span>
+                <span>暂无</span>
               )}
             </div>
             <div className="mt-ds-xs flex items-center justify-between gap-ds-xs">
@@ -444,7 +464,7 @@ export function HomeSection({
           </Card>
         </div>
       </div>
-      <div className="mt-ds-lg rounded-ds border-2 border-[#2e7d32]/35 bg-[#e8f5e9] px-ds-md py-ds-md text-center shadow-sm">
+      <div className="mt-ds-lg hidden rounded-ds border-2 border-[#2e7d32]/35 bg-[#e8f5e9] px-ds-md py-ds-md text-center shadow-sm sm:block">
         <p className="text-ds-body font-semibold leading-relaxed text-[#1b5e20]">
           🔒 所有数据本地存储，不上传服务器，你的隐私完全由你掌控
         </p>

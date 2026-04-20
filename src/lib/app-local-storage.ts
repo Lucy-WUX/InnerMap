@@ -43,21 +43,27 @@ export type LockSettings = {
 
 const SESSION_UNLOCK = "pss-session-unlocked"
 
-export function isSessionUnlocked(): boolean {
+function scopedKey(baseKey: string, scope?: string) {
+  if (!scope) return baseKey
+  return `${baseKey}:${scope}`
+}
+
+export function isSessionUnlocked(scope?: string): boolean {
   if (typeof sessionStorage === "undefined") return true
-  return sessionStorage.getItem(SESSION_UNLOCK) === "1"
+  return sessionStorage.getItem(scopedKey(SESSION_UNLOCK, scope)) === "1"
 }
 
-export function setSessionUnlocked(value: boolean) {
+export function setSessionUnlocked(value: boolean, scope?: string) {
   if (typeof sessionStorage === "undefined") return
-  if (value) sessionStorage.setItem(SESSION_UNLOCK, "1")
-  else sessionStorage.removeItem(SESSION_UNLOCK)
+  const key = scopedKey(SESSION_UNLOCK, scope)
+  if (value) sessionStorage.setItem(key, "1")
+  else sessionStorage.removeItem(key)
 }
 
-export function loadLockSettings(): LockSettings | null {
+export function loadLockSettings(scope?: string): LockSettings | null {
   if (typeof localStorage === "undefined") return null
   try {
-    const raw = localStorage.getItem(LOCK_STORAGE_KEY)
+    const raw = localStorage.getItem(scopedKey(LOCK_STORAGE_KEY, scope))
     if (!raw) return null
     const o = JSON.parse(raw) as LockSettings & { salt?: string; hash?: string; webauthnCredentialId?: string }
     if (!o.enabled) return null
@@ -75,13 +81,14 @@ export function loadLockSettings(): LockSettings | null {
   }
 }
 
-export function saveLockSettings(settings: LockSettings | null) {
+export function saveLockSettings(settings: LockSettings | null, scope?: string) {
   if (typeof localStorage === "undefined") return
+  const key = scopedKey(LOCK_STORAGE_KEY, scope)
   if (!settings) {
-    localStorage.removeItem(LOCK_STORAGE_KEY)
+    localStorage.removeItem(key)
     return
   }
-  localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(settings))
+  localStorage.setItem(key, JSON.stringify(settings))
 }
 
 function randomSalt() {
@@ -122,10 +129,10 @@ export function lockHasWebAuthn(settings: LockSettings): boolean {
   return Boolean(settings.webauthnCredentialId)
 }
 
-export function loadSnapshot(): AppDataSnapshot | null {
+export function loadSnapshot(scope?: string): AppDataSnapshot | null {
   if (typeof localStorage === "undefined") return null
   try {
-    const raw = localStorage.getItem(PERSISTENCE_KEY)
+    const raw = localStorage.getItem(scopedKey(PERSISTENCE_KEY, scope))
     if (!raw) return null
     const o = JSON.parse(raw) as AppDataSnapshot
     if (o.version !== 1 || !Array.isArray(o.contacts)) return null
@@ -135,14 +142,14 @@ export function loadSnapshot(): AppDataSnapshot | null {
   }
 }
 
-export function saveSnapshot(snapshot: Omit<AppDataSnapshot, "version" | "exportedAt">) {
+export function saveSnapshot(snapshot: Omit<AppDataSnapshot, "version" | "exportedAt">, scope?: string) {
   if (typeof localStorage === "undefined") return
   const full: AppDataSnapshot = {
     ...snapshot,
     version: 1,
     exportedAt: new Date().toISOString(),
   }
-  localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(full))
+  localStorage.setItem(scopedKey(PERSISTENCE_KEY, scope), JSON.stringify(full))
 }
 
 export function parseImportFile(text: string): AppDataSnapshot | null {
@@ -165,14 +172,14 @@ export function downloadJson(filename: string, data: unknown) {
   URL.revokeObjectURL(url)
 }
 
-export function onboardingDone(): boolean {
+export function onboardingDone(scope?: string): boolean {
   if (typeof localStorage === "undefined") return true
-  return localStorage.getItem(ONBOARDING_KEY) === "done"
+  return localStorage.getItem(scopedKey(ONBOARDING_KEY, scope)) === "done"
 }
 
-export function setOnboardingDone() {
+export function setOnboardingDone(scope?: string) {
   if (typeof localStorage === "undefined") return
-  localStorage.setItem(ONBOARDING_KEY, "done")
+  localStorage.setItem(scopedKey(ONBOARDING_KEY, scope), "done")
 }
 
 /** 引导仅在「完全空数据」时展示：无联系人、无互动、无日记 */

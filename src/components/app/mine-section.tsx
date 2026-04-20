@@ -16,6 +16,7 @@ import { Card } from "../ui/card"
 import { Input } from "../ui/input"
 
 type MineSectionProps = {
+  storageScope: string
   openAiPage: (seedText?: string) => void
   buildExportSnapshot: () => Omit<AppDataSnapshot, "version" | "exportedAt">
   onRestoreSnapshot: (snapshot: AppDataSnapshot) => void
@@ -25,6 +26,7 @@ type MineSectionProps = {
 }
 
 export function MineSection({
+  storageScope,
   openAiPage,
   buildExportSnapshot,
   onRestoreSnapshot,
@@ -61,7 +63,7 @@ export function MineSection({
     setLockBusy(true)
     try {
       const settings = await createLockFromPin(pinA)
-      setSessionUnlocked(true)
+      setSessionUnlocked(true, storageScope)
       onLockSettingsChange(settings)
       setPinA("")
       setPinB("")
@@ -73,7 +75,7 @@ export function MineSection({
   }
 
   function handleDisableLock() {
-    setSessionUnlocked(true)
+    setSessionUnlocked(true, storageScope)
     onLockSettingsChange(null)
     setImportTip("已关闭应用锁")
     setTimeout(() => setImportTip(""), 2000)
@@ -93,7 +95,7 @@ export function MineSection({
         setTimeout(() => setImportTip(""), 2500)
         return
       }
-      setSessionUnlocked(true)
+      setSessionUnlocked(true, storageScope)
       onLockSettingsChange(createLockWebAuthnOnly(id))
       setImportTip("已开启：仅指纹/系统密钥解锁")
       setTimeout(() => setImportTip(""), 2500)
@@ -120,7 +122,7 @@ export function MineSection({
         onLockSettingsChange({ ...lockSettings, webauthnCredentialId: id })
         setImportTip("已绑定指纹/系统密钥，可与密码任选其一解锁")
       } else {
-        setSessionUnlocked(true)
+        setSessionUnlocked(true, storageScope)
         onLockSettingsChange(createLockWebAuthnOnly(id))
         setImportTip("已开启：仅指纹/系统密钥解锁")
       }

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-import { getSupabaseBrowserClient, isBrowserSupabaseReady } from "@/lib/supabase-browser"
+import { getSupabaseBrowserClient, isBrowserSupabaseReady, isDemoModeEnabled } from "@/lib/supabase-browser"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,12 +12,13 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const missingEnv = !isBrowserSupabaseReady()
+  const demoMode = isDemoModeEnabled()
 
   useEffect(() => {
-    if (missingEnv) {
+    if (missingEnv && demoMode) {
       router.replace("/")
     }
-  }, [missingEnv, router])
+  }, [demoMode, missingEnv, router])
 
   async function signIn() {
     if (missingEnv) return
@@ -63,7 +64,7 @@ export default function LoginPage() {
       {missingEnv ? (
         <p className="mt-3 text-sm text-[#b24f45]">
           缺少 Supabase 环境变量。请在 `.env.local` 或 Vercel 设置 `NEXT_PUBLIC_SUPABASE_URL` 与
-          `NEXT_PUBLIC_SUPABASE_ANON_KEY`。
+          `NEXT_PUBLIC_SUPABASE_ANON_KEY`（或 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`）。
         </p>
       ) : null}
       <div className="mt-4 flex gap-2">
@@ -73,12 +74,14 @@ export default function LoginPage() {
         <button className="rounded-full border border-[#d3c3b1] px-4 py-2 text-sm" disabled={loading} onClick={signUp}>
           注册
         </button>
-        <button
-          className="rounded-full border border-[#d3c3b1] px-4 py-2 text-sm"
-          onClick={() => router.replace("/")}
-        >
-          进入演示
-        </button>
+        {demoMode ? (
+          <button
+            className="rounded-full border border-[#d3c3b1] px-4 py-2 text-sm"
+            onClick={() => router.replace("/")}
+          >
+            进入演示
+          </button>
+        ) : null}
       </div>
       {error ? <p className="mt-3 text-sm text-[#b24f45]">{error}</p> : null}
     </div>

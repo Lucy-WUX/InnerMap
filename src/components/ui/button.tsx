@@ -14,10 +14,10 @@ const buttonVariants = cva(
         danger: "bg-[#b75247] text-white hover:bg-[#9f463c]",
       },
       size: {
-        default: "h-10 px-4",
-        sm: "h-8 px-3",
-        lg: "h-11 px-6",
-        icon: "h-10 w-10",
+        default: "h-11 px-4",
+        sm: "h-11 px-3",
+        lg: "h-12 px-6",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {
