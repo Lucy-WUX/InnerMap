@@ -22,6 +22,17 @@ body {
   box-sizing: border-box;
 }
 
+/* 文本选中：避免系统默认「蓝底白字」，与落地页暖色风格一致 */
+::selection {
+  color: #2a1810;
+  background-color: #d8cbbd;
+}
+
+::-moz-selection {
+  color: #2a1810;
+  background-color: #d8cbbd;
+}
+
 @media (max-width: 640px) {
   button,
   a.rounded-btn-ds {

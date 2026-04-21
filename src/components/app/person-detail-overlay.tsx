@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 
 import { buildTrueFriendReport, type ScoreHistoryPoint } from "../../lib/relationship-ai-demo"
@@ -38,6 +38,7 @@ type PersonDetailOverlayProps = {
     aiInsight?: string
   }>
   onDeleteInteraction: (interactionId: string) => void
+  onDeleteContact: () => void
 }
 
 export function PersonDetailOverlay({
@@ -58,6 +59,7 @@ export function PersonDetailOverlay({
   interactionAiStatus,
   interactionLogs,
   onDeleteInteraction,
+  onDeleteContact,
 }: PersonDetailOverlayProps) {
   const [quickPrompts, setQuickPrompts] = useState([
     "🤔 我们之间的问题出在哪？",
@@ -74,6 +76,48 @@ export function PersonDetailOverlay({
   const [latestUserMessage, setLatestUserMessage] = useState("")
   const [aiReplyText, setAiReplyText] = useState("")
   const [isAiTyping, setIsAiTyping] = useState(false)
+  const [advisorError, setAdvisorError] = useState("")
+  const typeTimerRef = useRef<number | null>(null)
+
+  function clearTypeTimer() {
+    const id = typeTimerRef.current
+    if (id != null) {
+      window.clearInterval(id)
+      typeTimerRef.current = null
+    }
+  }
+
+  useEffect(() => () => clearTypeTimer(), [])
+
+  function buildAdvisorContext(): string {
+    const lines: string[] = []
+    if (selectedContact) {
+      lines.push(`姓名：${selectedContact.name}`)
+      lines.push(`分组：${selectedContact.group}`)
+      if (selectedContact.traits?.trim()) lines.push(`特点：${selectedContact.traits.trim()}`)
+      if (selectedContact.background?.trim()) lines.push(`背景：${selectedContact.background.trim()}`)
+      if (selectedContact.privateNote?.trim()) {
+        lines.push(`私人备注：${selectedContact.privateNote.trim().slice(0, 800)}`)
+      }
+    } else {
+      lines.push(`姓名：${selectedContactName ?? "未知"}`)
+      if (selectedContactGroup?.trim()) lines.push(`分组：${selectedContactGroup.trim()}`)
+      if (selectedContactTraits?.trim()) lines.push(`特点：${selectedContactTraits.trim()}`)
+    }
+    lines.push(`真朋友指数 ${trueFriendScore}/10，表面关系指数 ${surfaceRelationScore}/10`)
+    lines.push(`相处模式（本地摘要）：${patternSummary}`)
+    if (interactionLogs.length > 0) {
+      lines.push("互动记录（从新到旧节选）：")
+      for (const log of [...interactionLogs].reverse().slice(0, 12)) {
+        lines.push(
+          `- ${log.date} · ${log.type} · 能量 ${log.energy} · 我：${(log.what ?? "").slice(0, 220)} · TA：${(log.reaction ?? "").slice(0, 220)} · 感受：${(log.feel ?? "").slice(0, 160)}`
+        )
+      }
+    } else {
+      lines.push("互动记录：暂无")
+    }
+    return lines.join("\n")
+  }
 
   const friendScoreValue = trueFriendScore
   const surfaceScoreValue = surfaceRelationScore
@@ -88,38 +132,77 @@ export function PersonDetailOverlay({
         ]
 
   useEffect(() => {
+    clearTypeTimer()
     setHasHistory(false)
     setLatestUserMessage("")
     setAiReplyText("")
     setIsAiTyping(false)
+    setAdvisorError("")
   }, [selectedContactName])
 
-  const welcomeMessage = `👋 我是观系。关于${selectedContactName ?? "TA"}，我看到你给 TA 标记了“${
-    selectedContactGroup ?? "关系"
-  }”和“${selectedContactTraits || "敏感"}”。有什么想和我聊的吗？`
+  const welcomeMessage = "请输入你的问题并发送。系统仅在模型返回后展示分析结果。"
 
   const scoreCircleStyle = (value: number, color: string) => ({
     background: `conic-gradient(${color} 0 ${(value / 10) * 100}%, #eee7dd ${(value / 10) * 100}% 100%)`,
   })
 
-  function triggerAiReply(input: string) {
+  async function triggerAiReply(input: string) {
     const userMessage = input.trim()
     if (!userMessage) return
+    clearTypeTimer()
     setHasHistory(true)
     setLatestUserMessage(userMessage)
+    setAdvisorError("")
     setIsAiTyping(true)
     setAiReplyText("")
 
-    const fullReply = `我看到了你的问题：「${userMessage.slice(0, 36)}${userMessage.length > 36 ? "..." : ""}」。建议先说事实和感受，再提出一个可执行的小请求，并约定一个简短回看时间点。`
-    let index = 0
-    const timer = window.setInterval(() => {
-      index += 2
-      setAiReplyText(fullReply.slice(0, index))
-      if (index >= fullReply.length) {
-        window.clearInterval(timer)
-        setIsAiTyping(false)
+    try {
+      const res = await fetch("/api/ai/contact-advisor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage,
+          context: buildAdvisorContext(),
+        }),
+      })
+      let data: { reply?: string; error?: string } = {}
+      try {
+        data = (await res.json()) as typeof data
+      } catch {
+        data = {}
       }
-    }, 32)
+
+      if (!res.ok) {
+        const err = typeof data.error === "string" ? data.error : `请求失败（${res.status}）`
+        setAdvisorError(err)
+        setAiReplyText("")
+        setIsAiTyping(false)
+        return
+      }
+
+      const reply = typeof data.reply === "string" ? data.reply : ""
+      if (!reply) {
+        setAdvisorError("模型未返回内容，请重试。")
+        setIsAiTyping(false)
+        return
+      }
+
+      let index = 0
+      const step = 3
+      const timerId = window.setInterval(() => {
+        index += step
+        setAiReplyText(reply.slice(0, Math.min(index, reply.length)))
+        if (index >= reply.length) {
+          clearTypeTimer()
+          setIsAiTyping(false)
+        }
+      }, 18)
+      typeTimerRef.current = timerId
+    } catch {
+      setAdvisorError("网络异常，请检查连接后重试。")
+      setAiReplyText("")
+      setIsAiTyping(false)
+    }
   }
 
   return (
@@ -145,10 +228,13 @@ export function PersonDetailOverlay({
             </button>
           </div>
 
-          <div className="mb-ds-xs grid grid-cols-2 gap-ds-xs">
+          <div className="mb-ds-xs grid grid-cols-1 gap-ds-xs sm:grid-cols-3">
             <Button onClick={openInteractionDialog}>📝 记录互动</Button>
             <Button variant="outline" onClick={openEditContact}>
               ✏️ 编辑档案
+            </Button>
+            <Button variant="danger" onClick={onDeleteContact}>
+              🗑️ 删除联系人
             </Button>
           </div>
 
@@ -234,13 +320,13 @@ export function PersonDetailOverlay({
                     ) : (
                       aiReplyText
                     )}
-                    <p className="mt-1 text-ds-caption text-soft">基于你记录的 3 次互动生成</p>
+                    <p className="mt-1 text-ds-caption text-soft">由大模型基于上方档案与互动记录生成</p>
                   </div>
                 </>
               ) : (
                 <div className="w-[92%] rounded-ds bg-slate-100 p-ds-xs text-ds-body">
                   {welcomeMessage}
-                  <p className="mt-1 text-ds-caption text-soft">首次进入该联系人分析面板</p>
+                  <p className="mt-1 text-ds-caption text-soft">当前未生成 AI 分析</p>
                 </div>
               )}
             </div>
@@ -264,11 +350,6 @@ export function PersonDetailOverlay({
                       </div>
                       <p className="mt-1 text-ds-caption text-soft">我：{log.what || "（未填写）"}</p>
                       <p className="text-ds-caption text-soft">TA：{log.reaction || "（未填写）"}</p>
-                      {log.aiInsight ? (
-                        <p className="mt-ds-xs rounded-btn-ds bg-[#f0f7f2] px-ds-xs py-1 text-ds-caption text-[#2E7D32]">
-                          AI：{log.aiInsight}
-                        </p>
-                      ) : null}
                     </div>
                   ))
                 ) : (
@@ -338,11 +419,17 @@ export function PersonDetailOverlay({
           <div className="mt-ds-xs flex justify-end">
             <Button
               className="transition-all hover:-translate-y-0.5 hover:shadow-ds-card-hover"
-              onClick={() => triggerAiReply(detailInput)}
+              disabled={isAiTyping}
+              onClick={() => void triggerAiReply(detailInput)}
             >
-              发送
+              {isAiTyping ? "生成中…" : "发送"}
             </Button>
           </div>
+          {advisorError ? (
+            <p className="mt-ds-xs text-ds-caption font-medium text-[#b42318]" role="alert">
+              {advisorError}
+            </p>
+          ) : null}
           {interactionAiStatus === "analyzing" ? <p className="mt-1 text-ds-caption text-[#7a5a2e]">AI 分析中...</p> : null}
           {interactionAiStatus === "done" ? <p className="mt-1 text-ds-caption text-[#0f766e]">AI 已分析本次互动，关系评分已更新</p> : null}
         </div>
@@ -353,7 +440,7 @@ export function PersonDetailOverlay({
           open={showTrueFriendReport}
           onClose={() => setShowTrueFriendReport(false)}
           title={`真朋友验证 · ${selectedContact.name}`}
-          description="基于当前档案与互动记录的演示报告"
+          description="基于当前档案与互动记录的关系摘要"
           maxWidthClassName="max-w-lg"
         >
           {(() => {

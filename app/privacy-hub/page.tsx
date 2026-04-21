@@ -52,18 +52,23 @@ export default function PrivacyHubPage() {
         </section>
 
         <section className="rounded-landing-card border border-[#d7e7d9] bg-[#f3fbf4] p-6 sm:p-8">
-          <h2 className="text-base font-bold leading-snug text-[#14532d]">你现在已经可以做的事</h2>
-          <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-[#2f5b39]">
+          <h2 className="text-base font-bold leading-snug text-ink">你现在已经可以做的事</h2>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-soft">
             <li>
-              在应用内打开<strong className="font-medium">「我的」</strong>，可将联系人、互动、日记与评分历史
-              <strong className="font-medium">导出为 JSON 或 CSV 备份</strong>；也可一键清除本机数据、清空云端同步数据，或通过「永久注销账号」立即删除账户及关联库表数据（需部署环境配置服务端密钥）。
+              <strong className="font-medium text-ink">未登录（仅本机）</strong>
+              时，联系人、日记与互动默认只存在你的浏览器里；在「我的」中仍可
+              <strong className="font-medium text-ink">导出 JSON / CSV</strong> 与
+              <strong className="font-medium text-ink">一键清除本机数据</strong>，无需任何服务端账号。
             </li>
             <li>
-              退出登录、不在公共电脑保持登录；重置密码通过登录页「忘记密码」按邮件指引操作。
+              若已<strong className="font-medium text-ink">注册并同步</strong>，同一入口还可清空云端同步数据，或通过「永久注销账号」删除账户及关联库表（需在部署环境配置服务端密钥）。
+            </li>
+            <li>
+              退出登录、勿在公共电脑保持登录；已注册用户可通过登录页「忘记密码」按邮件指引重置密码。
             </li>
             <li>
               完整数据处理说明见
-              <Link href="/privacy" className="mx-1 font-medium underline-offset-2 hover:underline">
+              <Link href="/privacy" className="mx-1 font-medium text-ink underline-offset-2 hover:underline">
                 《隐私政策》
               </Link>
               。

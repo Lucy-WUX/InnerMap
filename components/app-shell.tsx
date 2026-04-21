@@ -1,5 +1,6 @@
 "use client"
 
+import { UserRound } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
@@ -210,9 +211,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? "⚠️ AI_API_KEY 未配置，AI 功能暂不可用，基础记录功能可继续使用。"
       : envError || envHint
 
+  /** 纯本地访客：不展示云端/部署类提示，顶栏保持极简 */
+  const showEnvBanner = Boolean(envBannerText) && !useLocalQs
+
   return (
     <div className="min-h-screen bg-base text-ink">
-      <header className="border-b border-warm-base bg-paper/90">
+      <header className="border-b border-warm-base/80 bg-paper/85 backdrop-blur-md supports-[backdrop-filter]:bg-paper/75">
         <nav className="mx-auto flex max-w-5xl items-center gap-1 px-3 py-2 sm:gap-ds-xs sm:px-ds-md sm:py-ds-xs">
           <Link
             href={tabHref("home")}
@@ -239,22 +243,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             我的
           </Link>
           <div className="ml-auto" />
-          <button
-            className="mr-1 rounded-btn-ds border border-[#b6905e] bg-[#fff3dc] px-2 py-1.5 text-ds-body font-semibold text-[#7a5a2e] shadow-[0_2px_6px_rgba(122,90,46,0.18)] hover:bg-[#ffeac8] sm:mr-ds-xs sm:px-3.5"
-            onClick={() => setShowProModal(true)}
-          >
-            <span className="sm:hidden">👑</span>
-            <span className="hidden sm:inline">👑 升级 Pro</span>
-          </button>
+          {!useLocalQs ? (
+            <button
+              className="mr-1 rounded-btn-ds border border-[#b6905e] bg-[#fff3dc] px-2 py-1.5 text-ds-body font-semibold text-[#7a5a2e] shadow-[0_2px_6px_rgba(122,90,46,0.18)] hover:bg-[#ffeac8] sm:mr-ds-xs sm:px-3.5"
+              onClick={() => setShowProModal(true)}
+            >
+              <span className="sm:hidden">👑</span>
+              <span className="hidden sm:inline">👑 升级 Pro</span>
+            </button>
+          ) : null}
           <div className="relative">
             <button
               type="button"
-              title="账户与登录"
-              aria-label="账户与登录"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-warm-strong bg-paper text-ds-body font-semibold text-[#6d5433] hover:bg-[#f8f1e7]"
+              title={useLocalQs ? "账户与同步" : "账户与登录"}
+              aria-label={useLocalQs ? "账户与同步" : "账户与登录"}
+              className={
+                useLocalQs
+                  ? "flex h-9 w-9 items-center justify-center rounded-full border border-warm-base/60 bg-paper/90 text-ink/80 transition-colors hover:border-warm-strong hover:bg-[#f8f1e7] hover:text-ink"
+                  : "flex h-9 w-9 items-center justify-center rounded-full border border-warm-strong bg-paper text-ds-body font-semibold text-[#6d5433] hover:bg-[#f8f1e7]"
+              }
               onClick={() => setShowUserMenu((prev) => !prev)}
             >
-              👤
+              <UserRound className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.75} aria-hidden />
             </button>
             {showUserMenu ? (
               <div className="absolute right-0 top-11 z-20 w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">
@@ -324,13 +334,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
-      {useLocalQs ? (
-        <div className="mx-auto mt-ds-xs max-w-5xl rounded-ds border border-[#b7e4c7] bg-[#f0fdf4] px-3 py-2.5 text-ds-caption leading-relaxed text-[#166534]">
-          <strong>无需注册</strong>
-          ：当前为<strong>本地模式</strong>，联系人、日记等默认只保存在本浏览器，不会上传到服务器。注册并登录后可选择加密同步、多设备使用。
-        </div>
-      ) : null}
-      {envBannerText ? (
+      {showEnvBanner ? (
         <div className="mx-auto mt-ds-xs flex max-w-5xl flex-wrap items-center gap-ds-xs rounded-ds border border-[#f0d7ad] bg-[#fff8ea] px-3 py-2 text-ds-caption text-[#8d6a3f]">
           <span>{envBannerText}</span>
           <a
@@ -350,7 +354,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
       <main className="mx-auto max-w-5xl p-ds-md md:p-ds-lg">{children}</main>
-      {showProNudge ? (
+      {showProNudge && !useLocalQs ? (
         <div className="fixed right-4 top-16 z-50 rounded-ds border border-warm-base bg-surface-warm-elevated px-3 py-2 text-ds-caption text-soft shadow-md">
           👋 没关系，你的 7天免费试用权益仍在。右上角随时可以找到我。
         </div>

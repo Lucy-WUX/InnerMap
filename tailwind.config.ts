@@ -13,7 +13,8 @@ const config: Config = {
         base: "#faf8f5",
         paper: "#faf8f5",
         ink: "#795548",
-        soft: "#8c7e71",
+        /** 次级说明文字：需满足浅底上的可读对比度 */
+        soft: "#5e4f44",
         "land-border": "#e9e2d8",
         "land-input-border": "#ddcfbe",
         "land-error": "#a64432",

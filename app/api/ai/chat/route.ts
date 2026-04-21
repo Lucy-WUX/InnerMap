@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     }
 
     const recent = await getRecentEntryContext(userId)
+    const userMessage = body.message?.trim() || null
     const history = (body.history ?? []).slice(-10).map((item) => ({
       role: item.role,
       content: item.content,
@@ -42,11 +43,22 @@ export async function POST(request: Request) {
       temperature: 0.7,
       messages: [
         { role: "system", content: structuredCoachPrompt },
-        { role: "system", content: `用户最近记录（回复时请按需引用、串联其中情节，勿当无关背景）：\n${recent}` },
+        {
+          role: "system",
+          content: `请使用以下 JSON 上下文回答；字段为 null 表示缺失，不得编造缺失信息。\n${JSON.stringify(
+            { recent_entries: recent },
+            null,
+            2
+          )}`,
+        },
         ...history,
         {
           role: "user",
-          content: `${body.message ?? ""}\n请按结构输出：【情绪识别】【关系模式】【可能的另一种视角】【风险提示】【建议方向】；总字数<=100字，语言简洁，不给绝对结论。`,
+          content: `${JSON.stringify(
+            { user_message: userMessage },
+            null,
+            2
+          )}\n请按结构输出：【情绪识别】【关系模式】【可能的另一种视角】【风险提示】【建议方向】；总字数<=100字，语言简洁，不给绝对结论。`,
         },
       ],
     })
@@ -56,14 +68,21 @@ export async function POST(request: Request) {
       ok: true,
       meta: {
         historyTurns: history.length,
-        messageLen: (body.message ?? "").length,
+        messageLen: userMessage?.length ?? 0,
       },
     })
 
-    return NextResponse.json({
-      reply: completion.choices[0]?.message?.content ?? "我在，愿意继续听你说。",
-      remaining: quota.remaining,
-    })
+    const reply = completion.choices[0]?.message?.content?.trim() ?? ""
+    if (!reply) {
+      logAiRouteEvent("ai/chat", requestId, {
+        userId,
+        ok: false,
+        meta: { reason: "empty_model_reply" },
+      })
+      return NextResponse.json({ error: "模型未返回有效内容", requestId }, { status: 502 })
+    }
+
+    return NextResponse.json({ reply, remaining: quota.remaining })
   } catch (error) {
     return aiJsonError(requestId, 500, "服务暂时不可用，请稍后再试", "ai/chat", error, userId)
   }

@@ -1,9 +1,13 @@
-import { useState } from "react"
-import { Button } from "../ui/button"
-import { Card } from "../ui/card"
+import { MoreVertical } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { Dispatch, SetStateAction } from "react"
 
-import type { GroupKey, RelationContact } from "./types"
+import { Button } from "../ui/button"
+import { Card } from "../ui/card"
+import { Dialog } from "../ui/dialog"
+import { Input } from "../ui/input"
+
+import { DEFAULT_CONTACT_GROUP, type GroupKey, type RelationContact } from "./types"
 
 type RelationHealthItem = {
   label: string
@@ -27,8 +31,9 @@ type RelationsSectionProps = {
   relationsFocusGroup: GroupKey | "全部"
   setRelationsFocusGroup: (value: GroupKey | "全部") => void
   contacts: RelationContact[]
-  groupsWithContacts: GroupKey[]
   allGroups: GroupKey[]
+  onRenameGroup: (from: GroupKey, to: string) => void
+  onDeleteGroup: (group: GroupKey) => void
   relationVisibleContacts: RelationContact[]
   relationsSearchQuery: string
   setRelationsSearchQuery: (value: string) => void
@@ -55,8 +60,9 @@ export function RelationsSection({
   relationsFocusGroup,
   setRelationsFocusGroup,
   contacts,
-  groupsWithContacts,
   allGroups,
+  onRenameGroup,
+  onDeleteGroup,
   relationVisibleContacts,
   relationsSearchQuery,
   setRelationsSearchQuery,
@@ -68,7 +74,45 @@ export function RelationsSection({
   energySpotlightItems,
 }: RelationsSectionProps) {
   const [bulkMode, setBulkMode] = useState(false)
-  const [batchMoveTarget, setBatchMoveTarget] = useState<GroupKey>(allGroups[0] ?? "朋友")
+  const [batchMoveTarget, setBatchMoveTarget] = useState<GroupKey>(allGroups[0] ?? DEFAULT_CONTACT_GROUP)
+  const [openMenuFor, setOpenMenuFor] = useState<GroupKey | null>(null)
+  const [renameOpen, setRenameOpen] = useState(false)
+  const [renameFrom, setRenameFrom] = useState<GroupKey | "">("")
+  const [renameValue, setRenameValue] = useState("")
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    setBatchMoveTarget((prev) =>
+      allGroups.includes(prev) ? prev : allGroups[0] ?? DEFAULT_CONTACT_GROUP
+    )
+  }, [allGroups])
+
+  useEffect(() => {
+    if (!openMenuFor) return
+    function handlePointerDown(event: MouseEvent) {
+      const el = menuRef.current
+      if (el && !el.contains(event.target as Node)) setOpenMenuFor(null)
+    }
+    window.addEventListener("mousedown", handlePointerDown)
+    return () => window.removeEventListener("mousedown", handlePointerDown)
+  }, [openMenuFor])
+
+  const healthConicBackground = useMemo(() => {
+    const parts = relationHealthData.map((item, i) => ({
+      color: item.color,
+      ratio: animatedHealthRatios[i] ?? 0,
+    }))
+    if (parts.every((p) => p.ratio === 0)) {
+      return "conic-gradient(#e8e4de 0% 100%)"
+    }
+    let acc = 0
+    const stops = parts.map(({ color, ratio }) => {
+      const start = acc
+      acc += ratio
+      return `${color} ${start}% ${Math.min(100, acc)}%`
+    })
+    return `conic-gradient(${stops.join(", ")})`
+  }, [relationHealthData, animatedHealthRatios])
 
   const getTrueFriendBarStyle = (score: number) => {
     const width = `${Math.min(100, Math.max(0, (score / 10) * 100))}%`
@@ -82,6 +126,37 @@ export function RelationsSection({
 
   return (
     <section className="grid gap-ds-md lg:grid-cols-[320px_1fr]">
+      <Dialog
+        open={renameOpen}
+        onClose={() => setRenameOpen(false)}
+        title="重命名分组"
+        description="将同步更新该分组下所有联系人与本地存档。"
+        maxWidthClassName="max-w-[400px]"
+      >
+        <label className="block text-ds-body font-medium">
+          新名称
+          <Input
+            className="mt-1"
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="输入新分组名"
+          />
+        </label>
+        <div className="mt-ds-md flex justify-end gap-ds-xs">
+          <Button type="button" variant="outline" onClick={() => setRenameOpen(false)}>
+            取消
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              if (renameFrom) onRenameGroup(renameFrom, renameValue)
+              setRenameOpen(false)
+            }}
+          >
+            保存
+          </Button>
+        </div>
+      </Dialog>
       <aside className="space-y-ds-xs">
         <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
           <h3 className="text-ds-title">关系健康度</h3>
@@ -100,7 +175,7 @@ export function RelationsSection({
               <div
                 className="h-full w-full rounded-full transition-transform duration-500"
                 style={{
-                  background: "conic-gradient(#66BB6A 0 26.7%, #FFA726 26.7% 66.7%, #BDBDBD 66.7% 100%)",
+                  background: healthConicBackground,
                   transform: healthChartReady ? "rotate(-90deg)" : "rotate(-240deg)",
                 }}
               />
@@ -113,7 +188,7 @@ export function RelationsSection({
                 ) : (
                   <div className="-translate-y-0.5 leading-tight">
                     <p className="text-ds-caption text-soft">总联系</p>
-                    <p className="text-lg font-semibold text-ink">15</p>
+                    <p className="text-lg font-semibold text-ink">{contacts.length}</p>
                   </div>
                 )}
               </div>
@@ -168,22 +243,14 @@ export function RelationsSection({
               ))}
             </div>
           </div>
-          <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-soft">
-            <div className="flex flex-wrap items-center gap-ds-xs">
-              <span
-                className="inline-flex items-center gap-1 rounded-btn-ds bg-[#E8F5E9] px-2 py-0.5 text-[#2E7D32]"
-                title="因与张三互动能量 +2，真朋友指数上升"
-              >
-                ↑ 真朋友 +1
-              </span>
-              <span
-                className="inline-flex items-center gap-1 rounded-btn-ds bg-[#FDECEC] px-2 py-0.5 text-[#C62828]"
-                title="与赵航本周互动减少，暂列入需观察"
-              >
-                ↓ 需观察 -1
-              </span>
-              <span className="text-slate-500">整体关系稳定度提升。</span>
-            </div>
+          <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5c4d42]">
+            {contacts.length === 0 ? (
+              <p>添加联系人后，系统会根据真朋友指数与表面关系指数自动归入上列三类，环形图与占比即来自你的真实数据。</p>
+            ) : (
+              <p>
+                上图占比由当前 {contacts.length} 位联系人的评分实时计算；将鼠标移到某一类上可查看人数与比例。记录互动后，分类会随之更新。
+              </p>
+            )}
           </div>
         </Card>
 
@@ -327,21 +394,74 @@ export function RelationsSection({
             >
               全部 {contacts.length}
             </button>
-            {groupsWithContacts.map((group) => {
+            {allGroups.map((group) => {
               const count = contacts.filter((c) => c.group === group).length
               const isActive = relationsFocusGroup === group
+              const canManage = group !== DEFAULT_CONTACT_GROUP
               return (
-                <button
+                <div
                   key={group}
-                  className={`rounded-btn-ds border px-3 py-1 text-ds-caption ${
+                  className={`inline-flex max-w-full items-stretch rounded-btn-ds border text-ds-caption ${
                     isActive
                       ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]"
                       : "border-warm-soft bg-surface-warm-soft text-slate-600"
                   }`}
-                  onClick={() => setRelationsFocusGroup(group)}
                 >
-                  {group} {count}
-                </button>
+                  <button
+                    type="button"
+                    className="min-h-8 px-3 py-1 text-left hover:brightness-[0.98]"
+                    onClick={() => setRelationsFocusGroup(group)}
+                  >
+                    {group} {count}
+                  </button>
+                  {canManage ? (
+                    <div className="relative flex shrink-0 border-l border-[#e7dfd4]" ref={openMenuFor === group ? menuRef : undefined}>
+                      <button
+                        type="button"
+                        className="flex h-full w-8 items-center justify-center text-[#6d5e54] hover:bg-black/[0.04]"
+                        aria-label={`「${group}」更多操作`}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setOpenMenuFor((prev) => (prev === group ? null : group))
+                        }}
+                      >
+                        <MoreVertical className="h-4 w-4" aria-hidden />
+                      </button>
+                      {openMenuFor === group ? (
+                        <div className="absolute right-0 top-full z-30 mt-1 min-w-[8.5rem] rounded-ds border border-warm-soft bg-paper py-1 shadow-ds-card">
+                          <button
+                            type="button"
+                            className="block w-full px-3 py-2 text-left text-ds-caption hover:bg-surface-warm-soft"
+                            onClick={() => {
+                              setRenameFrom(group)
+                              setRenameValue(group)
+                              setRenameOpen(true)
+                              setOpenMenuFor(null)
+                            }}
+                          >
+                            重命名…
+                          </button>
+                          <button
+                            type="button"
+                            className="block w-full px-3 py-2 text-left text-ds-caption text-[#b42318] hover:bg-[#fef2f2]"
+                            onClick={() => {
+                              setOpenMenuFor(null)
+                              const n = contacts.filter((c) => c.group === group).length
+                              const msg =
+                                n > 0
+                                  ? `删除分组「${group}」后，其中 ${n} 位联系人将移入「${DEFAULT_CONTACT_GROUP}」。确定删除？`
+                                  : `确定删除空分组「${group}」？`
+                              if (window.confirm(msg)) onDeleteGroup(group)
+                            }}
+                          >
+                            删除分组
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
               )
             })}
           </div>

@@ -43,6 +43,13 @@ export async function POST(request: Request) {
     }
 
     const relatedCount = body.relatedEntries?.length ?? 0
+    const relationshipName = body.relationship?.name?.trim() || null
+    const relationshipGroup = body.relationship?.group_type?.trim() || null
+    const relationshipEmotionTag = body.relationship?.emotion_tag?.trim() || null
+    const relationshipPersonality = body.relationship?.personality?.trim() || null
+    const relationshipBackground = body.relationship?.background?.trim() || null
+    const relationshipNotes = body.relationship?.notes?.trim() || null
+    const userQuestion = body.question?.trim() || null
     const recentEntries = await getRecentEntryContext(userId)
     const mappedRelatedEntries =
       body.relatedEntries
@@ -52,8 +59,25 @@ export async function POST(request: Request) {
           const head = t ? `[${t}] ` : ""
           return `- ${head}${item.content}（${item.mood}）`
         })
-        .join("\n") || "- 暂无相关日记"
-    const prompt = `分析对象：${body.relationship?.name ?? ""}\n\n以下「与该对象相关的日记」按时间从新到旧列出（至多15条），是理解你们之间发生了什么的核心依据；回答用户问题时请主动串联其中的情节与情绪，不要忽略。\n\n关系信息：\n- 分组：${body.relationship?.group_type ?? ""}\n- 情绪标签：${body.relationship?.emotion_tag ?? ""}\n\n性格：\n${body.relationship?.personality ?? "暂无"}\n\n成长背景：\n${body.relationship?.background ?? "暂无"}\n\n备注：\n${body.relationship?.notes ?? "暂无"}\n\n与该对象相关的日记：\n${mappedRelatedEntries}\n\n用户其他近期记录（可能涉及他人）：\n${recentEntries}\n\n用户问题：\n${body.question ?? "请帮我看清这段关系。"}\n\n请按固定结构输出：\n【情绪识别】\n【关系模式】\n【可能的另一种视角】\n【风险提示】\n【建议方向】\n\n务必<=100字，不给绝对结论；建议须指向上述材料中的具体细节，无细节则说明线索不足。`
+        .join("\n") || null
+    const analysisPayload = {
+      relationship: {
+        name: relationshipName,
+        group_type: relationshipGroup,
+        emotion_tag: relationshipEmotionTag,
+        personality: relationshipPersonality,
+        background: relationshipBackground,
+        notes: relationshipNotes,
+      },
+      related_entries: mappedRelatedEntries,
+      recent_entries: recentEntries,
+      user_question: userQuestion,
+    }
+    const prompt = `请基于以下 JSON 上下文分析关系；字段为 null 表示该项缺失，不得脑补缺失字段。\n\n${JSON.stringify(
+      analysisPayload,
+      null,
+      2
+    )}\n\n请按固定结构输出：\n【情绪识别】\n【关系模式】\n【可能的另一种视角】\n【风险提示】\n【建议方向】\n\n务必<=100字，不给绝对结论；建议须指向 JSON 中的具体细节，无细节则明确写“线索不足”。`
 
     const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
@@ -69,15 +93,22 @@ export async function POST(request: Request) {
       ok: true,
       meta: {
         relatedEntriesCount: relatedCount,
-        questionLen: (body.question ?? "").length,
+        questionLen: userQuestion?.length ?? 0,
         hasRelationshipPayload: Boolean(body.relationship?.name),
       },
     })
 
-    return NextResponse.json({
-      reply: completion.choices[0]?.message?.content ?? "目前线索有限，建议先补充更多互动场景。",
-      remaining: quota.remaining,
-    })
+    const reply = completion.choices[0]?.message?.content?.trim() ?? ""
+    if (!reply) {
+      logAiRouteEvent("ai/relationship-analysis", requestId, {
+        userId,
+        ok: false,
+        meta: { reason: "empty_model_reply" },
+      })
+      return NextResponse.json({ error: "模型未返回有效内容", requestId }, { status: 502 })
+    }
+
+    return NextResponse.json({ reply, remaining: quota.remaining })
   } catch (error) {
     return aiJsonError(requestId, 500, "服务暂时不可用，请稍后再试", "ai/relationship-analysis", error, userId)
   }

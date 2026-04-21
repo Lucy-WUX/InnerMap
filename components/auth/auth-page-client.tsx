@@ -19,6 +19,7 @@ const SIGNUP_PASSWORD_TOO_SHORT = "密码长度至少为 6 位"
 const PASSWORD_MISMATCH = "两次输入的密码不一致"
 const CONFIRM_PASSWORD_EMPTY = "请再次输入密码"
 const EMAIL_ALREADY_REGISTERED = "该邮箱已被注册，请直接登录"
+const OTP_RESEND_COOLDOWN_SECONDS = 60
 
 const ANONYMOUS_DISABLED_FRIENDLY =
   "当前未开放匿名或游客登录。请使用邮箱登录或注册；也可以无需注册，在本机直接使用本地模式（页面下方有入口）。"
@@ -62,6 +63,19 @@ function mapSignInError(err: { message?: string; code?: string }): string {
 
 export type AuthPageVariant = "login" | "register"
 
+function mapOtpErrorMessage(raw?: string): string {
+  const msg = (raw ?? "").toLowerCase()
+  if (!msg) return "验证码无效或已过期"
+  if (msg.includes("expired")) return "验证码已过期，请点击重发"
+  if (msg.includes("invalid")) return "验证码错误，请核对后重试"
+  if (msg.includes("rate limit")) return "操作过于频繁，请稍后重试"
+  return raw ?? "验证码无效或已过期"
+}
+
+function sanitizeOtpDigits(value: string): string {
+  return value.replace(/\D/g, "").slice(0, 6)
+}
+
 export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
   const router = useRouter()
   const isRegister = variant === "register"
@@ -77,6 +91,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
   const [showOtpPanel, setShowOtpPanel] = useState(false)
   const [verifyingOtp, setVerifyingOtp] = useState(false)
   const [resendingOtp, setResendingOtp] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const [forgotSending, setForgotSending] = useState(false)
   const [forgotConfirmOpen, setForgotConfirmOpen] = useState(false)
   const missingEnv = !isBrowserSupabaseReady()
@@ -96,8 +111,17 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
     if (!isRegister) {
       setShowOtpPanel(false)
       setOtpCode("")
+      setResendCooldown(0)
     }
   }, [isRegister])
+
+  useEffect(() => {
+    if (!showOtpPanel || resendCooldown <= 0) return
+    const timer = window.setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [showOtpPanel, resendCooldown])
 
   function openForgotPasswordConfirm() {
     if (missingEnv) return
@@ -209,6 +233,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       }
     } else if (!data.session) {
       setShowOtpPanel(true)
+      setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS)
       setStatus("注册成功，验证码已发送到邮箱。请填写验证码完成验证。")
     } else {
       router.replace("/?tab=home")
@@ -216,7 +241,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
     setLoading(false)
   }
 
-  async function verifyEmailOtp() {
+  async function verifyEmailOtp(overrideToken?: string) {
     if (missingEnv) return
     if (!email.trim()) {
       setError(EMAIL_EMPTY)
@@ -226,7 +251,8 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       setError(EMAIL_INVALID)
       return
     }
-    if (!otpCode.trim()) {
+    const normalizedToken = sanitizeOtpDigits(overrideToken ?? otpCode)
+    if (!normalizedToken) {
       setError("请输入邮箱验证码")
       return
     }
@@ -236,17 +262,14 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
     setStatus("")
     const { error: otpError } = await supabase.auth.verifyOtp({
       email: email.trim(),
-      token: otpCode.trim(),
+      token: normalizedToken,
       type: "signup",
     })
     if (otpError) {
-      setError(
-        mapAnonymousDisabledMessage(otpError.message || "") ??
-          (otpError.message || "验证码无效或已过期"),
-      )
+      setError(mapAnonymousDisabledMessage(otpError.message || "") ?? mapOtpErrorMessage(otpError.message))
     } else {
       setStatus("邮箱验证成功，正在进入应用…")
-      router.replace("/?tab=home")
+      setTimeout(() => router.replace("/?tab=home"), 250)
     }
     setVerifyingOtp(false)
   }
@@ -261,6 +284,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       setError(EMAIL_INVALID)
       return
     }
+    if (resendCooldown > 0) return
     const supabase = getSupabaseBrowserClient()
     setResendingOtp(true)
     setError("")
@@ -274,7 +298,10 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
         mapAnonymousDisabledMessage(resendError.message || "") ??
           (resendError.message || "重发失败"),
       )
-    else setStatus("验证码已重新发送，请检查邮箱。")
+    else {
+      setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS)
+      setStatus("验证码已重新发送，请检查邮箱。")
+    }
     setResendingOtp(false)
   }
 
@@ -401,18 +428,6 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
             <>
               <h2 className="text-xl font-semibold text-ink">登录</h2>
               <p className="mt-1 text-xs leading-relaxed text-[#5c4d42]">登录状态会保存在本浏览器，下次打开将自动保持登录。</p>
-              <div className="mt-3 rounded-xl border border-[#c8e6c9] bg-[#f1f8f2] px-3 py-3 text-xs leading-relaxed text-[#1b5e20]">
-                <p className="font-semibold">无需注册，直接使用</p>
-                <p className="mt-1.5 text-[#2e7d32]">
-                  可先在本机体验全部基础功能，数据默认只保存在当前设备。也可随时在下方一键进入本地模式。
-                </p>
-                <Link
-                  href={LOCAL_MODE_HREF}
-                  className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-full border-2 border-[#2e7d32] bg-white px-4 text-sm font-bold text-[#1b5e20] transition-colors hover:bg-[#e8f5e9]"
-                >
-                  进入本地模式（无需账号）→
-                </Link>
-              </div>
 
               <form className="mt-6 space-y-4" onSubmit={onLoginSubmit}>
                 <div className="relative">
@@ -607,23 +622,43 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
               {showOtpPanel ? (
                 <div className="mt-5 rounded-2xl border border-land-border bg-[#fffaf2] p-4 shadow-sm">
                   <p className="text-sm font-medium text-ink">填写邮箱验证码</p>
-                  <p className="mt-1 text-xs text-[#5c4d42]">已向该邮箱发送验证码，输入后完成验证并登录。</p>
+                  <p className="mt-1 text-xs text-[#5c4d42]">
+                    已向 <span className="font-medium text-ink">{email.trim()}</span> 发送验证码，输入后完成验证并登录。
+                  </p>
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
                     <input
                       className={`${inputShell} px-4`}
                       placeholder="6 位验证码"
                       inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
                       autoComplete="one-time-code"
                       value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value)}
+                      onChange={(e) => setOtpCode(sanitizeOtpDigits(e.target.value))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && otpCode.length === 6) {
+                          e.preventDefault()
+                          void verifyEmailOtp()
+                        }
+                      }}
+                      onPaste={(e) => {
+                        const text = e.clipboardData.getData("text")
+                        const pasted = sanitizeOtpDigits(text)
+                        if (!pasted) return
+                        e.preventDefault()
+                        setOtpCode(pasted)
+                        if (pasted.length === 6) {
+                          void verifyEmailOtp(pasted)
+                        }
+                      }}
                     />
                     <button
                       type="button"
                       className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7] disabled:opacity-50"
                       onClick={() => void resendOtpCode()}
-                      disabled={resendingOtp}
+                      disabled={resendingOtp || resendCooldown > 0}
                     >
-                      {resendingOtp ? "发送中" : "重发"}
+                      {resendingOtp ? "发送中" : resendCooldown > 0 ? `${resendCooldown}s 后重发` : "重发验证码"}
                     </button>
                   </div>
                   <button
@@ -641,9 +676,9 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
             </>
           )}
 
-          <div className="mt-8 rounded-2xl border-2 border-[#43a047] bg-gradient-to-br from-[#e8f5e9] via-[#f1f8f4] to-[#e8f5e9] p-5 shadow-md sm:p-6">
-            <p className="text-base font-bold text-[#1b5e20]">💡 不想注册？</p>
-            <p className="mt-2 text-sm font-medium leading-relaxed text-[#2e7d32]">
+          <div className="mt-8 rounded-2xl border-2 border-[#43a047] bg-gradient-to-br from-[#e8f5e9] via-[#f1f8f4] to-[#e8f5e9] p-5 text-[#2a1810] shadow-md sm:p-6">
+            <p className="text-base font-bold text-[#0f2918]">💡 不想注册？</p>
+            <p className="mt-2 text-sm font-medium leading-relaxed">
               你可以完全不注册账号，纯本地使用所有基础功能。数据默认只保存在本浏览器，不会上传到服务器。
             </p>
             <Link

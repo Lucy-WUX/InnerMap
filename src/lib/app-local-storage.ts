@@ -29,7 +29,8 @@ export type AppDataSnapshot = {
   scoreHistory: Record<string, ScoreHistoryPoint[]>
   customGroups: GroupKey[]
   diaryRecords: Record<string, string>
-  diaryEmotionRecords: Record<string, "愉悦" | "平静" | "低落" | "愤怒">
+  /** 心情：预设四字 或 自定义短语；缺省键表示该日未记录心情 */
+  diaryEmotionRecords: Record<string, string>
   diarySelectedDate: string
   diaryViewMonth: string
   selectedContactId: string
@@ -130,6 +131,68 @@ export function lockHasPassword(settings: LockSettings): boolean {
 
 export function lockHasWebAuthn(settings: LockSettings): boolean {
   return Boolean(settings.webauthnCredentialId)
+}
+
+/** 旧版内置 7 人演示联系人（id 1–7，无用户数据时应清空） */
+const LEGACY_DEMO_CONTACT_IDS = ["1", "2", "3", "4", "5", "6", "7"]
+const LEGACY_DEMO_GROUPS = new Set(["家人", "朋友", "同学", "职业关系", "同事", "其他"])
+
+/** 有正文的日记条数（排除空字符串占位） */
+export function countDiaryEntriesWithContent(records: Record<string, string> | undefined): number {
+  if (!records) return 0
+  return Object.values(records).filter((t) => (t ?? "").trim().length > 0).length
+}
+
+/** 旧版仅日记演示残留：无联系人、无互动，却在单月堆积多篇日记 */
+function snapshotLooksLikeOrphanDiaryDemo(snap: AppDataSnapshot): boolean {
+  if (snap.contacts.length > 0) return false
+  if ((snap.interactionLogs?.length ?? 0) > 0) return false
+  const withContent = Object.entries(snap.diaryRecords ?? {}).filter(([, t]) => (t ?? "").trim().length > 0)
+  if (withContent.length < 8) return false
+  const months = new Set(withContent.map(([k]) => k.slice(0, 7)))
+  return months.size <= 1
+}
+
+/**
+ * 旧版预设分组残留：全部联系人都落在历史演示分组里，且分组来源仅来自联系人字段（无真实自定义分组历史）。
+ */
+function snapshotLooksLikeLegacyGroupPreset(snap: AppDataSnapshot): boolean {
+  if (snap.contacts.length === 0) return false
+  const allInLegacyGroups = snap.contacts.every((c) => LEGACY_DEMO_GROUPS.has((c.group ?? "").trim()))
+  if (!allInLegacyGroups) return false
+  const custom = snap.customGroups ?? []
+  if (custom.length === 0) return true
+  return custom.every((g) => LEGACY_DEMO_GROUPS.has((g ?? "").trim()))
+}
+
+export function isLegacyBuiltInDemoSnapshot(snap: AppDataSnapshot): boolean {
+  if (snap.contacts.length !== 7) return false
+  const sortedIds = [...snap.contacts.map((c) => c.id)].sort().join(",")
+  return sortedIds === [...LEGACY_DEMO_CONTACT_IDS].sort().join(",")
+}
+
+/** 命中任一则应清空 guest 本地快照，避免上线前残留演示数据 */
+export function snapshotLooksLikeHardcodedDemo(snap: AppDataSnapshot): boolean {
+  if (isLegacyBuiltInDemoSnapshot(snap)) return true
+  if (snapshotLooksLikeOrphanDiaryDemo(snap)) return true
+  if (snapshotLooksLikeLegacyGroupPreset(snap)) return true
+  return false
+}
+
+/**
+ * 仅清空 guest 作用域下的应用数据（联系人/日记/引导/锁草稿等），不删除全局 WebAuthn 配置。
+ */
+export function wipeGuestAppDataOnly() {
+  if (typeof localStorage === "undefined") return
+  const scope = "guest"
+  localStorage.removeItem(scopedKey(PERSISTENCE_KEY, scope))
+  localStorage.removeItem(scopedKey(ONBOARDING_KEY, scope))
+  localStorage.removeItem(scopedKey(LOCK_STORAGE_KEY, scope))
+  localStorage.removeItem(`pss-diary-drafts:${scope}`)
+  localStorage.removeItem(`pss-interaction-draft:${scope}`)
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(scopedKey(SESSION_UNLOCK, scope))
+  }
 }
 
 export function loadSnapshot(scope?: string): AppDataSnapshot | null {
@@ -318,13 +381,13 @@ export function setOnboardingDone(scope?: string) {
   localStorage.setItem(scopedKey(ONBOARDING_KEY, scope), "done")
 }
 
-/** 引导仅在「完全空数据」时展示：无联系人、无互动、无日记 */
+/** 引导仅在「完全空数据」时展示：无联系人、无互动、无有正文的日记 */
 export function isAppDataEmpty(
   contactCount: number,
   interactionLogCount: number,
-  diaryEntryCount: number
+  diaryEntryCountWithContent: number
 ): boolean {
-  return contactCount === 0 && interactionLogCount === 0 && diaryEntryCount === 0
+  return contactCount === 0 && interactionLogCount === 0 && diaryEntryCountWithContent === 0
 }
 
 /** 本地模式首次进入欢迎弹窗 */
@@ -332,6 +395,64 @@ export const LOCAL_MODE_WELCOME_KEY = "innermap-local-welcome-v1"
 
 /** 最近一次在「我的」导出 JSON/CSV 的时间（ISO） */
 export const LAST_BACKUP_EXPORT_AT_KEY = "innermap-last-backup-export-at"
+
+/** guest 本地存储 schema；升级时 bump 值可强制一次干净重置 */
+export const GUEST_LOCAL_SCHEMA_KEY = "innermap-guest-local-schema-v2"
+const GUEST_LOCAL_SCHEMA_VALUE = "2"
+
+/**
+ * 首次打开或 schema 过期时：将未 scoped 的旧快照迁入 guest，必要时清空演示/空壳数据并重置提示位。
+ * 应在 guest 分支、loadSnapshot 之前调用。
+ */
+export function applyGuestLocalSchemaIfStale() {
+  if (typeof localStorage === "undefined") return
+  if (localStorage.getItem(GUEST_LOCAL_SCHEMA_KEY) === GUEST_LOCAL_SCHEMA_VALUE) return
+
+  let snap = loadSnapshot("guest")
+  if (!snap) {
+    const raw = localStorage.getItem(PERSISTENCE_KEY)
+    if (raw) {
+      try {
+        const o = JSON.parse(raw) as AppDataSnapshot
+        if (o.version === 1 && Array.isArray(o.contacts)) {
+          saveSnapshot(
+            {
+              contacts: o.contacts,
+              interactionLogs: o.interactionLogs ?? [],
+              scoreHistory: o.scoreHistory ?? {},
+              customGroups: o.customGroups ?? [],
+              diaryRecords: o.diaryRecords ?? {},
+              diaryEmotionRecords: o.diaryEmotionRecords ?? {},
+              diarySelectedDate: o.diarySelectedDate ?? new Date().toISOString().slice(0, 10),
+              diaryViewMonth: o.diaryViewMonth ?? new Date().toISOString().slice(0, 7),
+              selectedContactId: o.selectedContactId ?? "",
+            },
+            "guest"
+          )
+          localStorage.removeItem(PERSISTENCE_KEY)
+          snap = loadSnapshot("guest")
+        }
+      } catch {
+        /* ignore corrupt legacy blob */
+      }
+    }
+  }
+
+  const purge = !snap || snapshotLooksLikeHardcodedDemo(snap)
+
+  if (purge) {
+    wipeGuestAppDataOnly()
+    localStorage.removeItem(PERSISTENCE_KEY)
+    localStorage.removeItem(LOCAL_MODE_WELCOME_KEY)
+    localStorage.removeItem(LAST_BACKUP_EXPORT_AT_KEY)
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i)
+      if (k?.startsWith("innermap-guest-merge-prompt-")) localStorage.removeItem(k)
+    }
+  }
+
+  localStorage.setItem(GUEST_LOCAL_SCHEMA_KEY, GUEST_LOCAL_SCHEMA_VALUE)
+}
 
 export function hasSeenLocalModeWelcome(): boolean {
   if (typeof localStorage === "undefined") return true

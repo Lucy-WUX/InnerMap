@@ -262,7 +262,7 @@ export function MineSection({
         <p className="mt-2 text-ds-body font-semibold leading-relaxed text-[#1b5e20]">
           宁可少一个花哨功能，也不牺牲你的安全感。
         </p>
-        <p className="mt-ds-xs text-ds-caption leading-relaxed text-[#2f5b39]">
+        <p className="mt-ds-xs text-ds-caption leading-relaxed text-[#1a2e22]">
           你在这里写下的内容，可能比银行密码更敏感。InnerMap 把隐私当作生死线：记录与账户绑定，经加密连接与托管云端同步，
           <strong className="font-medium text-[#1b5e20]">不向其他用户公开</strong>
           。你可随时导出 JSON/CSV 自备份，一键清理本机或云端数据；注销账号后相关数据将立即永久删除。更细的说明见信任中心。
@@ -424,8 +424,10 @@ export function MineSection({
         )}
       </Card>
       <Card className="rounded-ds border border-warm-base p-ds-lg">
-        <p className="text-ds-body">本周关系维护完成度：72%</p>
-        <p className="mt-1 text-ds-body">AI 使用次数：演示数据</p>
+        <p className="text-ds-body font-medium text-ink">AI 关系分析</p>
+        <p className="mt-1 text-ds-caption leading-relaxed text-soft">
+          以下为本地界面入口：具体问答与次数限制取决于是否登录及服务端 AI 配置；未配置时部分能力可能不可用。
+        </p>
         <Button className="mt-ds-xs" onClick={() => openAiPage("总结我这周的人际模式并给出下周建议")}>
           打开 AI 分析页
         </Button>

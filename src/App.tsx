@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { AiAnalysisOverlay } from "./components/app/ai-analysis-overlay"
@@ -10,8 +10,8 @@ import { MineSection } from "./components/app/mine-section"
 import { PersonDetailOverlay } from "./components/app/person-detail-overlay"
 import { RelationsSection } from "./components/app/relations-section"
 import {
-  BASE_GROUPS,
-  RELATION_HEALTH_DATA,
+  DEFAULT_CONTACT_GROUP,
+  sortContactGroupsForUi,
   type GroupKey,
   type OverlayPage,
   type RelationContact,
@@ -21,7 +21,9 @@ import { AppLockScreen } from "./components/app/app-lock-screen"
 import { OnboardingOverlay } from "./components/app/onboarding-overlay"
 import { Button } from "./components/ui/button"
 import {
+  applyGuestLocalSchemaIfStale,
   clearAllScopedLocalData,
+  countDiaryEntriesWithContent,
   dismissMonthlyBackupBannerForMonth,
   guestMergePromptKey,
   hasSeenLocalModeWelcome,
@@ -36,15 +38,18 @@ import {
   setOnboardingDone,
   shouldShowMonthlyBackupBanner,
   snapshotHasMigratableData,
+  snapshotLooksLikeHardcodedDemo,
   userScopeShouldOfferGuestMerge,
+  wipeGuestAppDataOnly,
   type AppDataSnapshot,
   type LockSettings,
 } from "./lib/app-local-storage"
+import { normalizeCustomMoodInput } from "./lib/diary-mood"
 import { FREE_CONTACT_LIMIT, isProSubscriber } from "./lib/product-limits"
 import {
-  buildInteractionInsight,
   buildPatternSummary,
   computeEnergyAlerts,
+  computeRelationHealthBuckets,
   computeWeeklyDigest,
   type ScoreHistoryPoint,
 } from "./lib/relationship-ai-demo"
@@ -116,7 +121,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [customGroups, setCustomGroups] = useState<GroupKey[]>([])
   const [contactForm, setContactForm] = useState<ContactFormState>({
     name: "",
-    group: "朋友" as GroupKey,
+    group: DEFAULT_CONTACT_GROUP,
     tags: [] as string[],
     intimacy: 5,
     trueFriendScore: 7,
@@ -131,12 +136,12 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [diaryEditorText, setDiaryEditorText] = useState("")
   const [mentionActiveIndex, setMentionActiveIndex] = useState(0)
   const [calendarFadeIn, setCalendarFadeIn] = useState(true)
-  const [diaryEmotion, setDiaryEmotion] = useState<"愉悦" | "平静" | "低落" | "愤怒">("平静")
+  const [diaryEmotion, setDiaryEmotion] = useState("")
   const [diarySaveTip, setDiarySaveTip] = useState("")
   const [diaryViewMode, setDiaryViewMode] = useState<"calendar" | "list">("calendar")
   const [diarySearchQuery, setDiarySearchQuery] = useState("")
   const [diaryRecords, setDiaryRecords] = useState<Record<string, string>>({})
-  const [diaryEmotionRecords, setDiaryEmotionRecords] = useState<Record<string, "愉悦" | "平静" | "低落" | "愤怒">>({})
+  const [diaryEmotionRecords, setDiaryEmotionRecords] = useState<Record<string, string>>({})
   const [hoveredHealthLabel, setHoveredHealthLabel] = useState<string | null>(null)
   const [healthChartReady, setHealthChartReady] = useState(false)
   const [autoHealthIndex, setAutoHealthIndex] = useState(0)
@@ -145,9 +150,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [relationsSearchQuery, setRelationsSearchQuery] = useState("")
   const [relationsSortBy, setRelationsSortBy] = useState<"recent" | "intimacy" | "trueFriend">("recent")
   const [selectedRelationIds, setSelectedRelationIds] = useState<string[]>([])
-  const [animatedHealthRatios, setAnimatedHealthRatios] = useState<number[]>(
-    RELATION_HEALTH_DATA.map(() => 0)
-  )
+  const [animatedHealthRatios, setAnimatedHealthRatios] = useState<number[]>([0, 0, 0])
   const [interactionForm, setInteractionForm] = useState(buildDefaultInteractionForm)
   const [appReady, setAppReady] = useState(false)
   const [unlockTick, setUnlockTick] = useState(0)
@@ -247,15 +250,6 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       const deltaSurface = -energy * 0.08
       const nextTF = sel ? clampScore(sel.trueFriendScore + deltaFriend) : 0
       const nextSF = sel ? clampScore(sel.surfaceRelationScore + deltaSurface) : 0
-      const aiInsight =
-        sel != null
-          ? buildInteractionInsight({
-              contactName: sel.name,
-              energy,
-              deltaTrueFriend: Math.round(deltaFriend * 10) / 10,
-              type: interactionForm.type,
-            })
-          : undefined
       setInteractionLogs((prev) => [
         {
           id: String(Date.now()),
@@ -267,7 +261,6 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           feel: interactionForm.feel,
           energy: interactionForm.energy,
           meaningful: interactionForm.meaningful,
-          aiInsight,
         },
         ...prev,
       ])
@@ -313,7 +306,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     setTagInput("")
     setContactForm({
       name: "",
-      group: "朋友",
+      group: DEFAULT_CONTACT_GROUP,
       tags: [],
       intimacy: 5,
       trueFriendScore: 7,
@@ -343,6 +336,25 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       privateNote: selected.privateNote ?? "",
     })
     setContactDialogOpen(true)
+  }
+
+  function handleDeleteContactFromDetail() {
+    const targetId = selectedContactId
+    const target = contacts.find((c) => c.id === targetId)
+    if (!target) return
+    if (!window.confirm(`确认删除联系人「${target.name}」吗？其互动记录与评分历史也会一并删除，且不可恢复。`)) return
+
+    setContacts((prev) => prev.filter((item) => item.id !== targetId))
+    setInteractionLogs((prev) => prev.filter((item) => item.contactId !== targetId))
+    setScoreHistory((prev) => {
+      const next = { ...prev }
+      delete next[targetId]
+      return next
+    })
+    setSelectedRelationIds((prev) => prev.filter((id) => id !== targetId))
+    setSelectedContactId("")
+    setOverlay("none")
+    showSaveSuccess("联系人已删除 ✓")
   }
 
   function saveContactForm() {
@@ -397,8 +409,8 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           stars: Math.max(1, Math.min(5, Math.round(contactForm.intimacy / 2))),
           trueFriendScore: tf,
           surfaceRelationScore: sf,
-          lastContact: "刚创建",
-          note: "新建联系人",
+          lastContact: today,
+          note: "",
           tags: contactForm.tags,
           traits: contactForm.traits,
           background: contactForm.background,
@@ -418,10 +430,52 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
   function handleCreateGroup() {
     const name = newGroupName.trim()
-    if (!name || allGroups.includes(name)) return
+    if (!name) return
+    if (name === DEFAULT_CONTACT_GROUP) {
+      window.alert(`「${DEFAULT_CONTACT_GROUP}」为默认分组，无需创建。`)
+      return
+    }
+    if (customGroups.includes(name) || contacts.some((c) => c.group === name)) {
+      window.alert("已存在同名分组。")
+      return
+    }
     setCustomGroups((prev) => [...prev, name])
     setNewGroupName("")
     setShowNewGroupDialog(false)
+  }
+
+  function renameContactGroup(oldName: GroupKey, newName: string) {
+    const next = newName.trim()
+    if (!next || next === oldName) return
+    if (oldName === DEFAULT_CONTACT_GROUP) {
+      window.alert("不能重命名默认分组。")
+      return
+    }
+    if (next === DEFAULT_CONTACT_GROUP) {
+      window.alert(`请使用「删除分组」将联系人移入「${DEFAULT_CONTACT_GROUP}」，不要改为同名。`)
+      return
+    }
+    const nameTaken =
+      (next !== oldName && contacts.some((c) => c.group === next)) ||
+      (next !== oldName && customGroups.includes(next))
+    if (nameTaken) {
+      window.alert("已存在同名分组。")
+      return
+    }
+    setContacts((prev) => prev.map((c) => (c.group === oldName ? { ...c, group: next } : c)))
+    setCustomGroups((prev) => prev.map((g) => (g === oldName ? next : g)))
+    if (relationsFocusGroup === oldName) setRelationsFocusGroup(next)
+    setContactForm((p) => (p.group === oldName ? { ...p, group: next } : p))
+  }
+
+  function deleteContactGroup(groupName: GroupKey) {
+    if (groupName === DEFAULT_CONTACT_GROUP) return
+    setContacts((prev) =>
+      prev.map((c) => (c.group === groupName ? { ...c, group: DEFAULT_CONTACT_GROUP } : c))
+    )
+    setCustomGroups((prev) => prev.filter((g) => g !== groupName))
+    if (relationsFocusGroup === groupName) setRelationsFocusGroup("全部")
+    setContactForm((p) => (p.group === groupName ? { ...p, group: DEFAULT_CONTACT_GROUP } : p))
   }
 
   function formatMonthValue(date: Date) {
@@ -448,7 +502,13 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     }
 
     setDiaryRecords((prev) => ({ ...prev, [diarySelectedDate]: content }))
-    setDiaryEmotionRecords((prev) => ({ ...prev, [diarySelectedDate]: diaryEmotion }))
+    setDiaryEmotionRecords((prev) => {
+      const next = { ...prev }
+      const mood = normalizeCustomMoodInput(diaryEmotion)
+      if (!mood) delete next[diarySelectedDate]
+      else next[diarySelectedDate] = mood
+      return next
+    })
 
     const mentionNames = contacts
       .filter((c) => content.includes(`@${c.name}`))
@@ -496,7 +556,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     })
     if (diarySelectedDate === dateKey) {
       setDiaryEditorText("")
-      setDiaryEmotion("平静")
+      setDiaryEmotion("")
     }
     setDiaryDrafts((prev) => {
       const next = { ...prev }
@@ -518,9 +578,12 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     .map((c) => c.name)
   const linkedContactItems = contacts.filter((c) => linkedContacts.includes(c.name))
   const selectedContact = contacts.find((c) => c.id === selectedContactId)
-  const allGroups: GroupKey[] = [...BASE_GROUPS, ...customGroups]
+  const allGroups: GroupKey[] = sortContactGroupsForUi([
+    DEFAULT_CONTACT_GROUP,
+    ...customGroups,
+    ...contacts.map((c) => c.group),
+  ])
   const allTags = Array.from(new Set(contacts.flatMap((c) => c.tags ?? [])))
-  const groupsWithContacts = allGroups.filter((group) => contacts.some((c) => c.group === group))
   const relationVisibleContacts = contacts
     .filter((c) => (relationsFocusGroup === "全部" ? true : c.group === relationsFocusGroup))
     .filter((c) => {
@@ -537,7 +600,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       if (relationsSortBy === "trueFriend") return b.trueFriendScore - a.trueFriendScore
       return b.lastContact.localeCompare(a.lastContact)
     })
-  const relationHealthData = RELATION_HEALTH_DATA
+  const relationHealthData = useMemo(() => computeRelationHealthBuckets(contacts), [contacts])
   const [viewYear, viewMonth] = diaryViewMonth.split("-").map(Number)
   const monthDate = new Date(viewYear, viewMonth - 1, 1)
   const today = new Date()
@@ -552,15 +615,18 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     return {
       day,
       dateValue,
-      hasRecord: Boolean(diaryRecords[dateValue]),
+      hasRecord: (diaryRecords[dateValue] ?? "").trim().length > 0,
       isToday: dateValue === todayDateValue,
       emotion: diaryEmotionRecords[dateValue] ?? null,
     }
   })
   const monthTimeline = Object.entries(diaryRecords)
-    .filter(([dateKey]) => dateKey.startsWith(diaryViewMonth))
+    .filter(
+      ([dateKey, content]) => dateKey.startsWith(diaryViewMonth) && (content ?? "").trim().length > 0
+    )
     .sort((a, b) => a[0].localeCompare(b[0]))
   const diarySearchResults = Object.entries(diaryRecords)
+    .filter(([, content]) => (content ?? "").trim().length > 0)
     .filter(([, content]) => {
       if (!diarySearchQuery.trim()) return true
       const q = diarySearchQuery.trim().toLowerCase()
@@ -613,13 +679,56 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   }, [selectedContact, selectedContactId, interactionLogs])
   const scoreTrendForDetail = selectedContactId ? scoreHistory[selectedContactId] ?? [] : []
 
+  const buildGlobalAiAdvisorContext = useCallback((): string => {
+    const lines: string[] = []
+    lines.push(`全局关系概括：联系人 ${contacts.length} 人；自定义分组 ${customGroups.length} 个。`)
+    lines.push(`互动记录共 ${interactionLogs.length} 条。`)
+    const diaryFilled = Object.keys(diaryRecords).filter((d) => (diaryRecords[d] ?? "").trim().length > 0)
+    lines.push(`有内容的日记 ${diaryFilled.length} 篇。`)
+    if (contacts.length > 0) {
+      lines.push("联系人节选（最多 12 人）：")
+      for (const c of contacts.slice(0, 12)) {
+        lines.push(
+          `- ${c.name} · 分组「${c.group}」· 真朋友 ${c.trueFriendScore}/10 · 表面 ${c.surfaceRelationScore}/10`
+        )
+      }
+    }
+    if (interactionLogs.length > 0) {
+      lines.push("互动节选（最新 8 条）：")
+      for (const log of interactionLogs.slice(0, 8)) {
+        const person = contacts.find((x) => x.id === log.contactId)?.name ?? log.contactId
+        lines.push(
+          `- ${log.date} · ${person} · ${log.type} · 能量 ${log.energy} · ${(log.what ?? "").slice(0, 160)}`
+        )
+      }
+    }
+    const recentDiary = Object.entries(diaryRecords)
+      .filter(([, t]) => (t ?? "").trim().length > 0)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 3)
+    if (recentDiary.length > 0) {
+      lines.push("最近日记节选：")
+      for (const [date, text] of recentDiary) {
+        lines.push(`- ${date}：${(text ?? "").trim().slice(0, 500)}`)
+      }
+    }
+    return lines.join("\n")
+  }, [contacts, customGroups, interactionLogs, diaryRecords])
+
   useEffect(() => {
     if (sessionLoading) return
 
     setAppReady(false)
     const ls = loadLockSettings(storageScope)
     setLockSettings(ls)
-    const snap = loadSnapshot(storageScope)
+    if (storageScope === "guest") {
+      applyGuestLocalSchemaIfStale()
+    }
+    let snap = loadSnapshot(storageScope)
+    if (storageScope === "guest" && snap && snapshotLooksLikeHardcodedDemo(snap)) {
+      wipeGuestAppDataOnly()
+      snap = null
+    }
     if (snap) {
       setContacts(snap.contacts)
       setInteractionLogs(snap.interactionLogs)
@@ -731,7 +840,8 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     if (!appReady || lockVisible) return
     if (isLocalModeUrl && !userId && !hasSeenLocalModeWelcome()) return
     if (onboardingDone(storageScope)) return
-    if (!isAppDataEmpty(contacts.length, interactionLogs.length, Object.keys(diaryRecords).length)) return
+    if (!isAppDataEmpty(contacts.length, interactionLogs.length, countDiaryEntriesWithContent(diaryRecords)))
+      return
     setShowOnboarding(true)
   }, [
     appReady,
@@ -802,10 +912,10 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     const saved = diaryRecords[diarySelectedDate]
     if (saved) {
       setDiaryEditorText(saved)
-      setDiaryEmotion(diaryEmotionRecords[diarySelectedDate] ?? "平静")
+      setDiaryEmotion(diaryEmotionRecords[diarySelectedDate] ?? "")
     } else {
       setDiaryEditorText(diaryDrafts[diarySelectedDate] ?? "")
-      setDiaryEmotion("平静")
+      setDiaryEmotion("")
     }
   }, [diarySelectedDate, diaryRecords, diaryEmotionRecords, diaryDrafts])
 
@@ -940,8 +1050,9 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           relationsFocusGroup={relationsFocusGroup}
           setRelationsFocusGroup={setRelationsFocusGroup}
           contacts={contacts}
-          groupsWithContacts={groupsWithContacts}
           allGroups={allGroups}
+          onRenameGroup={renameContactGroup}
+          onDeleteGroup={deleteContactGroup}
           relationVisibleContacts={relationVisibleContacts}
           relationsSearchQuery={relationsSearchQuery}
           setRelationsSearchQuery={setRelationsSearchQuery}
@@ -973,6 +1084,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           onClose={() => setOverlay("none")}
           interactionLogs={interactionLogs.filter((item) => item.contactId === selectedContactId)}
           onDeleteInteraction={handleDeleteInteraction}
+          onDeleteContact={handleDeleteContactFromDetail}
         />
       ) : null}
 
@@ -994,7 +1106,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
             diarySearchQuery,
             setDiarySearchQuery,
             diarySearchResults,
-            totalDiaryCount: Object.keys(diaryRecords).length,
+            totalDiaryCount: countDiaryEntriesWithContent(diaryRecords),
             diaryEmotion,
             setDiaryEmotion,
             diaryEditorText,
@@ -1040,7 +1152,12 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       ) : null}
 
       {overlay === "ai-analysis" ? (
-        <AiAnalysisOverlay aiInput={aiInput} setAiInput={setAiInput} onClose={() => setOverlay("none")} />
+        <AiAnalysisOverlay
+          aiInput={aiInput}
+          setAiInput={setAiInput}
+          onClose={() => setOverlay("none")}
+          buildAdvisorContext={buildGlobalAiAdvisorContext}
+        />
       ) : null}
 
       <AppDialogs

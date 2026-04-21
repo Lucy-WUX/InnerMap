@@ -96,7 +96,7 @@ export function PublicLanding() {
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5c4d42] sm:text-base">
                 在这里，你可以诚实地面对自己和每一段关系
               </p>
-              <p className="mt-6 rounded-ds border border-[#c8e6c9] bg-[#f1f8f2] px-4 py-3 text-sm font-medium leading-relaxed text-[#1b5e20] sm:text-base">
+              <p className="mt-6 rounded-ds border border-[#c8e6c9] bg-[#f1f8f2] px-4 py-3 text-sm font-medium leading-relaxed text-[#0f2918] sm:text-base">
                 <span aria-hidden>✅</span> 无需注册，打开即用。所有数据默认存储在你的浏览器本地，不会上传任何服务器。
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
@@ -158,7 +158,10 @@ export function PublicLanding() {
                     <>
                       所有数据默认本地存储，我们永远看不到你的任何内容。
                       若你注册并开启同步，数据会经加密连接保存至你的账户，仅供你本人使用，不向其他用户公开。详见
-                      <Link href="/privacy" className="font-medium text-ink underline-offset-2 hover:underline">
+                      <Link
+                        href="/privacy"
+                        className="font-semibold text-[#3e2723] underline decoration-[#6d5e54] underline-offset-2 hover:text-ink hover:decoration-ink"
+                      >
                         《隐私政策》
                       </Link>
                       。
@@ -189,7 +192,7 @@ export function PublicLanding() {
                     {item.icon}
                   </p>
                   <h3 className="mt-3 text-base font-semibold text-ink">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-soft">{item.body}</p>
+                  <p className="mt-2 text-sm leading-7 text-[#3e2723]">{item.body}</p>
                 </article>
               ))}
             </div>
@@ -205,7 +208,7 @@ export function PublicLanding() {
             <p className="mx-auto mt-8 max-w-2xl text-lg font-semibold leading-relaxed text-[#4a3728] sm:text-xl sm:leading-snug">
               宁可少一个花哨功能，也不牺牲你的安全感。
             </p>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#5c4d42] sm:text-base">
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#3e2723] sm:text-base">
               你写下的不是普通笔记，而是人际关系里最锋利、最柔软、最不敢示人的部分。我们按「生死线」标准设计隐私：登录与同步、AI
               处理边界均在政策中写清，能力与话术保持一致。
             </p>
@@ -223,7 +226,7 @@ export function PublicLanding() {
                 阅读《隐私政策》
               </Link>
             </div>
-            <p className="mx-auto mt-10 max-w-2xl text-sm font-medium leading-relaxed text-[#2e7d32] sm:text-base">
+            <p className="mx-auto mt-10 max-w-2xl text-sm font-medium leading-relaxed text-[#2a1810] sm:text-base">
               <span aria-hidden>🚀</span> 现在就可以无需注册开始使用，你的第一个联系人、第一篇日记，都只会保存在你的设备里。
             </p>
           </div>
@@ -231,7 +234,7 @@ export function PublicLanding() {
 
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <div className="rounded-landing-card border border-[#c8e6c9] bg-[#f9fdf9] px-6 py-10 text-center shadow-landing sm:px-10 sm:py-12">
-            <p className="mx-auto max-w-xl text-sm font-medium leading-relaxed text-[#2e7d32] sm:text-base">
+            <p className="mx-auto max-w-xl text-sm font-medium leading-relaxed text-[#2a1810] sm:text-base">
               <span aria-hidden>✅</span> 无需注册即可体验；需要换机或多端同步时再注册即可。
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">

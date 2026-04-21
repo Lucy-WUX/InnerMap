@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 
 import { Button } from "../ui/button"
 import { Dialog } from "../ui/dialog"
 import { Textarea } from "../ui/textarea"
 
-import type { GroupKey } from "./types"
+import { DEFAULT_CONTACT_GROUP, type GroupKey } from "./types"
 
 type ContactFormState = {
   name: string
@@ -87,39 +87,10 @@ export function AppDialogs({
   saveInteraction,
   interactionAiStatus,
 }: AppDialogsProps) {
-  const [groupSuggestLoading, setGroupSuggestLoading] = useState(false)
-  const [liveSuggestedGroup, setLiveSuggestedGroup] = useState<GroupKey | "">("")
   const [interactionTemplates, setInteractionTemplates] = useState<Record<string, Pick<InteractionFormState, "what" | "reaction" | "feel">>>({})
   const energy = interactionForm.energy
   const energyTrackPercent = ((energy + 5) / 10) * 100
   const energyAccentColor = energy > 0 ? "#16a34a" : energy < 0 ? "#dc2626" : "#9ca3af"
-
-  const suggestSourceText = useMemo(
-    () => `${contactForm.traits} ${contactForm.background}`.trim(),
-    [contactForm.traits, contactForm.background]
-  )
-
-  useEffect(() => {
-    if (!showContactDialog) return
-    if (!suggestSourceText) {
-      setLiveSuggestedGroup("")
-      setGroupSuggestLoading(false)
-      return
-    }
-    setGroupSuggestLoading(true)
-    const timer = setTimeout(() => {
-      const text = suggestSourceText
-      let next: GroupKey = "朋友"
-      if (/家|父母|亲|家庭|家人/.test(text)) next = "家人"
-      else if (/同事|工作|项目|汇报|团队/.test(text)) next = "同事"
-      else if (/职业|客户|合作|商务|行业/.test(text)) next = "职业关系"
-      else if (/同学|学校|大学|老师|课程/.test(text)) next = "同学"
-      else if (/邻居|社群|兴趣/.test(text)) next = "其他"
-      setLiveSuggestedGroup(next)
-      setGroupSuggestLoading(false)
-    }, 450)
-    return () => clearTimeout(timer)
-  }, [showContactDialog, suggestSourceText])
 
   useEffect(() => {
     if (!showInteractionDialog) return
@@ -168,7 +139,7 @@ export function AppDialogs({
             姓名 *
             <input
               className="mt-1 w-full rounded-btn-ds border border-warm-soft px-3 py-2 text-ds-body"
-              placeholder="例如：张三"
+              placeholder="请输入姓名"
               value={contactForm.name}
               onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
             />
@@ -176,13 +147,7 @@ export function AppDialogs({
           <label className="block text-ds-body font-medium">
             <span className="flex items-center justify-between">
               <span>分组 *</span>
-              <span className="text-ds-caption font-normal text-soft">
-                {groupSuggestLoading
-                  ? "AI 识别中..."
-                  : liveSuggestedGroup
-                    ? `建议：${liveSuggestedGroup}`
-                    : "输入特点后自动建议"}
-              </span>
+              <span className="text-ds-caption font-normal text-soft">请从列表选择，或使用「关系」页新建分组</span>
             </span>
             <select
               className="mt-1 w-full rounded-btn-ds border border-warm-soft px-3 py-2 text-ds-body"
@@ -298,7 +263,7 @@ export function AppDialogs({
           />
           {showRecommendHint ? (
             <p className="text-ds-caption text-[#0F766E]">
-              建议分组：{contactForm.group}（根据你输入的“{contactForm.background.slice(0, 6) || "同事"}”和“{contactForm.traits.slice(0, 6) || "敏感"}”标签）
+              已重置为「{DEFAULT_CONTACT_GROUP}」。需要更多类别时，请在「关系」页使用「新建分组」后再来此选择。
             </p>
           ) : null}
           {contactFormError ? (
@@ -316,11 +281,11 @@ export function AppDialogs({
                 setTimeout(() => {
                   setSmartGrouping(false)
                   setShowRecommendHint(true)
-                  setContactForm((prev) => ({ ...prev, group: "朋友" }))
+                  setContactForm((prev) => ({ ...prev, group: DEFAULT_CONTACT_GROUP }))
                 }, 800)
               }}
             >
-              {smartGrouping ? "推荐中..." : "✨ 智能推荐分组"}
+              {smartGrouping ? "处理中…" : "重置为默认分组"}
             </Button>
             <div className="flex gap-ds-xs">
               <Button className="border-warm-soft bg-white" variant="outline" onClick={() => setShowContactDialog(false)}>

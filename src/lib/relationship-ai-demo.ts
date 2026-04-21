@@ -1,5 +1,48 @@
 import type { RelationContact } from "../components/app/types"
 
+/** 关系页环形图 / 列表：与「真朋友 / 需观察 / 表面关系」三分法一致，由真实联系人评分推导 */
+export type RelationHealthBucket = {
+  label: string
+  count: number
+  color: string
+  /** 占全部联系人的百分比 0–100 */
+  ratio: number
+}
+
+export function computeRelationHealthBuckets(contacts: RelationContact[]): RelationHealthBucket[] {
+  const palette = [
+    { label: "真朋友", color: "#66BB6A" },
+    { label: "需观察", color: "#FFA726" },
+    { label: "表面关系", color: "#BDBDBD" },
+  ] as const
+  if (contacts.length === 0) {
+    return palette.map((p) => ({ ...p, count: 0, ratio: 0 }))
+  }
+  let highTrust = 0
+  let surfaceLean = 0
+  let observe = 0
+  for (const c of contacts) {
+    if (c.trueFriendScore >= 7.5) highTrust++
+    else if (c.surfaceRelationScore >= 6) surfaceLean++
+    else observe++
+  }
+  const counts = [highTrust, observe, surfaceLean]
+  const n = contacts.length
+  const ratios = counts.map((c) => Math.floor((100 * c) / n))
+  let remainder = 100 - ratios.reduce((a, b) => a + b, 0)
+  const frac = counts.map((c, i) => ({ i, rem: (100 * c) / n - ratios[i] }))
+  frac.sort((a, b) => b.rem - a.rem)
+  for (let k = 0; k < remainder; k++) {
+    ratios[frac[k % frac.length].i]++
+  }
+  return palette.map((p, i) => ({
+    label: p.label,
+    color: p.color,
+    count: counts[i],
+    ratio: ratios[i],
+  }))
+}
+
 export type ScoreHistoryPoint = {
   date: string
   trueFriend: number
@@ -39,7 +82,7 @@ export function clampScore(value: number) {
   return Math.min(10, Math.max(0, Math.round(value * 10) / 10))
 }
 
-/** 演示用：为每位联系人生成近 3 个月趋势锚点（确定性，无 random） */
+/** 为每位联系人生成近 3 个月趋势锚点（确定性，无 random；仅在有联系人数据时使用） */
 export function seedScoreHistory(contacts: RelationContact[]): Record<string, ScoreHistoryPoint[]> {
   const out: Record<string, ScoreHistoryPoint[]> = {}
   const now = new Date()
@@ -63,30 +106,6 @@ export function seedScoreHistory(contacts: RelationContact[]): Record<string, Sc
     out[c.id] = pts
   }
   return out
-}
-
-/** 30 字以内的互动即时分析（演示） */
-export function buildInteractionInsight(params: {
-  contactName: string
-  energy: number
-  deltaTrueFriend: number
-  type: string
-}): string {
-  const d = params.deltaTrueFriend.toFixed(1)
-  const e =
-    params.energy > 0
-      ? `能量+${params.energy}`
-      : params.energy < 0
-        ? `能量${params.energy}`
-        : "能量持平"
-  let core = ""
-  if (params.energy >= 2) core = `${e}，沟通顺畅，对${params.contactName}信任感上升，真朋友+${d}`
-  else if (params.energy >= 1) core = `${e}，互动积极，真朋友指数+${d}`
-  else if (params.energy <= -2) core = `${e}，持续消耗，建议先降频复盘，真朋友${Number(d) >= 0 ? "+" + d : d}`
-  else if (params.energy <= -1) core = `${e}，略感疲惫，真朋友${Number(d) >= 0 ? "+" + d : d}`
-  else core = `${e}，关系波动不大，真朋友${Number(d) >= 0 ? "+" + d : d}`
-  if (core.length > 30) return `${core.slice(0, 27)}…`
-  return core
 }
 
 export function buildPatternSummary(contactName: string, logs: InteractionLogLike[]): string {

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react"
 
 import { Button } from "../ui/button"
 import { Card } from "../ui/card"
@@ -7,15 +7,19 @@ import { Textarea } from "../ui/textarea"
 
 import type { RelationContact } from "./types"
 import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
-
-type DiaryEmotion = "愉悦" | "平静" | "低落" | "愤怒"
+import {
+  DIARY_CUSTOM_MOOD_MAX_LEN,
+  diaryMoodDotClass,
+  isPresetMood,
+  normalizeCustomMoodInput,
+} from "../../lib/diary-mood"
 
 type CalendarCell = {
   day: number
   dateValue: string
   hasRecord: boolean
   isToday: boolean
-  emotion: DiaryEmotion | null
+  emotion: string | null
 } | null
 
 type HomeSectionProps = {
@@ -35,8 +39,8 @@ type HomeSectionProps = {
   setDiarySearchQuery: Dispatch<SetStateAction<string>>
   diarySearchResults: [string, string][]
   totalDiaryCount: number
-  diaryEmotion: DiaryEmotion
-  setDiaryEmotion: (value: DiaryEmotion) => void
+  diaryEmotion: string
+  setDiaryEmotion: (value: string) => void
   diaryEditorText: string
   setDiaryEditorText: (value: string) => void
   mentionKeyword: string | null
@@ -91,12 +95,25 @@ export function HomeSection({
   weeklyDigest,
   energyAlerts,
 }: HomeSectionProps) {
+  const diaryTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const [customMoodDraft, setCustomMoodDraft] = useState("")
   const [showMentionPicker, setShowMentionPicker] = useState(false)
   const [mentionSearch, setMentionSearch] = useState("")
   const pickerSuggestions = useMemo(
     () => contacts.filter((c) => c.name.includes(mentionSearch.trim())).slice(0, 8),
     [contacts, mentionSearch]
   )
+
+  const monthDiaryCount = monthTimeline.length
+  const monthMentionedContactCount = useMemo(() => {
+    const ids = new Set<string>()
+    for (const [, content] of monthTimeline) {
+      for (const c of contacts) {
+        if (content.includes(`@${c.name}`)) ids.add(c.id)
+      }
+    }
+    return ids.size
+  }, [monthTimeline, contacts])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -108,6 +125,31 @@ export function HomeSection({
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [handleSaveDiary])
+
+  useEffect(() => {
+    if (diaryEmotion && !isPresetMood(diaryEmotion)) setCustomMoodDraft(diaryEmotion)
+    else setCustomMoodDraft("")
+  }, [diaryEmotion, diarySelectedDate])
+
+  function insertAtTrigger() {
+    const el = diaryTextareaRef.current
+    const start = el?.selectionStart ?? diaryEditorText.length
+    const end = el?.selectionEnd ?? diaryEditorText.length
+    const before = diaryEditorText.slice(0, start)
+    const after = diaryEditorText.slice(end)
+    const needLeadingSpace = before.length > 0 && !/\s$/.test(before)
+    const next = `${before}${needLeadingSpace ? " " : ""}@${after}`
+    const caret = before.length + (needLeadingSpace ? 1 : 0) + 1
+    setDiaryEditorText(next)
+    setShowMentionPicker(true)
+    setMentionSearch("")
+    requestAnimationFrame(() => {
+      const target = diaryTextareaRef.current
+      if (!target) return
+      target.focus()
+      target.setSelectionRange(caret, caret)
+    })
+  }
 
   return (
     <section className="space-y-ds-md">
@@ -294,19 +336,8 @@ export function HomeSection({
                     </span>
                     {cell.hasRecord ? (
                       <span
-                        className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${
-                          cell.emotion === "愉悦"
-                            ? "bg-[#66BB6A]"
-                            : cell.emotion === "平静"
-                              ? "bg-[#BDBDBD]"
-                              : cell.emotion === "低落"
-                                ? "bg-[#60A5FA]"
-                                : cell.emotion === "愤怒"
-                                  ? "bg-[#EF5350]"
-                                  : diarySelectedDate === cell.dateValue
-                                    ? "bg-[#1E293B]"
-                                    : "bg-[#94A3B8]"
-                        }`}
+                        className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${diaryMoodDotClass(cell.emotion)}`}
+                        title={cell.emotion?.trim() ? `心情：${cell.emotion}` : "未记录心情"}
                       />
                     ) : null}
                   </div>
@@ -334,9 +365,9 @@ export function HomeSection({
 
         <div className="space-y-ds-md">
           <Card className="hidden rounded-ds border border-warm-base bg-paper p-ds-lg sm:block">
-            <div className="flex items-center justify-between text-ds-body text-soft">
-              <p>本月记录：12 篇</p>
-              <p>提及联系人：8 人</p>
+            <div className="flex items-center justify-between text-ds-body text-[#5c4d42]">
+              <p>本月记录：{monthDiaryCount} 篇</p>
+              <p>提及联系人：{monthMentionedContactCount} 人</p>
             </div>
           </Card>
 
@@ -348,19 +379,64 @@ export function HomeSection({
               </p>
             ) : null}
             <div className="mt-ds-xs flex flex-wrap gap-ds-xs">
-              {["😊愉悦", "😐平静", "😞低落", "😠愤怒"].map((m) => (
-                <button
-                  key={m}
-                  className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
-                    diaryEmotion === m.slice(2) ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft"
-                  }`}
-                  onClick={() => setDiaryEmotion(m.slice(2) as DiaryEmotion)}
-                >
-                  {m}
-                </button>
-              ))}
+              {(["😊愉悦", "😐平静", "😞低落", "😠愤怒"] as const).map((m) => {
+                const key = m.slice(2)
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
+                      diaryEmotion === key ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft"
+                    }`}
+                    onClick={() => setDiaryEmotion(key)}
+                  >
+                    {m}
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
+                  diaryEmotion === "" ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft"
+                }`}
+                onClick={() => setDiaryEmotion("")}
+              >
+                不记录心情
+              </button>
             </div>
+            <div className="mt-ds-xs flex flex-wrap items-center gap-ds-xs">
+              <input
+                type="text"
+                className="min-w-[11rem] flex-1 rounded-btn-ds border border-warm-soft bg-paper px-3 py-1.5 text-ds-body text-ink placeholder:text-soft"
+                placeholder="自定义心情（最多 24 字）"
+                maxLength={DIARY_CUSTOM_MOOD_MAX_LEN}
+                value={customMoodDraft}
+                onChange={(e) => setCustomMoodDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return
+                  e.preventDefault()
+                  const v = normalizeCustomMoodInput(customMoodDraft)
+                  setDiaryEmotion(v)
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 min-h-9 shrink-0 border-warm-soft px-3 py-0 text-ds-body"
+                onClick={() => {
+                  const v = normalizeCustomMoodInput(customMoodDraft)
+                  setDiaryEmotion(v)
+                }}
+              >
+                应用自定义
+              </Button>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-soft">
+              日历圆点：预设四色 · 自定义为紫 · 不记录为灰。保存日记后生效。
+            </p>
             <Textarea
+              ref={diaryTextareaRef}
               className="mt-4 min-h-[260px]"
               placeholder="今天发生了什么..."
               value={diaryEditorText}
@@ -381,8 +457,9 @@ export function HomeSection({
             />
             <div className="mt-ds-xs flex items-center gap-ds-xs">
               <button
+                type="button"
                 className="rounded-btn-ds border border-warm-soft bg-surface-warm-soft px-2.5 py-1 text-ds-caption text-soft"
-                onClick={() => setShowMentionPicker((prev) => !prev)}
+                onClick={insertAtTrigger}
               >
                 @ 提及联系人
               </button>

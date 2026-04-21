@@ -34,7 +34,22 @@ export async function POST(request: Request) {
     }
 
     const recent = await getRecentEntryContext(userId)
-    const prompt = `用户最近记录（请与当前输入串联理解，避免脱离上下文的通用建议）：\n${recent}\n\n当前输入：${body.content ?? ""}\n情绪：${body.mood ?? ""}\n人物：${body.peopleTag ?? "无"}\n请按结构输出：\n【情绪识别】\n【关系模式】\n【可能的另一种视角】\n【风险提示】\n【建议方向】\n要求总字数<=100字，不给绝对结论；建议须结合当前输入或最近记录中的具体情节。`
+    const currentContent = body.content?.trim() || null
+    const currentMood = body.mood?.trim() || null
+    const currentPeopleTag = body.peopleTag?.trim() || null
+    const feedbackPayload = {
+      recent_entries: recent,
+      current_input: {
+        content: currentContent,
+        mood: currentMood,
+        people_tag: currentPeopleTag,
+      },
+    }
+    const prompt = `请基于以下 JSON 上下文给出简短反馈；字段为 null 表示缺失，不得编造缺失信息。\n\n${JSON.stringify(
+      feedbackPayload,
+      null,
+      2
+    )}\n\n请按结构输出：\n【情绪识别】\n【关系模式】\n【可能的另一种视角】\n【风险提示】\n【建议方向】\n要求总字数<=100字，不给绝对结论；建议须结合 JSON 中的具体情节。`
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
@@ -49,15 +64,22 @@ export async function POST(request: Request) {
       userId,
       ok: true,
       meta: {
-        contentLen: (body.content ?? "").length,
+        contentLen: currentContent?.length ?? 0,
         hasPeopleTag: Boolean(body.peopleTag?.trim()),
       },
     })
 
-    return NextResponse.json({
-      reply: completion.choices[0]?.message?.content ?? "我看见你的感受了，我们可以慢慢理清。",
-      remaining: quota.remaining,
-    })
+    const reply = completion.choices[0]?.message?.content?.trim() ?? ""
+    if (!reply) {
+      logAiRouteEvent("ai/quick-feedback", requestId, {
+        userId,
+        ok: false,
+        meta: { reason: "empty_model_reply" },
+      })
+      return NextResponse.json({ error: "模型未返回有效内容", requestId }, { status: 502 })
+    }
+
+    return NextResponse.json({ reply, remaining: quota.remaining })
   } catch (error) {
     return aiJsonError(requestId, 500, "服务暂时不可用，请稍后再试", "ai/quick-feedback", error, userId)
   }
