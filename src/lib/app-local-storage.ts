@@ -5,7 +5,6 @@ import type { ScoreHistoryPoint } from "./relationship-ai-demo"
 import { WEBAUTHN_BROWSER_USER_KEY } from "./webauthn-lock"
 
 export const PERSISTENCE_KEY = "pss-app-snapshot-v1"
-export const ONBOARDING_KEY = "pss-onboarding-v1"
 export const LOCK_STORAGE_KEY = "pss-app-lock-v1"
 
 export type PersistedInteractionLog = {
@@ -186,7 +185,6 @@ export function wipeGuestAppDataOnly() {
   if (typeof localStorage === "undefined") return
   const scope = "guest"
   localStorage.removeItem(scopedKey(PERSISTENCE_KEY, scope))
-  localStorage.removeItem(scopedKey(ONBOARDING_KEY, scope))
   localStorage.removeItem(scopedKey(LOCK_STORAGE_KEY, scope))
   localStorage.removeItem(`pss-diary-drafts:${scope}`)
   localStorage.removeItem(`pss-interaction-draft:${scope}`)
@@ -358,7 +356,6 @@ export function clearAllScopedLocalData(scope: string) {
   if (typeof localStorage === "undefined") return
   const keys = [
     scopedKey(PERSISTENCE_KEY, scope),
-    scopedKey(ONBOARDING_KEY, scope),
     scopedKey(LOCK_STORAGE_KEY, scope),
     `pss-diary-drafts:${scope}`,
     `pss-interaction-draft:${scope}`,
@@ -369,25 +366,6 @@ export function clearAllScopedLocalData(scope: string) {
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(scopedKey(SESSION_UNLOCK, scope))
   }
-}
-
-export function onboardingDone(scope?: string): boolean {
-  if (typeof localStorage === "undefined") return true
-  return localStorage.getItem(scopedKey(ONBOARDING_KEY, scope)) === "done"
-}
-
-export function setOnboardingDone(scope?: string) {
-  if (typeof localStorage === "undefined") return
-  localStorage.setItem(scopedKey(ONBOARDING_KEY, scope), "done")
-}
-
-/** 引导仅在「完全空数据」时展示：无联系人、无互动、无有正文的日记 */
-export function isAppDataEmpty(
-  contactCount: number,
-  interactionLogCount: number,
-  diaryEntryCountWithContent: number
-): boolean {
-  return contactCount === 0 && interactionLogCount === 0 && diaryEntryCountWithContent === 0
 }
 
 /** 本地模式首次进入欢迎弹窗 */

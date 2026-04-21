@@ -205,7 +205,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href={tabHref("home")}
             className={`rounded-[16px] px-4 py-2 text-ds-body font-semibold transition-all ${
-              navHome ? "bg-[#eadfce] text-ink" : "text-soft hover:bg-[#f4ebdf]"
+              navHome ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)]" : "text-soft hover:bg-[#f4ebdf]"
             }`}
           >
             晓观
@@ -213,7 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href={tabHref("relations")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
-              navRelations ? "bg-[#eadfce] text-ink" : "text-soft hover:bg-[#f4ebdf]"
+              navRelations ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)]" : "text-soft hover:bg-[#f4ebdf]"
             }`}
           >
             观系
@@ -221,15 +221,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href={tabHref("mine")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
-              navMine ? "bg-[#eadfce] text-ink" : "text-soft hover:bg-[#f4ebdf]"
+              navMine ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)]" : "text-soft hover:bg-[#f4ebdf]"
             }`}
           >
-            我的
+            系统
           </Link>
           <div className="ml-auto" />
           {!useLocalQs ? (
             <button
-              className="mr-1 rounded-[16px] border border-[#b6905e] bg-[#7a5a2e] px-3 py-2 text-ds-body font-semibold text-white shadow-[0_4px_12px_rgba(122,90,46,0.26)] transition-all hover:-translate-y-0.5 hover:bg-[#694d27] hover:shadow-[0_8px_18px_rgba(122,90,46,0.28)] sm:mr-ds-xs sm:px-4"
+              className="mr-1 rounded-[16px] border border-[#b6905e] bg-[#7a5a2e] px-3 py-2 text-ds-body font-semibold text-[#fffdf9] shadow-[0_4px_12px_rgba(122,90,46,0.26)] transition-all hover:-translate-y-0.5 hover:bg-[#694d27] hover:shadow-[0_8px_18px_rgba(122,90,46,0.28)] sm:mr-ds-xs sm:px-4"
               onClick={() => router.push("/pricing")}
             >
               <span className="sm:hidden">👑</span>
@@ -243,12 +243,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="账户"
               className={
                 useLocalQs
-                  ? "flex h-9 w-9 items-center justify-center rounded-full border border-warm-base/60 bg-paper/90 text-ink/80 transition-colors hover:border-warm-strong hover:bg-[#f8f1e7] hover:text-ink"
-                  : "flex h-9 w-9 items-center justify-center rounded-full border border-warm-strong bg-paper text-ds-body font-semibold text-[#6d5433] hover:bg-[#f8f1e7]"
+                  ? "flex h-8 w-8 items-center justify-center rounded-full bg-paper/80 text-ink/65 transition-colors hover:bg-[#f8f1e7] hover:text-ink"
+                  : "flex h-8 w-8 items-center justify-center rounded-full bg-paper text-ds-body font-semibold text-[#6d5433] transition-colors hover:bg-[#f8f1e7]"
               }
               onClick={() => setShowUserMenu((prev) => !prev)}
             >
-              <UserRound className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.75} aria-hidden />
+              <UserRound className="h-[1rem] w-[1rem]" strokeWidth={1.75} aria-hidden />
             </button>
             {showUserMenu ? (
               <div className="absolute right-0 top-11 z-[90] w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">

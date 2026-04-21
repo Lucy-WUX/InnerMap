@@ -11,9 +11,9 @@ export type RelationHealthBucket = {
 
 export function computeRelationHealthBuckets(contacts: RelationContact[]): RelationHealthBucket[] {
   const palette = [
-    { label: "真朋友", color: "#66BB6A" },
-    { label: "需观察", color: "#FFA726" },
-    { label: "表面关系", color: "#BDBDBD" },
+    { label: "真朋友", color: "#2d7a4a" },
+    { label: "需观察", color: "#c45c3e" },
+    { label: "表面关系", color: "#a39a91" },
   ] as const
   if (contacts.length === 0) {
     return palette.map((p) => ({ ...p, count: 0, ratio: 0 }))

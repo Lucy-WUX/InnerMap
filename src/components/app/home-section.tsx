@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react"
+import { ChevronDown } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 
 import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
 import { isProSubscriber } from "../../lib/product-limits"
@@ -59,9 +60,6 @@ type HomeSectionProps = {
   handleDeleteDiary: (dateKey: string) => void
   weeklyDigest: WeeklyDigest | null
   energyAlerts: EnergyAlert[]
-  openCreateContact?: () => void
-  /** 为 true 时隐藏首页「新用户快速开始」卡片（与顶栏横幅一致，引导结束后不再展示） */
-  suppressNewUserQuickStart?: boolean
   storageScope?: string
 }
 
@@ -83,6 +81,32 @@ function chatStorageKey(scope: string) {
 
 function todayToken() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function CollapsiblePanel({ open, children }: { open: boolean; children: ReactNode }) {
+  return (
+    <div
+      className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none ${
+        open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+      }`}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <div className="pt-ds-xs">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function CollapseChevron({ open, className = "" }: { open: boolean; className?: string }) {
+  return (
+    <ChevronDown
+      className={`h-5 w-5 shrink-0 text-soft transition-transform duration-300 ease-out motion-reduce:transition-none ${
+        open ? "rotate-180" : "rotate-0"
+      } ${className}`}
+      strokeWidth={1.75}
+      aria-hidden
+    />
+  )
 }
 
 export function HomeSection(props: HomeSectionProps) {
@@ -122,8 +146,6 @@ export function HomeSection(props: HomeSectionProps) {
     mentionActiveIndex,
     setMentionActiveIndex,
     insertDiaryMention,
-    openCreateContact,
-    suppressNewUserQuickStart = false,
     storageScope = "guest",
     weeklyDigest,
   } = props
@@ -160,7 +182,6 @@ export function HomeSection(props: HomeSectionProps) {
   const isPro = isProSubscriber()
   const freeLeft = Math.max(0, DAILY_LIMIT - freeUsed)
   const hitLimit = !isPro && freeLeft <= 0
-  const isEmptyUser = contacts.length === 0 && totalDiaryCount === 0
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -274,26 +295,28 @@ export function HomeSection(props: HomeSectionProps) {
     <section className="space-y-ds-md pb-28">
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg text-center">
         <div className="mx-auto h-20 w-20 rounded-full bg-[#d4b79d]" />
-        <h2 className="mt-3 text-2xl font-semibold text-[#5C4B3E]">晓观 · 你的专属人际关系AI</h2>
-        <p className="mt-1 text-ds-body font-medium text-[#5C4B3E]">看清关系，减少内耗，AI陪伴分析</p>
+        <h2 className="mt-3 text-ds-title font-semibold text-[#5C4B3E]">晓观 · 你的专属人际关系AI</h2>
+        <p className="mt-1 text-ds-body font-medium leading-[1.5] text-[#5C4B3E]">看清关系，减少内耗，AI陪伴分析</p>
       </Card>
 
       <Card className="rounded-[16px] border border-warm-base bg-[#F9F5F0] p-ds-lg shadow-[inset_0_1px_6px_rgba(0,0,0,0.04)]">
-        <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-1">
+        <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
           {chatMessages.length === 0 ? (
-            <div className="rounded-[16px] rounded-br-sm bg-white px-3 py-3 text-[#5C4B3E]">
-              你好，我是晓观。
-              <br />
-              你可以和我聊聊人际关系困惑、情绪内耗、相处难题，我会帮你分析、陪伴、给出真正适合你的建议。
+            <div className="rounded-[16px] rounded-br-sm border border-[#e8d9ca] bg-[#F0E8DE] px-3 py-3 text-ds-body text-[#5C4B3E] shadow-[0_1px_2px_rgba(95,73,53,0.06)]">
+              <p className="font-medium">你好，我是晓观。</p>
+              <ul className="mt-2 list-inside list-disc space-y-1 text-ds-caption leading-[1.6]">
+                <li>可聊人际困惑、情绪内耗、相处难题。</li>
+                <li>我会陪你梳理，并给出适合你的建议。</li>
+              </ul>
             </div>
           ) : (
             chatMessages.map((item) => (
               <div key={item.id} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[82%] whitespace-pre-wrap px-3 py-3 ${
+                  className={`max-w-[85%] whitespace-pre-wrap px-3.5 py-3 shadow-[0_1px_3px_rgba(60,40,30,0.08)] ${
                     item.role === "user"
-                      ? "rounded-[16px] rounded-bl-sm bg-[#8B5A42] text-white"
-                      : "rounded-[16px] rounded-br-sm bg-white text-[#5C4B3E]"
+                      ? "rounded-[16px] rounded-bl-sm bg-[#6B3F2E] text-[#fffdf9]"
+                      : "rounded-[16px] rounded-br-sm border border-[#e5d8ca] bg-[#F0E8DE] text-[#5C4B3E]"
                   }`}
                 >
                   {item.content}
@@ -305,11 +328,16 @@ export function HomeSection(props: HomeSectionProps) {
       </Card>
 
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-        <button type="button" className="w-full text-left text-ds-body font-semibold text-ink" onClick={() => setExpandEnergy((v) => !v)}>
-          近期能量与预警 {expandEnergy ? "−" : "+"}
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left text-ds-body font-semibold text-ink"
+          onClick={() => setExpandEnergy((v) => !v)}
+        >
+          <span>近期能量与预警</span>
+          <CollapseChevron open={expandEnergy} />
         </button>
-        {expandEnergy ? (
-          <div className="mt-ds-xs space-y-1 text-ds-caption text-[#5C4B3E]">
+        <CollapsiblePanel open={expandEnergy}>
+          <div className="space-y-1 text-ds-caption text-[#5C4B3E]">
             {energyAlerts.length === 0 ? (
               <p>暂无红色预警。记录互动后，观系会持续观察能量走势。</p>
             ) : (
@@ -327,7 +355,7 @@ export function HomeSection(props: HomeSectionProps) {
               ))
             )}
           </div>
-        ) : null}
+        </CollapsiblePanel>
       </Card>
 
       {weeklyDigest ? (
@@ -353,15 +381,28 @@ export function HomeSection(props: HomeSectionProps) {
 
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
         <div className="flex items-center justify-between gap-2">
-          <button type="button" className="text-left text-ds-body font-semibold text-ink" onClick={() => setExpandDiary((v) => !v)}>
-            日记与日历 {expandDiary ? "−" : "+"}
+          <button
+            type="button"
+            className="flex min-w-0 flex-1 items-center gap-2 text-left text-ds-body font-semibold text-ink"
+            onClick={() => setExpandDiary((v) => !v)}
+          >
+            <span className="min-w-0 truncate">日记与日历</span>
+            <CollapseChevron open={expandDiary} className="ml-auto shrink-0" />
           </button>
-          <span className="text-ds-caption text-[#5C4B3E]">本月 {monthDiaryCount} 篇</span>
+          <span className="shrink-0 text-ds-caption text-[#5C4B3E]">本月 {monthDiaryCount} 篇</span>
         </div>
-        {!expandDiary ? (
-          <p className="mt-ds-xs text-ds-caption text-[#5C4B3E]">点击展开：日历视图、列表搜索、心情与 @ 联系人。</p>
-        ) : null}
-        {expandDiary ? (
+        <div
+          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none ${
+            expandDiary ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+          }`}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <p className="mt-ds-xs text-ds-caption leading-[1.6] text-[#5C4B3E]">
+              点击展开：日历视图、列表搜索、心情与 @ 联系人。
+            </p>
+          </div>
+        </div>
+        <CollapsiblePanel open={expandDiary}>
           <div className="mt-ds-sm">
             <div className="grid gap-ds-md lg:grid-cols-[minmax(0,420px)_1fr]">
               <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg">
@@ -469,16 +510,16 @@ export function HomeSection(props: HomeSectionProps) {
                             type="button"
                             className={`relative h-14 rounded-2xl border text-[30px] leading-none transition-all duration-200 ${
                               diarySelectedDate === cell.dateValue
-                                ? "border-warm-strong bg-surface-warm-soft text-[#0F172A] shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
+                                ? "border-[#8B5A42] bg-[#f5e7cf] text-soft shadow-[0_6px_16px_rgba(139,90,66,0.18)]"
                                 : cell.hasRecord
-                                  ? "border-[#D7DEE8] bg-[#F8FAFC] text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
-                                  : "border-warm-soft bg-paper text-slate-500 hover:border-warm-strong hover:bg-surface-warm-soft"
+                                  ? "border-warm-strong bg-surface-warm-elevated text-soft shadow-[0_2px_8px_rgba(95,73,53,0.08)]"
+                                  : "border-warm-soft bg-paper text-muted hover:border-warm-strong hover:bg-surface-warm-soft"
                             }`}
                             onClick={() => setDiarySelectedDate(cell.dateValue)}
                           >
                             <div className="flex h-full flex-col items-center justify-center">
                               <span
-                                className={`font-light tabular-nums tracking-[-0.03em] text-[34px] ${cell.isToday ? "flex h-8 w-8 items-center justify-center rounded-full bg-[#795548] text-[20px] font-medium tracking-normal text-white" : ""}`}
+                                className={`font-light tabular-nums tracking-[-0.03em] text-[34px] ${cell.isToday ? "flex h-8 w-8 items-center justify-center rounded-full bg-[#8B5A42] text-[20px] font-medium tracking-normal text-[#fffdf9]" : ""}`}
                               >
                                 {cell.day}
                               </span>
@@ -686,15 +727,20 @@ export function HomeSection(props: HomeSectionProps) {
               </div>
             </div>
           </div>
-        ) : null}
+        </CollapsiblePanel>
       </Card>
 
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-        <button type="button" className="w-full text-left text-ds-body font-semibold text-ink" onClick={() => setExpandContacts((v) => !v)}>
-          联系人快捷入口 {expandContacts ? "−" : "+"}
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left text-ds-body font-semibold text-ink"
+          onClick={() => setExpandContacts((v) => !v)}
+        >
+          <span>联系人快捷入口</span>
+          <CollapseChevron open={expandContacts} />
         </button>
-        {expandContacts ? (
-          <div className="mt-ds-xs flex flex-wrap gap-1.5">
+        <CollapsiblePanel open={expandContacts}>
+          <div className="flex flex-wrap gap-1.5">
             {contacts.slice(0, 12).length > 0 ? (
               contacts.slice(0, 12).map((item) => (
                 <button
@@ -710,20 +756,8 @@ export function HomeSection(props: HomeSectionProps) {
               <p className="text-ds-caption text-[#5C4B3E]">暂无联系人，添加后可在这里快速进入详情。</p>
             )}
           </div>
-        ) : null}
+        </CollapsiblePanel>
       </Card>
-
-      {isEmptyUser && !suppressNewUserQuickStart ? (
-        <Card className="rounded-ds border border-[#e6d7c5] bg-[#fff8ee] p-ds-md">
-          <p className="text-ds-caption text-[#5C4B3E]">新用户快速开始：先添加联系人，再记录互动，最后查看关系洞察。</p>
-          <div className="mt-ds-xs flex flex-wrap gap-2">
-            {openCreateContact ? <Button onClick={openCreateContact}>立即添加联系人</Button> : null}
-            <Button variant="ghost" onClick={onOpenAiPage}>
-              打开完整晓观页
-            </Button>
-          </div>
-        </Card>
-      ) : null}
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-warm-soft bg-base/95 p-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-2">
@@ -731,8 +765,9 @@ export function HomeSection(props: HomeSectionProps) {
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             disabled={hitLimit}
-            className="h-12 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft disabled:opacity-70"
+            className="h-12 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft/90 disabled:opacity-70"
             placeholder="和晓观聊聊你的关系与情绪…"
+            title="Enter 发送；可先说说具体场景或感受"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
@@ -742,7 +777,7 @@ export function HomeSection(props: HomeSectionProps) {
           />
           <button
             type="button"
-            className="h-12 w-12 rounded-full bg-[#8B5A42] text-white transition hover:opacity-90 disabled:opacity-50"
+            className="h-12 w-12 shrink-0 rounded-full bg-[#8B5A42] text-[#fffdf9] shadow-[0_2px_8px_rgba(107,63,46,0.35)] transition duration-200 hover:scale-110 hover:shadow-[0_4px_14px_rgba(107,63,46,0.4)] active:scale-95 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:scale-100"
             onClick={() => void sendMessage()}
             disabled={chatLoading || hitLimit}
             aria-label="发送消息"
@@ -764,10 +799,13 @@ export function HomeSection(props: HomeSectionProps) {
         {chatError ? <p className="mt-1 text-center text-ds-caption text-[#B42318]">{chatError}</p> : null}
       </div>
 
-      <div className="mt-ds-lg hidden rounded-ds border-2 border-[#2e7d32]/35 bg-[#e8f5e9] px-ds-md py-ds-md text-center shadow-sm sm:block">
-        <p className="text-ds-body font-semibold leading-relaxed text-[#1b5e20]">
-          🔒 内容与账户绑定，经 Supabase 安全同步至云端，仅你本人可访问；AI 与数据处理以{" "}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-[#145214]">
+      <div className="mt-ds-lg hidden rounded-ds border-2 border-energy-positive/30 bg-[#e8f0ea] px-ds-md py-ds-md text-center shadow-sm sm:block">
+        <p className="text-ds-body font-semibold leading-[1.5] text-energy-positive">
+          🔒 内容与账户绑定，经 Supabase 同步至云端，仅你本人可访问。
+        </p>
+        <p className="mt-1 text-ds-caption leading-[1.6] text-energy-positive">
+          AI 与数据处理以{" "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-[#245c36]">
             《隐私政策》
           </Link>{" "}
           为准。

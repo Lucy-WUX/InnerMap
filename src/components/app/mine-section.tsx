@@ -437,7 +437,7 @@ export function MineSection({
               </Button>
             ) : null}
             {lockSettings && lockHasWebAuthn(lockSettings) ? (
-              <p className="text-ds-caption text-[#0f766e]">已绑定 WebAuthn 凭证</p>
+              <p className="text-ds-caption text-energy-positive">已绑定 WebAuthn 凭证</p>
             ) : null}
             <Button type="button" variant="danger" onClick={handleDisableLock}>
               关闭应用锁

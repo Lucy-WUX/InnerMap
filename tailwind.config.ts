@@ -15,6 +15,12 @@ const config: Config = {
         ink: "#795548",
         /** 次级说明文字：需满足浅底上的可读对比度 */
         soft: "#5e4f44",
+        /** 能量正向 / 成功提示（辅助色，与主色棕色搭配） */
+        "energy-positive": "#2d7a4a",
+        /** 预警与危险操作强调 */
+        "energy-alert": "#b42318",
+        /** 中性辅助（暖灰，避免冷色 slate） */
+        muted: "#8a7d72",
         "land-border": "#e9e2d8",
         "land-input-border": "#ddcfbe",
         "land-error": "#a64432",
@@ -43,9 +49,9 @@ const config: Config = {
         "ds-lg": "24px",
       },
       fontSize: {
-        "ds-title": ["16px", { lineHeight: "1.5", fontWeight: "600" }],
-        "ds-body": ["14px", { lineHeight: "1.55", fontWeight: "400" }],
-        "ds-caption": ["12px", { lineHeight: "1.5", fontWeight: "400" }],
+        "ds-title": ["18px", { lineHeight: "1.4", fontWeight: "600" }],
+        "ds-body": ["14px", { lineHeight: "1.5", fontWeight: "400" }],
+        "ds-caption": ["12px", { lineHeight: "1.6", fontWeight: "400" }],
       },
     },
   },

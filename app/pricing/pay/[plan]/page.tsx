@@ -151,7 +151,7 @@ export default function PricingPayPage({ params }: PayPageProps) {
             />
             <button
               type="button"
-              className="cursor-pointer rounded-[16px] bg-[#7a5a2e] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[#694d27] disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer rounded-[16px] bg-[#7a5a2e] px-6 py-3 text-base font-semibold text-[#5C4B3E] transition-colors hover:bg-[#694d27] disabled:cursor-not-allowed disabled:opacity-60"
               onClick={redeemNow}
               disabled={redeemBusy}
             >

@@ -58,11 +58,11 @@ export function AppLockScreen({ settings, storageScope, onUnlocked }: AppLockScr
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0f172a] px-ds-md text-white">
-      <div className="w-full max-w-sm rounded-ds border border-white/10 bg-white/5 p-ds-lg backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#2c2419] px-ds-md text-[#f4ecdf]">
+      <div className="w-full max-w-sm rounded-ds border border-[#5c4b3e]/40 bg-[#3d3229]/90 p-ds-lg backdrop-blur-md">
         <p className="text-center text-2xl">🔒</p>
-        <h1 className="mt-ds-xs text-center text-ds-title text-white">观系已锁定</h1>
-        <p className="mt-1 text-center text-ds-caption text-white/70">
+        <h1 className="mt-ds-xs text-center text-ds-title text-[#fffdf9]">观系已锁定</h1>
+        <p className="mt-1 text-center text-ds-caption text-[#e8dfd4]">
           {hasW && hasPwd
             ? "可使用系统指纹 / 面容 / 安全密钥，或输入密码解锁。"
             : hasW
@@ -72,34 +72,30 @@ export function AppLockScreen({ settings, storageScope, onUnlocked }: AppLockScr
 
         {webUsable ? (
           <>
-            <Button
-              className="mt-ds-md w-full bg-[#0f766e] text-white hover:bg-[#0d5f58]"
-              disabled={busy}
-              onClick={() => void submitWebAuthn()}
-            >
+            <Button className="mt-ds-md w-full" disabled={busy} onClick={() => void submitWebAuthn()}>
               {busy ? "验证中…" : "🔐 指纹 / 面容 / 系统验证"}
             </Button>
-            {error && !hasPwd ? <p className="mt-ds-xs text-center text-ds-caption text-red-300">{error}</p> : null}
+            {error && !hasPwd ? <p className="mt-ds-xs text-center text-ds-caption text-[#f5a8a0]">{error}</p> : null}
           </>
         ) : hasW && !isWebAuthnAvailable() ? (
-          <p className="mt-ds-md text-center text-ds-caption text-amber-200/90">当前环境不支持 WebAuthn，请改用密码。</p>
+          <p className="mt-ds-md text-center text-ds-caption text-[#f0d9a8]">当前环境不支持 WebAuthn，请改用密码。</p>
         ) : null}
 
         {hasPwd ? (
           <>
-            {hasW ? <p className="mt-ds-md text-center text-ds-caption text-white/50">或使用密码</p> : null}
+            {hasW ? <p className="mt-ds-md text-center text-ds-caption text-[#c4b8a8]">或使用密码</p> : null}
             <Input
               type="password"
               autoComplete="current-password"
-              className="mt-2 border-white/20 bg-white/10 text-white placeholder:text-white/40"
+              className="mt-2 border-[#8a7d72]/50 bg-[#2c2419]/80 text-[#fffdf9] placeholder:text-[#c4b8a8]"
               placeholder="密码"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void submitPassword()}
             />
-            {error ? <p className="mt-ds-xs text-ds-caption text-red-300">{error}</p> : null}
+            {error ? <p className="mt-ds-xs text-ds-caption text-[#f5a8a0]">{error}</p> : null}
             <Button
-              className="mt-ds-md w-full bg-[#c4a574] text-[#2d1f0f] hover:bg-[#b89564]"
+              className="mt-ds-md w-full bg-[#a67c52] text-[#fffdf9] hover:bg-[#956f49]"
               disabled={busy || !pin}
               onClick={() => void submitPassword()}
             >
@@ -107,7 +103,7 @@ export function AppLockScreen({ settings, storageScope, onUnlocked }: AppLockScr
             </Button>
           </>
         ) : !hasW && !hasPwd ? (
-          <p className="mt-ds-md text-center text-ds-caption text-red-200">未配置有效解锁方式，请在「我的」关闭锁或重新绑定。</p>
+          <p className="mt-ds-md text-center text-ds-caption text-[#f5a8a0]">未配置有效解锁方式，请在「系统」关闭锁或重新绑定。</p>
         ) : null}
       </div>
     </div>

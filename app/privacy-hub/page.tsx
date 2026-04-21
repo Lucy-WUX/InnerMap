@@ -100,7 +100,7 @@ export default function PrivacyHubPage() {
           </Link>
           <Link
             href="/privacy"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6d4c41]"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-5 py-2 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41]"
           >
             阅读完整隐私政策
           </Link>

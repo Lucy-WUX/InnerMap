@@ -121,7 +121,7 @@ export default function PricingPage() {
           </p>
           <button
             type="button"
-            className="mt-4 w-full cursor-pointer rounded-[16px] bg-[#7a5a2e] px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#694d27] md:w-auto"
+            className="mt-4 w-full cursor-pointer rounded-[16px] bg-[#7a5a2e] px-6 py-3 text-lg font-semibold text-[#5C4B3E] transition-colors hover:bg-[#694d27] md:w-auto"
             onClick={() => router.push(`/pricing/pay/${selectedPlan}`)}
           >
             立即购买

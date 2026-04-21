@@ -41,22 +41,24 @@ export function Dialog({
       <div
         className={`w-full ${
           fullScreen
-            ? "h-[100dvh] max-w-none max-h-none overflow-y-auto overscroll-contain rounded-none border-0 bg-paper p-4 pb-20 shadow-none sm:p-6 sm:pb-24"
-            : `${maxWidthClassName ?? "max-w-[480px]"} max-h-[90vh] overflow-y-auto rounded-ds border border-[#e4d8cb] bg-paper p-4 shadow-ds-card sm:max-h-[88vh] sm:p-5`
+            ? "h-[100dvh] max-w-none max-h-none overflow-y-auto overscroll-contain rounded-none border-0 bg-paper p-4 pb-[max(5rem,env(safe-area-inset-bottom))] shadow-none sm:p-6 sm:pb-[max(6rem,env(safe-area-inset-bottom))]"
+            : `${maxWidthClassName ?? "max-w-[480px]"} max-h-[90vh] overflow-y-auto rounded-ds border border-[#e4d8cb] bg-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-ds-card sm:max-h-[88vh] sm:p-5`
         }`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3 border-b border-warm-soft pb-ds-xs pt-1">
           <div>
           <h2 className="text-ds-title font-semibold text-ink">{title}</h2>
-          {description ? <p className="mt-1 text-sm text-[#907f6f]">{description}</p> : null}
+          {description ? (
+            <p className="mt-1 whitespace-pre-line text-ds-caption text-soft">{description}</p>
+          ) : null}
           </div>
           <button
             className="rounded-md p-2 text-[#907f6f] hover:bg-[#f3eadf]"
             aria-label="关闭弹窗"
             onClick={onClose}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           </button>
         </div>
         {children}

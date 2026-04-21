@@ -42,6 +42,9 @@ type RelationsSectionProps = {
   selectedRelationIds: string[]
   setSelectedRelationIds: Dispatch<SetStateAction<string[]>>
   setContacts: Dispatch<SetStateAction<RelationContact[]>>
+  onEditContact: (contactId: string) => void
+  onDeleteContact: (contactId: string) => void
+  requestDeleteConfirm: (action: () => void) => void
   energySpotlightItems: { id: string; title: string; desc: string; alert: boolean }[]
 }
 
@@ -71,6 +74,9 @@ export function RelationsSection({
   selectedRelationIds,
   setSelectedRelationIds,
   setContacts,
+  onEditContact,
+  onDeleteContact,
+  requestDeleteConfirm,
   energySpotlightItems,
 }: RelationsSectionProps) {
   const hasContacts = contacts.length > 0
@@ -81,6 +87,7 @@ export function RelationsSection({
   const [renameFrom, setRenameFrom] = useState<GroupKey | "">("")
   const [renameValue, setRenameValue] = useState("")
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const [openContactMenuFor, setOpenContactMenuFor] = useState<string | null>(null)
 
   useEffect(() => {
     setBatchMoveTarget((prev) =>
@@ -97,6 +104,26 @@ export function RelationsSection({
     window.addEventListener("mousedown", handlePointerDown)
     return () => window.removeEventListener("mousedown", handlePointerDown)
   }, [openMenuFor])
+
+  useEffect(() => {
+    if (!openContactMenuFor) return
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as HTMLElement | null
+      if (target?.closest?.(`[data-contact-menu="${openContactMenuFor}"]`)) return
+      setOpenContactMenuFor(null)
+    }
+    window.addEventListener("mousedown", handlePointerDown)
+    return () => window.removeEventListener("mousedown", handlePointerDown)
+  }, [openContactMenuFor])
+
+  useEffect(() => {
+    if (!renameOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [renameOpen])
 
   const healthConicBackground = useMemo(() => {
     const parts = relationHealthData.map((item, i) => ({
@@ -117,11 +144,11 @@ export function RelationsSection({
 
   const getTrueFriendBarStyle = (score: number) => {
     const width = `${Math.min(100, Math.max(0, (score / 10) * 100))}%`
-    let color = "#BDBDBD"
-    if (score >= 7.5) color = "#66BB6A"
-    else if (score >= 6) color = "#8BC34A"
-    else if (score >= 4.5) color = "#FFA726"
-    else if (score >= 3) color = "#FFB74D"
+    let color = "#a39a91"
+    if (score >= 7.5) color = "#2d7a4a"
+    else if (score >= 6) color = "#3d8f55"
+    else if (score >= 4.5) color = "#a67c52"
+    else if (score >= 3) color = "#c45c3e"
     return { width, color }
   }
 
@@ -170,7 +197,7 @@ export function RelationsSection({
                   transform: healthChartReady ? "scale(1)" : "scale(0.92)",
                   filter:
                     activeHealth
-                      ? `drop-shadow(0 0 ${6 + healthPulseStrength * 8}px rgba(99,102,241,${0.14 + healthPulseStrength * 0.18}))`
+                      ? `drop-shadow(0 0 ${6 + healthPulseStrength * 8}px rgba(139,90,66,${0.2 + healthPulseStrength * 0.22}))`
                       : "none",
                 }}
               >
@@ -199,7 +226,7 @@ export function RelationsSection({
                 {relationHealthData.map((item, index) => (
                   <div
                     key={item.label}
-                    className="rounded-md px-1 py-0.5 transition-colors duration-200 hover:bg-slate-50"
+                    className="rounded-md px-1 py-0.5 transition-colors duration-200 hover:bg-surface-warm-hover"
                     onMouseEnter={() => setHoveredHealthLabel(item.label)}
                     onMouseLeave={() => setHoveredHealthLabel(null)}
                     style={{
@@ -226,7 +253,7 @@ export function RelationsSection({
                       </span>
                       <span>{Math.round(animatedHealthRatios[index] ?? 0)}%</span>
                     </div>
-                    <div className="mt-1 h-1.5 rounded-full bg-slate-100">
+                    <div className="mt-1 h-1.5 rounded-full bg-[#e8e0d6]">
                       <div
                         className="h-1.5 rounded-full transition-all duration-700"
                         style={{
@@ -247,31 +274,31 @@ export function RelationsSection({
             </div>
           ) : (
             <div className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-4 text-ds-caption text-soft">
-              还没有联系人数据，关系健康度将保持空白。添加第一位联系人后，这里才会开始显示分布与趋势。
+              <p>暂无联系人时，健康度保持空白。</p>
+              <p className="mt-1">添加第一位联系人后，会显示分布与趋势。</p>
             </div>
           )}
           <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5c4d42]">
             {!hasContacts ? (
-              <p>添加联系人后，系统会根据真朋友指数与表面关系指数自动归入上列三类，环形图与占比即来自你的真实数据。</p>
+              <ul className="list-inside list-disc space-y-1">
+                <li>添加联系人后，按真朋友 / 表面关系指数自动归入三类。</li>
+                <li>环形图与占比均来自你的真实数据。</li>
+              </ul>
             ) : (
-              <p>
-                上图占比由当前 {contacts.length} 位联系人的评分实时计算；将鼠标移到某一类上可查看人数与比例。记录互动后，分类会随之更新。
-              </p>
+              <ul className="list-inside list-disc space-y-1">
+                <li>占比由当前 {contacts.length} 位联系人评分实时计算。</li>
+                <li>悬停某一类可查看人数与比例；记录互动后分类会更新。</li>
+              </ul>
             )}
           </div>
         </Card>
 
         <Card className="rounded-ds border border-[#E9D5B8] bg-[#FFF8EA] p-ds-lg">
           <p className="text-ds-title text-[#6d5433]">👑 解锁无限 AI 分析与完整报告</p>
-          <p className="mt-1 text-ds-caption text-[#8a6a45]">
-            免费版含 20 位联系人与每日 15 次 AI；开通 Pro 可无限问答、导出完整报告、自动更新评分。
-          </p>
-          <button
-            className="mt-ds-xs rounded-btn-ds border border-[#b6905e] bg-surface-warm-soft px-3 py-1.5 text-ds-caption font-medium text-[#7a5a2e] hover:bg-[#fff3dc]"
-            onClick={() => window.dispatchEvent(new Event("open-pro-modal"))}
-          >
-            立即查看 Pro 方案
-          </button>
+          <ul className="mt-2 list-inside list-disc space-y-1 text-ds-caption leading-[1.6] text-[#8a6a45]">
+            <li>免费版：最多 20 位联系人，每日 15 次 AI。</li>
+            <li>Pro：无限问答、完整报告导出、评分自动更新。</li>
+          </ul>
         </Card>
 
         <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
@@ -357,9 +384,10 @@ export function RelationsSection({
                   className="rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption"
                   onClick={() => {
                     if (selectedRelationIds.length === 0) return
-                    if (!window.confirm(`确认删除选中的 ${selectedRelationIds.length} 位联系人吗？删除后无法恢复。`)) return
-                    setContacts((prev) => prev.filter((c) => !selectedRelationIds.includes(c.id)))
-                    setSelectedRelationIds([])
+                    requestDeleteConfirm(() => {
+                      setContacts((prev) => prev.filter((c) => !selectedRelationIds.includes(c.id)))
+                      setSelectedRelationIds([])
+                    })
                   }}
                 >
                   批量删除
@@ -395,7 +423,7 @@ export function RelationsSection({
                 className={`rounded-btn-ds border px-3 py-1 text-ds-caption ${
                 relationsFocusGroup === "全部"
                   ? "border-[#b6905e] bg-[#fff3dc] text-[#7a5a2e]"
-                  : "border-warm-soft bg-surface-warm-soft text-slate-600"
+                  : "border-warm-soft bg-surface-warm-soft text-muted"
               }`}
               onClick={() => setRelationsFocusGroup("全部")}
             >
@@ -411,7 +439,7 @@ export function RelationsSection({
                   className={`inline-flex max-w-full items-stretch rounded-btn-ds border text-ds-caption ${
                     isActive
                       ? "border-[#b6905e] bg-[#fff3dc] text-[#7a5a2e]"
-                      : "border-warm-soft bg-surface-warm-soft text-slate-600"
+                      : "border-warm-soft bg-surface-warm-soft text-muted"
                   }`}
                 >
                   <button
@@ -454,12 +482,9 @@ export function RelationsSection({
                             className="block w-full px-3 py-2 text-left text-ds-caption text-[#b42318] hover:bg-[#fef2f2]"
                             onClick={() => {
                               setOpenMenuFor(null)
-                              const n = contacts.filter((c) => c.group === group).length
-                              const msg =
-                                n > 0
-                                  ? `删除分组「${group}」后，其中 ${n} 位联系人将移入「${DEFAULT_CONTACT_GROUP}」。确定删除？`
-                                  : `确定删除空分组「${group}」？`
-                              if (window.confirm(msg)) onDeleteGroup(group)
+                              requestDeleteConfirm(() => {
+                                onDeleteGroup(group)
+                              })
                             }}
                           >
                             删除分组
@@ -501,57 +526,106 @@ export function RelationsSection({
           ) : (
             <div className="grid gap-ds-xs md:grid-cols-2">
               {relationVisibleContacts.map((c) => (
-              <button
-                key={c.id}
-                className="group w-full rounded-xl bg-surface-warm-soft p-3 text-left shadow-ds-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-warm-hover hover:shadow-ds-card-hover"
-                onClick={() => openPage4WithContact(c.id)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-btn-ds bg-[#efe4d3] text-ds-caption text-slate-700">
-                      {c.name.slice(0, 1)}
-                    </span>
-                    <div>
-                      <p className="text-ds-body font-medium">{c.name}</p>
-                      <div className="mt-1 w-20">
-                        <div className="h-1.5 rounded-full bg-[#eadfce]">
-                          <div
-                            className="h-1.5 origin-left rounded-full transition-all duration-200 group-hover:scale-x-[1.03] group-hover:brightness-110"
-                            style={getTrueFriendBarStyle(c.trueFriendScore)}
-                          />
+                <div
+                  key={c.id}
+                  className="group relative w-full rounded-xl bg-surface-warm-soft p-3 text-left shadow-ds-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ds-card-hover"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      className="flex flex-1 items-center gap-2 rounded-btn-ds p-1 transition-colors hover:bg-[#f5e9d9]"
+                      onClick={() => openPage4WithContact(c.id)}
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-btn-ds bg-[#efe4d3] text-ds-caption text-soft">
+                        {c.name.slice(0, 1)}
+                      </span>
+                      <div>
+                        <p className="text-ds-body font-medium">{c.name}</p>
+                        <div className="mt-1 w-20">
+                          <div className="h-1.5 rounded-full bg-[#eadfce]">
+                            <div
+                              className="h-1.5 origin-left rounded-full transition-all duration-200 group-hover:scale-x-[1.03] group-hover:brightness-110"
+                              style={getTrueFriendBarStyle(c.trueFriendScore)}
+                            />
+                          </div>
+                          <p className="mt-0.5 text-ds-caption text-muted">真朋友 {c.trueFriendScore.toFixed(1)}/10</p>
                         </div>
-                        <p className="mt-0.5 text-[11px] text-slate-500">真朋友 {c.trueFriendScore.toFixed(1)}/10</p>
                       </div>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-btn-ds bg-surface-warm-soft px-2 py-0.5 text-ds-caption text-muted">{c.group}</span>
+                      {bulkMode ? (
+                        <button
+                          className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
+                            selectedRelationIds.includes(c.id)
+                              ? "border-[#8B5A42] bg-[#8B5A42] text-[#fffdf9]"
+                              : "border-warm-soft bg-paper text-soft"
+                          }`}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setSelectedRelationIds((prev) =>
+                              prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                            )
+                          }}
+                          title={selectedRelationIds.includes(c.id) ? "取消选择" : "选择此联系人"}
+                        >
+                          {selectedRelationIds.includes(c.id) ? "✓" : "○"}
+                        </button>
+                      ) : (
+                        <div className="relative" data-contact-menu={c.id}>
+                          <button
+                            type="button"
+                            className="flex h-7 w-7 items-center justify-center rounded-btn-ds text-soft transition-colors hover:bg-[#f5e9d9]"
+                            onClick={() => setOpenContactMenuFor((prev) => (prev === c.id ? null : c.id))}
+                            aria-label={`${c.name} 操作菜单`}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          {openContactMenuFor === c.id ? (
+                            <div className="absolute right-0 top-full z-30 mt-1 min-w-[8.5rem] rounded-ds border border-warm-soft bg-paper py-1 shadow-ds-card">
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-2 text-left text-ds-caption hover:bg-surface-warm-soft"
+                                onClick={() => {
+                                  setOpenContactMenuFor(null)
+                                  onEditContact(c.id)
+                                }}
+                              >
+                                编辑档案
+                              </button>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-2 text-left text-ds-caption text-[#b42318] hover:bg-[#fef2f2]"
+                                onClick={() => {
+                                  setOpenContactMenuFor(null)
+                                  onDeleteContact(c.id)
+                                }}
+                              >
+                                删除联系人
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-btn-ds bg-surface-warm-soft px-2 py-0.5 text-ds-caption text-slate-500">{c.group}</span>
-                    {bulkMode ? (
+                  <p className="mt-ds-xs line-clamp-2 text-ds-caption text-soft">💬 {c.note}</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="text-ds-caption text-muted">
+                      最近联系：{c.lastContact?.trim() ? c.lastContact : "暂未联系"}
+                    </p>
+                    {!bulkMode ? (
                       <button
-                        className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
-                          selectedRelationIds.includes(c.id)
-                            ? "border-[#6366F1] bg-[#6366F1] text-white"
-                            : "border-warm-soft bg-paper text-soft"
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setSelectedRelationIds((prev) =>
-                            prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
-                          )
-                        }}
-                        title={selectedRelationIds.includes(c.id) ? "取消选择" : "选择此联系人"}
+                        type="button"
+                        className="rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption text-soft transition-colors hover:bg-[#f5e9d9]"
+                        onClick={() => openInteractionForContact(c.id)}
                       >
-                        {selectedRelationIds.includes(c.id) ? "✓" : "○"}
+                        记录互动
                       </button>
                     ) : null}
                   </div>
                 </div>
-                <p className="mt-ds-xs line-clamp-2 text-ds-caption text-soft">💬 {c.note}</p>
-                <p className="mt-1 text-[11px] text-slate-400">
-                  最近联系：{c.lastContact?.trim() ? c.lastContact : "暂未联系"}
-                </p>
-              </button>
               ))}
             </div>
           )}

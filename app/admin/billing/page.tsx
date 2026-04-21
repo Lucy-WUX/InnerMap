@@ -202,14 +202,14 @@ export default function BillingAdminPage() {
             <button
               type="button"
               onClick={() => setIssueLocalMode(false)}
-              className={`rounded px-3 py-1 ${issueLocalMode ? "bg-[#f2e9df] text-[#6b5342]" : "bg-[#7a5a2e] text-white"}`}
+              className={`rounded px-3 py-1 ${issueLocalMode ? "bg-[#f2e9df] text-[#6b5342]" : "bg-[#7a5a2e] text-[#5C4B3E]"}`}
             >
               联网核销码
             </button>
             <button
               type="button"
               onClick={() => setIssueLocalMode(true)}
-              className={`rounded px-3 py-1 ${issueLocalMode ? "bg-[#7a5a2e] text-white" : "bg-[#f2e9df] text-[#6b5342]"}`}
+              className={`rounded px-3 py-1 ${issueLocalMode ? "bg-[#7a5a2e] text-[#5C4B3E]" : "bg-[#f2e9df] text-[#6b5342]"}`}
             >
               本地离线码
             </button>
@@ -252,7 +252,7 @@ export default function BillingAdminPage() {
               </>
             )}
           </div>
-          <button disabled={issueBusy} onClick={issueCodes} className="mt-3 rounded-[12px] bg-[#7a5a2e] px-4 py-2 text-white disabled:opacity-60">
+          <button disabled={issueBusy} onClick={issueCodes} className="mt-3 rounded-[12px] bg-[#7a5a2e] px-4 py-2 text-[#5C4B3E] disabled:opacity-60">
             {issueBusy ? "发码中..." : "生成兑换码"}
           </button>
           {issueTip ? <p className="mt-2 text-sm text-[#6b5342]">{issueTip}</p> : null}
@@ -279,7 +279,7 @@ export default function BillingAdminPage() {
             <input className="h-11 rounded-[12px] border border-[#d8c9b9] bg-paper px-3" type="datetime-local" value={codeFrom} onChange={(e) => setCodeFrom(e.target.value)} />
             <input className="h-11 rounded-[12px] border border-[#d8c9b9] bg-paper px-3" type="datetime-local" value={codeTo} onChange={(e) => setCodeTo(e.target.value)} />
           </div>
-          <button disabled={codeBusy} onClick={loadRedeemCodes} className="mt-3 rounded-[12px] bg-[#7a5a2e] px-4 py-2 text-white disabled:opacity-60">
+          <button disabled={codeBusy} onClick={loadRedeemCodes} className="mt-3 rounded-[12px] bg-[#7a5a2e] px-4 py-2 text-[#5C4B3E] disabled:opacity-60">
             {codeBusy ? "查询中..." : "查询兑换码"}
           </button>
           {codeTip ? <p className="mt-2 text-sm text-[#6b5342]">{codeTip}</p> : null}
@@ -310,14 +310,14 @@ export default function BillingAdminPage() {
                         <button
                           onClick={() => patchCodeStatus(row.id, "disable")}
                           disabled={row.status === "disabled"}
-                          className="rounded bg-[#b75247] px-2 py-1 text-white disabled:opacity-50"
+                          className="rounded bg-[#b75247] px-2 py-1 text-[#5C4B3E] disabled:opacity-50"
                         >
                           禁用
                         </button>
                         <button
                           onClick={() => patchCodeStatus(row.id, "enable")}
                           disabled={row.status === "redeemed" || row.status === "issued"}
-                          className="rounded bg-[#5a7c4d] px-2 py-1 text-white disabled:opacity-50"
+                          className="rounded bg-[#5a7c4d] px-2 py-1 text-[#5C4B3E] disabled:opacity-50"
                         >
                           启用
                         </button>
@@ -339,7 +339,7 @@ export default function BillingAdminPage() {
             <input className="h-11 rounded-[12px] border border-[#d8c9b9] bg-paper px-3" type="datetime-local" value={auditFrom} onChange={(e) => setAuditFrom(e.target.value)} />
             <input className="h-11 rounded-[12px] border border-[#d8c9b9] bg-paper px-3" type="datetime-local" value={auditTo} onChange={(e) => setAuditTo(e.target.value)} />
           </div>
-          <button disabled={auditBusy} onClick={loadAuditLogs} className="mt-3 rounded-[12px] bg-[#7a5a2e] px-4 py-2 text-white disabled:opacity-60">
+          <button disabled={auditBusy} onClick={loadAuditLogs} className="mt-3 rounded-[12px] bg-[#7a5a2e] px-4 py-2 text-[#5C4B3E] disabled:opacity-60">
             {auditBusy ? "查询中..." : "查询审计日志"}
           </button>
           {auditTip ? <p className="mt-2 text-sm text-[#6b5342]">{auditTip}</p> : null}

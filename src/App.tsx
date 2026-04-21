@@ -21,7 +21,6 @@ import {
   type TabKey,
 } from "./components/app/types"
 import { AppLockScreen } from "./components/app/app-lock-screen"
-import { OnboardingOverlay } from "./components/app/onboarding-overlay"
 import { Button } from "./components/ui/button"
 import {
   applyGuestLocalSchemaIfStale,
@@ -30,15 +29,12 @@ import {
   dismissMonthlyBackupBannerForMonth,
   guestMergePromptKey,
   hasSeenLocalModeWelcome,
-  isAppDataEmpty,
   isSessionUnlocked,
   loadLockSettings,
   loadSnapshot,
   markLocalModeWelcomeSeen,
-  onboardingDone,
   saveLockSettings,
   saveSnapshot,
-  setOnboardingDone,
   shouldShowMonthlyBackupBanner,
   snapshotHasMigratableData,
   snapshotLooksLikeHardcodedDemo,
@@ -164,11 +160,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   const [appReady, setAppReady] = useState(false)
   const [unlockTick, setUnlockTick] = useState(0)
   const [lockSettings, setLockSettings] = useState<LockSettings | null>(null)
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const showOnboardingRef = useRef(false)
-  showOnboardingRef.current = showOnboarding
-  /** 与 localStorage 同步：新手引导已结束或已关闭后不再自动弹出，也不再显示顶栏「新用户快速开始」 */
-  const [onboardingHandled, setOnboardingHandled] = useState(false)
   const [contactFormError, setContactFormError] = useState("")
   const [saveSuccessTip, setSaveSuccessTip] = useState("")
   const [contactSaving, setContactSaving] = useState(false)
@@ -180,21 +171,27 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   showLocalWelcomeRef.current = showLocalWelcomeModal
   const [showGuestMergeModal, setShowGuestMergeModal] = useState(false)
   const [, setBackupBannerTick] = useState(0)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [confirmDialogTitle, setConfirmDialogTitle] = useState("确定要删除吗？")
+  const [confirmDialogDesc, setConfirmDialogDesc] = useState("此操作不可撤销")
+  const confirmActionRef = useRef<(() => void) | null>(null)
 
   function showSaveSuccess(message = "保存成功 ✓") {
     setSaveSuccessTip(message)
     setTimeout(() => setSaveSuccessTip(""), 2000)
   }
 
+  function requestDeleteConfirm(action: () => void) {
+    confirmActionRef.current = action
+    setConfirmDialogTitle("确定要删除吗？")
+    setConfirmDialogDesc("此操作不可撤销")
+    setConfirmDialogOpen(true)
+  }
+
   function setContactDialogOpen(value: boolean) {
     if (!value) setContactFormError("")
     setShowContactDialog(value)
   }
-
-  const markOnboardingHandled = useCallback(() => {
-    setOnboardingDone(storageScope)
-    setOnboardingHandled(true)
-  }, [storageScope])
 
   function navigateToTab(next: TabKey) {
     setOverlay("none")
@@ -218,11 +215,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   function openInteractionForContact(contactId: string) {
     setSelectedContactId(contactId)
     openInteractionDialog()
-  }
-
-  function openInteractionForFirstContact() {
-    const first = contacts[0]
-    if (first) openInteractionForContact(first.id)
   }
 
   function buildExportCore(): Omit<AppDataSnapshot, "version" | "exportedAt"> {
@@ -255,9 +247,15 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     return Math.min(10, Math.max(0, Math.round(value * 10) / 10))
   }
 
-  function saveInteraction() {
+  function resetInteractionForm() {
+    setInteractionForm(buildDefaultInteractionForm())
+  }
+
+  function saveInteraction(): boolean {
+    if (!selectedContactId) {
+      return false
+    }
     setInteractionSaving(true)
-    setShowInteractionDialog(false)
     setInteractionSaved(true)
     setInteractionAiStatus("analyzing")
     if (selectedContactId) {
@@ -313,9 +311,9 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       setInteractionSaved(false)
       setInteractionAiStatus("idle")
     }, 2200)
-    setInteractionForm(buildDefaultInteractionForm())
     showSaveSuccess("保存成功 ✓")
     setTimeout(() => setInteractionSaving(false), 300)
+    return true
   }
 
   function openCreateContact() {
@@ -356,11 +354,14 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     setContactDialogOpen(true)
   }
 
-  function handleDeleteContactFromDetail() {
-    const targetId = selectedContactId
+  function openEditContactFromList(contactId: string) {
+    setSelectedContactId(contactId)
+    setTimeout(() => openEditContact(), 0)
+  }
+
+  function deleteContactById(targetId: string) {
     const target = contacts.find((c) => c.id === targetId)
     if (!target) return
-    if (!window.confirm(`确认删除联系人「${target.name}」吗？其互动记录与评分历史也会一并删除，且不可恢复。`)) return
 
     setContacts((prev) => prev.filter((item) => item.id !== targetId))
     setInteractionLogs((prev) => prev.filter((item) => item.contactId !== targetId))
@@ -375,11 +376,28 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     showSaveSuccess("联系人已删除 ✓")
   }
 
+  function handleDeleteContactFromDetail() {
+    const targetId = selectedContactId
+    if (!targetId) return
+    requestDeleteConfirm(() => deleteContactById(targetId))
+  }
+
+  function handleDeleteContactFromList(contactId: string) {
+    requestDeleteConfirm(() => deleteContactById(contactId))
+  }
+
   function saveContactForm() {
-    if (!contactForm.name.trim()) return
+    if (!contactForm.name.trim()) {
+      setContactFormError("请填写姓名。")
+      return false
+    }
+    if (!contactForm.group || !String(contactForm.group).trim()) {
+      setContactFormError("请选择分组。")
+      return false
+    }
     if (!isEditingContact && !isProSubscriber() && contacts.length >= FREE_CONTACT_LIMIT) {
       setContactFormError(`免费版最多添加 ${FREE_CONTACT_LIMIT} 位联系人，升级 Pro 可解除限制。`)
-      return
+      return false
     }
     setContactFormError("")
     setContactSaving(true)
@@ -443,10 +461,9 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       }))
       setSelectedContactId(createdId)
     }
-    setContactDialogOpen(false)
-    setOverlay("none")
     showSaveSuccess(isEditingContact ? "联系人已更新 ✓" : "联系人已创建 ✓")
     setTimeout(() => setContactSaving(false), 300)
+    return true
   }
 
   function handleCreateGroup() {
@@ -571,34 +588,36 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   }
 
   function handleDeleteDiary(dateKey: string) {
-    if (!window.confirm("确认删除这条日记吗？删除后无法恢复。")) return
-    setDiaryRecords((prev) => {
-      const next = { ...prev }
-      delete next[dateKey]
-      return next
+    requestDeleteConfirm(() => {
+      setDiaryRecords((prev) => {
+        const next = { ...prev }
+        delete next[dateKey]
+        return next
+      })
+      setDiaryEmotionRecords((prev) => {
+        const next = { ...prev }
+        delete next[dateKey]
+        return next
+      })
+      if (diarySelectedDate === dateKey) {
+        setDiaryEditorText("")
+        setDiaryEmotion("")
+      }
+      setDiaryDrafts((prev) => {
+        const next = { ...prev }
+        delete next[dateKey]
+        return next
+      })
+      setDiarySaveTip("日记已删除")
+      setTimeout(() => setDiarySaveTip(""), 1400)
     })
-    setDiaryEmotionRecords((prev) => {
-      const next = { ...prev }
-      delete next[dateKey]
-      return next
-    })
-    if (diarySelectedDate === dateKey) {
-      setDiaryEditorText("")
-      setDiaryEmotion("")
-    }
-    setDiaryDrafts((prev) => {
-      const next = { ...prev }
-      delete next[dateKey]
-      return next
-    })
-    setDiarySaveTip("日记已删除")
-    setTimeout(() => setDiarySaveTip(""), 1400)
   }
 
   function handleDeleteInteraction(interactionId: string) {
-    if (!window.confirm("确认删除这条互动记录吗？删除后无法恢复。")) return
-    setInteractionLogs((prev) => prev.filter((item) => item.id !== interactionId))
-    showSaveSuccess("删除成功 ✓")
+    requestDeleteConfirm(() => {
+      setInteractionLogs((prev) => prev.filter((item) => item.id !== interactionId))
+      showSaveSuccess("删除成功 ✓")
+    })
   }
 
   const linkedContacts = contacts
@@ -808,11 +827,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   }, [sessionLoading, storageScope])
 
   useEffect(() => {
-    if (!appReady) return
-    setOnboardingHandled(onboardingDone(storageScope))
-  }, [appReady, storageScope])
-
-  useEffect(() => {
     if (typeof localStorage === "undefined") return
     localStorage.setItem(`pss-diary-drafts:${storageScope}`, JSON.stringify(diaryDrafts))
   }, [diaryDrafts, storageScope])
@@ -890,26 +904,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   }, [userId, accessToken])
 
   useEffect(() => {
-    if (!appReady || lockVisible) return
-    if (isLocalModeUrl && !userId && !hasSeenLocalModeWelcome()) return
-    if (onboardingHandled) return
-    if (!isAppDataEmpty(contacts.length, interactionLogs.length, countDiaryEntriesWithContent(diaryRecords)))
-      return
-    setShowOnboarding(true)
-  }, [
-    appReady,
-    lockVisible,
-    unlockTick,
-    contacts.length,
-    interactionLogs.length,
-    diaryRecords,
-    storageScope,
-    isLocalModeUrl,
-    userId,
-    onboardingHandled,
-  ])
-
-  useEffect(() => {
     setTab(initialTab)
     setOverlay("none")
   }, [initialTab])
@@ -925,14 +919,10 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       setShowInteractionDialog(false)
       setShowContactDialog(false)
       setShowNewGroupDialog(false)
-      if (showOnboardingRef.current) {
-        markOnboardingHandled()
-      }
-      setShowOnboarding(false)
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [markOnboardingHandled])
+  }, [])
 
   useEffect(() => {
     const [year, month] = diarySelectedDate.split("-")
@@ -1030,9 +1020,31 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     if (!activeHealthLabel) setHealthPulseStrength(0)
   }, [activeHealthLabel])
 
+  useEffect(() => {
+    const shouldLockScroll =
+      showInteractionDialog ||
+      showContactDialog ||
+      showNewGroupDialog ||
+      showLocalWelcomeModal ||
+      showGuestMergeModal ||
+      confirmDialogOpen
+    const previousOverflow = document.body.style.overflow
+    if (shouldLockScroll) document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [
+    confirmDialogOpen,
+    showContactDialog,
+    showGuestMergeModal,
+    showInteractionDialog,
+    showLocalWelcomeModal,
+    showNewGroupDialog,
+  ])
+
   if (!appReady) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC] px-ds-md pb-ds-lg pt-ds-md">
+      <main className="min-h-screen bg-base px-ds-md pb-ds-lg pt-ds-md">
         <div className="mx-auto max-w-5xl space-y-ds-md animate-pulse">
           <div className="h-11 w-full rounded-ds bg-[#efe6d9]" />
           <div className="grid gap-ds-md lg:grid-cols-[320px_1fr]">
@@ -1050,11 +1062,10 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
 
   const showBackupReminder =
     shouldShowMonthlyBackupBanner() && snapshotHasMigratableData(loadSnapshot(storageScope))
-  const firstUseEmpty = isAppDataEmpty(contacts.length, interactionLogs.length, countDiaryEntriesWithContent(diaryRecords))
 
   return (
     <>
-    <main className="min-h-screen bg-[#F8FAFC] px-ds-md pb-ds-lg pt-ds-md text-[#0F172A]">
+    <main className="min-h-screen bg-base px-ds-md pb-ds-lg pt-ds-md text-soft">
       {showBackupReminder ? (
         <div className="mb-3 flex items-start gap-2 rounded-ds border border-[#d8c9b9] bg-[#f8f1e8] px-3 py-2.5 text-sm text-[#4a3728] shadow-sm">
           <button
@@ -1079,24 +1090,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
           >
             ×
           </button>
-        </div>
-      ) : null}
-      {firstUseEmpty && overlay === "none" && !onboardingHandled ? (
-        <div className="mb-3 rounded-ds border border-[#e6d7c5] bg-[#fff8ee] px-3 py-2.5 text-[#5f4a32] shadow-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-ds-body font-medium">新用户快速开始：先添加联系人，再记录互动，最后查看关系洞察。</p>
-            <div className="ml-auto flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                onClick={() => {
-                  navigateToTab("relations")
-                  openCreateContact()
-                }}
-              >
-                立即添加联系人
-              </Button>
-            </div>
-          </div>
         </div>
       ) : null}
       <div>
@@ -1127,6 +1120,9 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
           selectedRelationIds={selectedRelationIds}
           setSelectedRelationIds={setSelectedRelationIds}
           setContacts={setContacts}
+          onEditContact={openEditContactFromList}
+          onDeleteContact={handleDeleteContactFromList}
+          requestDeleteConfirm={requestDeleteConfirm}
           energySpotlightItems={energySpotlightItems}
         />
       ) : null}
@@ -1193,11 +1189,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
               openPage4WithContact(contactId)
             },
             onOpenAiPage: () => openAiPage("我想先快速梳理这周最消耗我的关系。"),
-            openCreateContact: () => {
-              navigateToTab("relations")
-              openCreateContact()
-            },
-            suppressNewUserQuickStart: onboardingHandled,
             storageScope,
             diarySaveTip,
             diarySaving,
@@ -1243,6 +1234,9 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
         showContactDialog={showContactDialog}
         setShowContactDialog={setContactDialogOpen}
         contactFormError={contactFormError}
+        clearContactFormError={() => setContactFormError("")}
+        storageScope={storageScope}
+        selectedContactId={selectedContactId}
         isEditingContact={isEditingContact}
         contactForm={contactForm}
         setContactForm={setContactForm}
@@ -1262,28 +1256,14 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
         interactionForm={interactionForm}
         setInteractionForm={setInteractionForm}
         saveInteraction={saveInteraction}
+        resetInteractionForm={resetInteractionForm}
         interactionSaving={interactionSaving}
         interactionAiStatus={interactionAiStatus}
       />
       </div>
     </main>
-    <OnboardingOverlay
-      open={showOnboarding}
-      onClose={() => {
-        setShowOnboarding(false)
-        markOnboardingHandled()
-      }}
-      onFinishOnboarding={markOnboardingHandled}
-      setTab={navigateToTab}
-      openCreateContact={openCreateContact}
-      openInteractionForFirstContact={openInteractionForFirstContact}
-      openAiPage={openAiPage}
-      openReminderSetup={() => navigateToTab("mine")}
-      contactCount={contacts.length}
-      interactionCount={interactionLogs.length}
-    />
     {saveSuccessTip ? (
-      <div className="fixed right-4 top-4 z-[80] rounded-ds border border-[#b7e4c7] bg-[#ecfdf3] px-3 py-2 text-ds-caption font-medium text-[#166534] shadow-md">
+      <div className="fixed right-4 top-4 z-[80] rounded-ds border border-energy-positive/25 bg-[#e8f0ea] px-3 py-2 text-ds-caption font-medium text-energy-positive shadow-md">
         {saveSuccessTip}
       </div>
     ) : null}
@@ -1296,15 +1276,15 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
         aria-labelledby="local-welcome-title"
       >
         <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-ds border border-[#d8c9b9] bg-paper p-6 shadow-xl">
-          <h2 id="local-welcome-title" className="text-lg font-semibold text-[#3b2f2f]">
+          <h2 id="local-welcome-title" className="text-ds-title font-semibold text-ink">
             🎉 欢迎使用 InnerMap！
           </h2>
-          <div className="mt-4 space-y-3 text-sm leading-relaxed text-[#4a3728]">
-            <p>你的所有数据都将存储在这台设备的浏览器中，不会上传到任何服务器。</p>
-            <p>
-              💡 建议：定期点击右上角 &quot;我的&quot;→&quot;导出所有数据&quot; 备份你的数据，防止意外丢失。
-            </p>
-            <p>如果你需要在多设备之间同步数据，可以随时注册一个账号。</p>
+          <div className="mt-4 space-y-3 text-ds-body text-soft">
+            <p>数据保存在本机浏览器，不会上传到服务器。</p>
+            <ul className="list-inside list-disc space-y-1.5">
+              <li>建议定期在「系统」中导出备份，避免意外丢失。</li>
+              <li>需要多设备同步时，可随时注册账号。</li>
+            </ul>
           </div>
           <div className="mt-6 flex justify-end">
             <Button
@@ -1329,11 +1309,13 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
         aria-labelledby="guest-merge-title"
       >
         <div className="w-full max-w-md rounded-ds border border-[#d8c9b9] bg-paper p-6 shadow-xl">
-          <h2 id="guest-merge-title" className="text-lg font-semibold text-[#3b2f2f]">
+          <h2 id="guest-merge-title" className="text-ds-title font-semibold text-ink">
             同步本地数据
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-[#4a3728]">
-            检测到你有本地数据，是否要将这些数据同步到你的新账号？
+          <p className="mt-3 text-ds-body text-soft">
+            检测到你本地已有数据。
+            <br />
+            是否同步到当前新账号？
           </p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button
@@ -1361,6 +1343,39 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
               }}
             >
               是，同步所有数据
+            </Button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+    {confirmDialogOpen ? (
+      <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4" role="dialog" aria-modal="true">
+        <div className="w-full max-w-sm rounded-ds border border-[#d8c9b9] bg-paper p-6 shadow-xl">
+          <h2 className="text-ds-title font-semibold text-ink">{confirmDialogTitle}</h2>
+          <p className="mt-2 text-ds-body text-soft">{confirmDialogDesc}</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#d8c9b9] bg-paper text-soft"
+              onClick={() => {
+                setConfirmDialogOpen(false)
+                confirmActionRef.current = null
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => {
+                const action = confirmActionRef.current
+                setConfirmDialogOpen(false)
+                confirmActionRef.current = null
+                action?.()
+              }}
+            >
+              确认删除
             </Button>
           </div>
         </div>

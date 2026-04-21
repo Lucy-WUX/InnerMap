@@ -149,7 +149,7 @@ export default function RelationshipDetailPage() {
           placeholder="例如：我是不是太依赖了？"
         />
         <div className="mt-3 flex flex-wrap gap-2">
-          <button className="rounded-full bg-[#795548] px-4 py-2 text-sm text-white" onClick={analyzeRelationship} disabled={loading}>
+          <button className="rounded-full bg-[#795548] px-4 py-2 text-sm text-[#5C4B3E]" onClick={analyzeRelationship} disabled={loading}>
             {loading ? "分析中..." : "分析这段关系"}
           </button>
           <button className="rounded-full border border-warm-strong px-4 py-2 text-sm text-ink" onClick={generatePortrait} disabled={loading}>

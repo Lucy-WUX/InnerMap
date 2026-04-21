@@ -290,13 +290,13 @@ export function PersonDetailOverlay({
           <Card className="rounded-ds border border-warm-base p-ds-md">
             <div className="mb-ds-xs flex gap-1">
               <button
-                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${activeTab === "advisor" ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]" : "border-warm-soft bg-paper text-soft"}`}
+                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${activeTab === "advisor" ? "border-[#8B5A42] bg-[#f5e7cf] text-soft" : "border-warm-soft bg-paper text-soft"}`}
                 onClick={() => setActiveTab("advisor")}
               >
                 AI 顾问
               </button>
               <button
-                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${activeTab === "history" ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]" : "border-warm-soft bg-paper text-soft"}`}
+                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${activeTab === "history" ? "border-[#8B5A42] bg-[#f5e7cf] text-soft" : "border-warm-soft bg-paper text-soft"}`}
                 onClick={() => setActiveTab("history")}
               >
                 互动历史
@@ -308,10 +308,10 @@ export function PersonDetailOverlay({
             <div className="mt-ds-xs space-y-ds-xs">
               {hasHistory ? (
                 <>
-                <div className="ml-auto w-[86%] rounded-ds bg-[#DBEAFE] p-ds-xs text-ds-body">
+                <div className="ml-auto w-[86%] rounded-ds bg-[#8B5A42] p-ds-xs text-ds-body text-[#fffdf9]">
                     {latestUserMessage}
                   </div>
-                  <div className="w-[92%] rounded-ds bg-slate-100 p-ds-xs text-ds-body">
+                  <div className="w-[92%] rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs text-ds-body">
                     {isAiTyping ? (
                       <span>
                         {aiReplyText}
@@ -324,7 +324,7 @@ export function PersonDetailOverlay({
                   </div>
                 </>
               ) : (
-                <div className="w-[92%] rounded-ds bg-slate-100 p-ds-xs text-ds-body">
+                <div className="w-[92%] rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs text-ds-body">
                   {welcomeMessage}
                   <p className="mt-1 text-ds-caption text-soft">当前未生成 AI 分析</p>
                 </div>
@@ -431,7 +431,7 @@ export function PersonDetailOverlay({
             </p>
           ) : null}
           {interactionAiStatus === "analyzing" ? <p className="mt-1 text-ds-caption text-[#7a5a2e]">AI 分析中...</p> : null}
-          {interactionAiStatus === "done" ? <p className="mt-1 text-ds-caption text-[#0f766e]">AI 已分析本次互动，关系评分已更新</p> : null}
+          {interactionAiStatus === "done" ? <p className="mt-1 text-ds-caption text-energy-positive">AI 已分析本次互动，关系评分已更新</p> : null}
         </div>
       </aside>
 

@@ -4,13 +4,12 @@ import Link from "next/link"
 import { type ReactNode } from "react"
 
 import { LOCAL_MODE_HREF } from "@/lib/local-mode"
-import { PricingPaymentReminderCard } from "@/components/pricing-payment-reminder"
 
 function NavButtonPrimary({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
-      className="rounded-btn-ds inline-flex min-h-11 items-center justify-center bg-ink px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6d4c41]"
+      className="rounded-btn-ds inline-flex min-h-11 items-center justify-center bg-ink px-4 py-2 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41]"
     >
       {children}
     </Link>
@@ -32,7 +31,7 @@ function HeroButtonPrimary({ href, children }: { href: string; children: ReactNo
   return (
     <Link
       href={href}
-      className="rounded-full inline-flex min-h-11 items-center justify-center bg-ink px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6d4c41]"
+      className="rounded-full inline-flex min-h-11 items-center justify-center bg-ink px-6 py-2.5 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41]"
     >
       {children}
     </Link>
@@ -101,9 +100,6 @@ export function PublicLanding() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6">
-          <PricingPaymentReminderCard />
-        </section>
       </main>
     </div>
   )
