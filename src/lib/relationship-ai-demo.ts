@@ -29,7 +29,7 @@ export function computeRelationHealthBuckets(contacts: RelationContact[]): Relat
   const counts = [highTrust, observe, surfaceLean]
   const n = contacts.length
   const ratios = counts.map((c) => Math.floor((100 * c) / n))
-  let remainder = 100 - ratios.reduce((a, b) => a + b, 0)
+  const remainder = 100 - ratios.reduce((a, b) => a + b, 0)
   const frac = counts.map((c, i) => ({ i, rem: (100 * c) / n - ratios[i] }))
   frac.sort((a, b) => b.rem - a.rem)
   for (let k = 0; k < remainder; k++) {

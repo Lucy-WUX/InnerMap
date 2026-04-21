@@ -73,6 +73,7 @@ export function RelationsSection({
   setContacts,
   energySpotlightItems,
 }: RelationsSectionProps) {
+  const hasContacts = contacts.length > 0
   const [bulkMode, setBulkMode] = useState(false)
   const [batchMoveTarget, setBatchMoveTarget] = useState<GroupKey>(allGroups[0] ?? DEFAULT_CONTACT_GROUP)
   const [openMenuFor, setOpenMenuFor] = useState<GroupKey | null>(null)
@@ -160,91 +161,97 @@ export function RelationsSection({
       <aside className="space-y-ds-xs">
         <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
           <h3 className="text-ds-title">关系健康度</h3>
-          <div className="mt-ds-xs flex items-center gap-ds-md">
-            <div
-              className="relative h-28 w-28 transition-all duration-500"
-              style={{
-                opacity: healthChartReady ? 1 : 0,
-                transform: healthChartReady ? "scale(1)" : "scale(0.92)",
-                filter:
-                  activeHealth
-                    ? `drop-shadow(0 0 ${6 + healthPulseStrength * 8}px rgba(99,102,241,${0.14 + healthPulseStrength * 0.18}))`
-                    : "none",
-              }}
-            >
+          {hasContacts ? (
+            <div className="mt-ds-xs flex items-center gap-ds-md">
               <div
-                className="h-full w-full rounded-full transition-transform duration-500"
+                className="relative h-28 w-28 transition-all duration-500"
                 style={{
-                  background: healthConicBackground,
-                  transform: healthChartReady ? "rotate(-90deg)" : "rotate(-240deg)",
+                  opacity: healthChartReady ? 1 : 0,
+                  transform: healthChartReady ? "scale(1)" : "scale(0.92)",
+                  filter:
+                    activeHealth
+                      ? `drop-shadow(0 0 ${6 + healthPulseStrength * 8}px rgba(99,102,241,${0.14 + healthPulseStrength * 0.18}))`
+                      : "none",
                 }}
-              />
-              <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-white text-center">
-                {activeHealth ? (
-                  <div className="-translate-y-0.5 leading-tight">
-                    <p className="text-ds-caption text-soft">{activeHealth.label}</p>
-                    <p className="text-lg font-semibold text-ink">{activeHealth.count}</p>
-                  </div>
-                ) : (
-                  <div className="-translate-y-0.5 leading-tight">
-                    <p className="text-ds-caption text-soft">总联系</p>
-                    <p className="text-lg font-semibold text-ink">{contacts.length}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 space-y-ds-xs">
-              {relationHealthData.map((item, index) => (
+              >
                 <div
-                  key={item.label}
-                  className="rounded-md px-1 py-0.5 transition-colors duration-200 hover:bg-slate-50"
-                  onMouseEnter={() => setHoveredHealthLabel(item.label)}
-                  onMouseLeave={() => setHoveredHealthLabel(null)}
+                  className="h-full w-full rounded-full transition-transform duration-500"
                   style={{
-                    boxShadow:
-                      activeHealthLabel === item.label
-                        ? `0 0 0 ${1 + healthPulseStrength * 4}px ${item.color}22`
-                        : "none",
+                    background: healthConicBackground,
+                    transform: healthChartReady ? "rotate(-90deg)" : "rotate(-240deg)",
                   }}
-                >
-                  <div className="flex items-center justify-between text-ds-caption text-soft">
-                    <span className="flex items-center gap-1">
-                      <span
-                        className="inline-block h-2.5 w-2.5 rounded-full transition-transform duration-300"
+                />
+                <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-white text-center">
+                  {activeHealth ? (
+                    <div className="-translate-y-0.5 leading-tight">
+                      <p className="text-ds-caption text-soft">{activeHealth.label}</p>
+                      <p className="text-lg font-semibold text-ink">{activeHealth.count}</p>
+                    </div>
+                  ) : (
+                    <div className="-translate-y-0.5 leading-tight">
+                      <p className="text-ds-caption text-soft">总联系</p>
+                      <p className="text-lg font-semibold text-ink">{contacts.length}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 space-y-ds-xs">
+                {relationHealthData.map((item, index) => (
+                  <div
+                    key={item.label}
+                    className="rounded-md px-1 py-0.5 transition-colors duration-200 hover:bg-slate-50"
+                    onMouseEnter={() => setHoveredHealthLabel(item.label)}
+                    onMouseLeave={() => setHoveredHealthLabel(null)}
+                    style={{
+                      boxShadow:
+                        activeHealthLabel === item.label
+                          ? `0 0 0 ${1 + healthPulseStrength * 4}px ${item.color}22`
+                          : "none",
+                    }}
+                  >
+                    <div className="flex items-center justify-between text-ds-caption text-soft">
+                      <span className="flex items-center gap-1">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full transition-transform duration-300"
+                          style={{
+                            backgroundColor: item.color,
+                            transform: activeHealthLabel === item.label ? `scale(${1 + healthPulseStrength * 0.24})` : "scale(1)",
+                            boxShadow:
+                              activeHealthLabel === item.label
+                                ? `0 0 0 ${1 + healthPulseStrength * 4}px ${item.color}30`
+                                : "none",
+                          }}
+                        />
+                        {item.label} {item.count}人
+                      </span>
+                      <span>{Math.round(animatedHealthRatios[index] ?? 0)}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-slate-100">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700"
                         style={{
+                          width: `${animatedHealthRatios[index] ?? 0}%`,
                           backgroundColor: item.color,
-                          transform: activeHealthLabel === item.label ? `scale(${1 + healthPulseStrength * 0.24})` : "scale(1)",
+                          transitionDelay: `${120 + index * 90}ms`,
+                          opacity: activeHealthLabel && activeHealthLabel !== item.label ? 0.45 : 1,
                           boxShadow:
                             activeHealthLabel === item.label
-                              ? `0 0 0 ${1 + healthPulseStrength * 4}px ${item.color}30`
+                              ? `0 0 ${4 + healthPulseStrength * 10}px ${item.color}66`
                               : "none",
                         }}
                       />
-                      {item.label} {item.count}人
-                    </span>
-                    <span>{Math.round(animatedHealthRatios[index] ?? 0)}%</span>
+                    </div>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-slate-100">
-                    <div
-                      className="h-1.5 rounded-full transition-all duration-700"
-                      style={{
-                        width: `${animatedHealthRatios[index] ?? 0}%`,
-                        backgroundColor: item.color,
-                        transitionDelay: `${120 + index * 90}ms`,
-                        opacity: activeHealthLabel && activeHealthLabel !== item.label ? 0.45 : 1,
-                        boxShadow:
-                          activeHealthLabel === item.label
-                            ? `0 0 ${4 + healthPulseStrength * 10}px ${item.color}66`
-                            : "none",
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-4 text-ds-caption text-soft">
+              还没有联系人数据，关系健康度将保持空白。添加第一位联系人后，这里才会开始显示分布与趋势。
+            </div>
+          )}
           <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5c4d42]">
-            {contacts.length === 0 ? (
+            {!hasContacts ? (
               <p>添加联系人后，系统会根据真朋友指数与表面关系指数自动归入上列三类，环形图与占比即来自你的真实数据。</p>
             ) : (
               <p>
@@ -332,7 +339,7 @@ export function RelationsSection({
             </select>
             <button
               className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${
-                bulkMode ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]" : "border-warm-soft bg-paper text-soft"
+                bulkMode ? "border-[#b6905e] bg-[#fff3dc] text-[#7a5a2e]" : "border-warm-soft bg-paper text-soft"
               }`}
               onClick={() => {
                 setBulkMode((prev) => {
@@ -387,7 +394,7 @@ export function RelationsSection({
             <button
                 className={`rounded-btn-ds border px-3 py-1 text-ds-caption ${
                 relationsFocusGroup === "全部"
-                  ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]"
+                  ? "border-[#b6905e] bg-[#fff3dc] text-[#7a5a2e]"
                   : "border-warm-soft bg-surface-warm-soft text-slate-600"
               }`}
               onClick={() => setRelationsFocusGroup("全部")}
@@ -403,7 +410,7 @@ export function RelationsSection({
                   key={group}
                   className={`inline-flex max-w-full items-stretch rounded-btn-ds border text-ds-caption ${
                     isActive
-                      ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]"
+                      ? "border-[#b6905e] bg-[#fff3dc] text-[#7a5a2e]"
                       : "border-warm-soft bg-surface-warm-soft text-slate-600"
                   }`}
                 >
@@ -473,10 +480,23 @@ export function RelationsSection({
             <p className="hidden text-ds-caption text-soft sm:block">点击卡片查看详情与 AI 建议</p>
           </div>
           {relationVisibleContacts.length === 0 ? (
-            <div className="rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft p-ds-md text-ds-body text-soft">
-              {contacts.length === 0
-                ? "你还没有添加任何联系人，点击右上角 ' 新建联系人 ' 开始使用"
-                : "当前筛选条件下暂无联系人"}
+            <div className="rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft p-ds-md">
+              {contacts.length === 0 ? (
+                <div className="space-y-2">
+                  <p className="text-ds-body font-medium text-ink">还没有联系人，从这里开始更清晰：</p>
+                  <p className="text-ds-caption text-soft">建议顺序：先新建联系人 → 再建分组 → 然后记录一次互动。</p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button size="sm" onClick={openCreateContact}>
+                      + 新建第一位联系人
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowNewGroupDialog(true)}>
+                      + 新建分组
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-ds-body text-soft">当前筛选条件下暂无联系人，请切换筛选或搜索关键词。</p>
+              )}
             </div>
           ) : (
             <div className="grid gap-ds-xs md:grid-cols-2">

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 
 import { ACCOUNT_DELETION_CONFIRM_PHRASE } from "@/lib/account-constants"
 import { clearPersistedAuth, useAuthStore } from "@/lib/stores/auth-store"
@@ -20,6 +20,7 @@ import {
   setSessionUnlocked,
 } from "../../lib/app-local-storage"
 import { registerWebAuthnCredential, isWebAuthnAvailable } from "../../lib/webauthn-lock"
+import { isLocalProActiveNow } from "../../lib/local-pro-license"
 import { Button } from "../ui/button"
 import { Card } from "../ui/card"
 import { Input } from "../ui/input"
@@ -32,6 +33,7 @@ type MineSectionProps = {
   onLockSettingsChange: (settings: LockSettings | null) => void
   lockEnabled: boolean
   lockSettings: LockSettings | null
+  localRecordCount: number
   /** 在「我的」成功导出 JSON/CSV 后调用（用于刷新顶栏备份提醒等） */
   onExportComplete?: () => void
 }
@@ -44,6 +46,7 @@ export function MineSection({
   onLockSettingsChange,
   lockEnabled,
   lockSettings,
+  localRecordCount,
   onExportComplete,
 }: MineSectionProps) {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -57,6 +60,8 @@ export function MineSection({
   const [lockBusy, setLockBusy] = useState(false)
   const [dataActionBusy, setDataActionBusy] = useState(false)
   const [accountDeleteConfirm, setAccountDeleteConfirm] = useState("")
+  const localProActive = useMemo(() => isLocalProActiveNow(), [])
+  const shouldNudgeSyncByVolume = !isLoggedIn && localRecordCount >= 100
 
   function showTip(message: string, ms = 2800) {
     setImportTip(message)
@@ -256,6 +261,40 @@ export function MineSection({
       <Card className="rounded-ds border border-warm-base p-ds-lg">
         <h2 className="text-ds-title">我的</h2>
         <p className="mt-1 text-ds-body text-soft">数据、安全与备份</p>
+      </Card>
+      <Card className="rounded-ds border border-[#d8c9b9] bg-[#fff8ee] p-ds-lg">
+        <h3 className="text-ds-body font-semibold text-ink">云同步与账号（可选）</h3>
+        <p className="mt-1 text-ds-caption leading-relaxed text-soft">
+          注册登录不是必须的；仅在你需要多设备同步、云备份和 Pro 跨设备同步时再开启即可。
+        </p>
+        <div className="mt-ds-xs flex flex-wrap gap-2">
+          {isLoggedIn ? (
+            <Button type="button" variant="outline" disabled>
+              已开启云同步
+            </Button>
+          ) : (
+            <Link href="/register" className="inline-flex">
+              <Button type="button">开启云同步</Button>
+            </Link>
+          )}
+          {!isLoggedIn ? (
+            <Link href="/login" className="inline-flex">
+              <Button type="button" variant="outline">
+                我已有账号，去登录
+              </Button>
+            </Link>
+          ) : null}
+        </div>
+        {shouldNudgeSyncByVolume ? (
+          <p className="mt-ds-xs text-ds-caption font-medium text-[#7a5a2e]">
+            你当前本地记录已超过 100 条，建议注册账号开启云备份与多设备同步，降低浏览器数据丢失风险。
+          </p>
+        ) : null}
+        {!isLoggedIn && localProActive ? (
+          <p className="mt-ds-xs text-ds-caption font-medium text-[#7a5a2e]">
+            你已激活本地 Pro。注册账号后，可将 Pro 状态同步到所有登录设备。
+          </p>
+        ) : null}
       </Card>
       <Card className="rounded-ds border border-[#2e7d32]/30 bg-[#f1f8f2] p-ds-lg">
         <h3 className="text-ds-body font-semibold text-[#1b5e20]">隐私与信任</h3>

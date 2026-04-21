@@ -52,7 +52,9 @@ type HomeSectionProps = {
   linkedContactItems: RelationContact[]
   contacts: RelationContact[]
   onJumpToContact: (contactId: string) => void
+  onOpenAiPage: () => void
   diarySaveTip: string
+  diarySaving: boolean
   handleSaveDiary: () => void
   handleDeleteDiary: (dateKey: string) => void
   weeklyDigest: WeeklyDigest | null
@@ -89,7 +91,9 @@ export function HomeSection({
   linkedContactItems,
   contacts,
   onJumpToContact,
+  onOpenAiPage,
   diarySaveTip,
+  diarySaving,
   handleSaveDiary,
   handleDeleteDiary,
   weeklyDigest,
@@ -99,6 +103,7 @@ export function HomeSection({
   const [customMoodDraft, setCustomMoodDraft] = useState("")
   const [showMentionPicker, setShowMentionPicker] = useState(false)
   const [mentionSearch, setMentionSearch] = useState("")
+  const [diaryExpanded, setDiaryExpanded] = useState(false)
   const pickerSuggestions = useMemo(
     () => contacts.filter((c) => c.name.includes(mentionSearch.trim())).slice(0, 8),
     [contacts, mentionSearch]
@@ -153,6 +158,13 @@ export function HomeSection({
 
   return (
     <section className="space-y-ds-md">
+      <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg text-center">
+        <h2 className="text-2xl font-semibold text-ink">晓观 · 你的专属人际关系AI</h2>
+        <p className="mt-2 text-ds-body text-soft">看清关系、减少内耗、AI陪伴分析</p>
+        <div className="mt-4">
+          <Button onClick={onOpenAiPage}>进入晓观对话</Button>
+        </div>
+      </Card>
       <div className="grid gap-ds-md md:grid-cols-2">
         {weeklyDigest ? (
           <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
@@ -209,8 +221,21 @@ export function HomeSection({
           )}
         </Card>
       </div>
-      <div className="grid gap-ds-md lg:grid-cols-[420px_1fr]">
-        <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg">
+      <div className="grid gap-ds-md lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
+        <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
+          <div className="flex items-center justify-between">
+            <h3 className="text-ds-title">日记记录</h3>
+            <Button type="button" variant="outline" size="sm" onClick={() => setDiaryExpanded((v) => !v)}>
+              {diaryExpanded ? "收起" : "展开"}
+            </Button>
+          </div>
+          {!diaryExpanded ? (
+            <p className="mt-ds-xs text-ds-caption text-soft">默认收起，点击展开后可继续使用完整日记功能（增删改、心情、@联系人、搜索等）。</p>
+          ) : null}
+          {diaryExpanded ? (
+            <div className="mt-ds-sm">
+              <div className="grid gap-ds-md lg:grid-cols-[420px_1fr]">
+                <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg">
           <div className="mb-ds-md flex items-center justify-between">
             <button
               className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover"
@@ -361,17 +386,17 @@ export function HomeSection({
               <p className="text-ds-caption text-soft">本月暂无日记记录</p>
             )}
           </div>
-        </Card>
+                </Card>
 
-        <div className="space-y-ds-md">
-          <Card className="hidden rounded-ds border border-warm-base bg-paper p-ds-lg sm:block">
+                <div className="space-y-ds-md">
+                  <Card className="hidden rounded-ds border border-warm-base bg-paper p-ds-lg sm:block">
             <div className="flex items-center justify-between text-ds-body text-[#5c4d42]">
               <p>本月记录：{monthDiaryCount} 篇</p>
               <p>提及联系人：{monthMentionedContactCount} 人</p>
             </div>
           </Card>
 
-          <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
+                  <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
             <p className="text-[24px] font-semibold">{diarySelectedDate}</p>
             {totalDiaryCount === 0 ? (
               <p className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-soft">
@@ -537,7 +562,30 @@ export function HomeSection({
             </div>
             <div className="mt-ds-xs flex items-center justify-between gap-ds-xs">
               <p className="text-ds-caption text-soft">{diarySaveTip}</p>
-              <Button onClick={handleSaveDiary}>保存日记</Button>
+              <Button onClick={handleSaveDiary} disabled={diarySaving}>
+                {diarySaving ? "保存中..." : "保存日记"}
+              </Button>
+            </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </Card>
+        <div className="space-y-ds-sm">
+          <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
+            <h3 className="text-ds-body font-semibold text-ink">联系人快捷入口</h3>
+            <div className="mt-ds-xs flex flex-wrap gap-1.5">
+              {contacts.slice(0, 8).map((item) => (
+                <button
+                  key={item.id}
+                  className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption hover:bg-surface-warm-soft"
+                  onClick={() => onJumpToContact(item.id)}
+                >
+                  {item.name}
+                </button>
+              ))}
+              {contacts.length === 0 ? <span className="text-ds-caption text-soft">暂无联系人</span> : null}
             </div>
           </Card>
         </div>

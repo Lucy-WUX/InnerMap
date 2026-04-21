@@ -1,14 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import { useRouter, useSearchParams } from "next/navigation"
 
-import { AiAnalysisOverlay } from "./components/app/ai-analysis-overlay"
-import { AppDialogs } from "./components/app/app-dialogs"
-import { HomeSection } from "./components/app/home-section"
-import { MineSection } from "./components/app/mine-section"
-import { PersonDetailOverlay } from "./components/app/person-detail-overlay"
-import { RelationsSection } from "./components/app/relations-section"
+const AiAnalysisOverlay = dynamic(() => import("./components/app/ai-analysis-overlay").then((m) => m.AiAnalysisOverlay))
+const AppDialogs = dynamic(() => import("./components/app/app-dialogs").then((m) => m.AppDialogs))
+const HomeSection = dynamic(() => import("./components/app/home-section").then((m) => m.HomeSection))
+const MineSection = dynamic(() => import("./components/app/mine-section").then((m) => m.MineSection))
+const PersonDetailOverlay = dynamic(() =>
+  import("./components/app/person-detail-overlay").then((m) => m.PersonDetailOverlay)
+)
+const RelationsSection = dynamic(() => import("./components/app/relations-section").then((m) => m.RelationsSection))
 import {
   DEFAULT_CONTACT_GROUP,
   sortContactGroupsForUi,
@@ -45,6 +48,7 @@ import {
   type LockSettings,
 } from "./lib/app-local-storage"
 import { normalizeCustomMoodInput } from "./lib/diary-mood"
+import { hasLocalProSynced, markLocalProSynced, readStoredLocalProLicense } from "./lib/local-pro-license"
 import { FREE_CONTACT_LIMIT, isProSubscriber } from "./lib/product-limits"
 import {
   buildPatternSummary,
@@ -93,11 +97,16 @@ function buildDefaultInteractionForm() {
   }
 }
 
+function normalizeGroupNameInput(value: string) {
+  return value.trim().replace(/\s+/g, " ")
+}
+
 function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isLocalModeUrl = searchParams.get("local") === "1"
   const userId = useAuthStore((s) => s.userId)
+  const accessToken = useAuthStore((s) => s.accessToken)
   const authHydrated = useAuthHydration()
   const sessionLoading = !authHydrated
   const storageScope = userId ?? "guest"
@@ -158,7 +167,9 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [contactFormError, setContactFormError] = useState("")
   const [saveSuccessTip, setSaveSuccessTip] = useState("")
-  const [contentVisible, setContentVisible] = useState(true)
+  const [contactSaving, setContactSaving] = useState(false)
+  const [interactionSaving, setInteractionSaving] = useState(false)
+  const [diarySaving, setDiarySaving] = useState(false)
   const [diaryDrafts, setDiaryDrafts] = useState<Record<string, string>>({})
   const [showLocalWelcomeModal, setShowLocalWelcomeModal] = useState(false)
   const showLocalWelcomeRef = useRef(false)
@@ -240,6 +251,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   }
 
   function saveInteraction() {
+    setInteractionSaving(true)
     setShowInteractionDialog(false)
     setInteractionSaved(true)
     setInteractionAiStatus("analyzing")
@@ -298,6 +310,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     }, 2200)
     setInteractionForm(buildDefaultInteractionForm())
     showSaveSuccess("保存成功 ✓")
+    setTimeout(() => setInteractionSaving(false), 300)
   }
 
   function openCreateContact() {
@@ -364,6 +377,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       return
     }
     setContactFormError("")
+    setContactSaving(true)
     if (!allGroups.includes(contactForm.group)) {
       setCustomGroups((prev) => [...prev, contactForm.group])
     }
@@ -426,22 +440,29 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     }
     setContactDialogOpen(false)
     setOverlay("none")
+    showSaveSuccess(isEditingContact ? "联系人已更新 ✓" : "联系人已创建 ✓")
+    setTimeout(() => setContactSaving(false), 300)
   }
 
   function handleCreateGroup() {
-    const name = newGroupName.trim()
+    const name = normalizeGroupNameInput(newGroupName)
     if (!name) return
     if (name === DEFAULT_CONTACT_GROUP) {
       window.alert(`「${DEFAULT_CONTACT_GROUP}」为默认分组，无需创建。`)
       return
     }
-    if (customGroups.includes(name) || contacts.some((c) => c.group === name)) {
+    const normalizedExisting = new Set([
+      ...customGroups.map((g) => normalizeGroupNameInput(g)),
+      ...contacts.map((c) => normalizeGroupNameInput(c.group)),
+    ])
+    if (normalizedExisting.has(name)) {
       window.alert("已存在同名分组。")
       return
     }
     setCustomGroups((prev) => [...prev, name])
     setNewGroupName("")
     setShowNewGroupDialog(false)
+    showSaveSuccess("分组已创建 ✓")
   }
 
   function renameContactGroup(oldName: GroupKey, newName: string) {
@@ -501,6 +522,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       return
     }
 
+    setDiarySaving(true)
     setDiaryRecords((prev) => ({ ...prev, [diarySelectedDate]: content }))
     setDiaryEmotionRecords((prev) => {
       const next = { ...prev }
@@ -540,6 +562,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       return next
     })
     showSaveSuccess("保存成功 ✓")
+    setTimeout(() => setDiarySaving(false), 300)
   }
 
   function handleDeleteDiary(dateKey: string) {
@@ -659,7 +682,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     for (const l of interactionLogs) {
       if (l.energy < 0) sums.set(l.contactId, (sums.get(l.contactId) ?? 0) + l.energy)
     }
-    let rows = [...sums.entries()].sort((a, b) => a[1] - b[1]).slice(0, 3)
+    const rows = [...sums.entries()].sort((a, b) => a[1] - b[1]).slice(0, 3)
     if (rows.length === 0) return []
     return rows.map(([id]) => {
       const c = contacts.find((x) => x.id === id)
@@ -837,6 +860,26 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
   }, [appReady, userId, lockVisible])
 
   useEffect(() => {
+    if (!userId || !accessToken) return
+    if (hasLocalProSynced(userId)) return
+    const localLicense = readStoredLocalProLicense()
+    if (!localLicense?.code) return
+    void fetch("/api/billing/sync-local-license", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ code: localLicense.code }),
+    })
+      .then((res) => {
+        if (!res.ok) return
+        markLocalProSynced(userId)
+      })
+      .catch(() => undefined)
+  }, [userId, accessToken])
+
+  useEffect(() => {
     if (!appReady || lockVisible) return
     if (isLocalModeUrl && !userId && !hasSeenLocalModeWelcome()) return
     if (onboardingDone(storageScope)) return
@@ -876,12 +919,6 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [])
-
-  useEffect(() => {
-    setContentVisible(false)
-    const timer = setTimeout(() => setContentVisible(true), 120)
-    return () => clearTimeout(timer)
-  }, [tab, overlay])
 
   useEffect(() => {
     const [year, month] = diarySelectedDate.split("-")
@@ -999,6 +1036,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
   const showBackupReminder =
     shouldShowMonthlyBackupBanner() && snapshotHasMigratableData(loadSnapshot(storageScope))
+  const firstUseEmpty = isAppDataEmpty(contacts.length, interactionLogs.length, countDiaryEntriesWithContent(diaryRecords))
 
   return (
     <>
@@ -1029,11 +1067,28 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
           </button>
         </div>
       ) : null}
-      <div
-        className={`transition-all duration-200 ease-out ${
-          contentVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
-        }`}
-      >
+      {firstUseEmpty && overlay === "none" ? (
+        <div className="mb-3 rounded-ds border border-[#e6d7c5] bg-[#fff8ee] px-3 py-2.5 text-[#5f4a32] shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-ds-body font-medium">新用户快速开始：先添加联系人，再记录互动，最后查看关系洞察。</p>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => setShowOnboarding(true)}>
+                打开新手引导
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  navigateToTab("relations")
+                  openCreateContact()
+                }}
+              >
+                立即添加联系人
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <div>
       {overlay === "none" && tab === "relations" ? (
         <RelationsSection
           relationHealthData={relationHealthData}
@@ -1126,7 +1181,9 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
               navigateToTab("relations")
               openPage4WithContact(contactId)
             },
+            onOpenAiPage: () => openAiPage("我想先快速梳理这周最消耗我的关系。"),
             diarySaveTip,
+            diarySaving,
             handleSaveDiary,
             handleDeleteDiary,
             weeklyDigest,
@@ -1147,6 +1204,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
             setLockSettings(s)
             saveLockSettings(s, storageScope)
           }}
+          localRecordCount={contacts.length + interactionLogs.length + countDiaryEntriesWithContent(diaryRecords)}
           onExportComplete={() => setBackupBannerTick((n) => n + 1)}
         />
       ) : null}
@@ -1181,12 +1239,14 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
         setSmartGrouping={setSmartGrouping}
         setShowRecommendHint={setShowRecommendHint}
         saveContactForm={saveContactForm}
+        contactSaving={contactSaving}
         showInteractionDialog={showInteractionDialog}
         setShowInteractionDialog={setShowInteractionDialog}
         selectedContactName={selectedContact?.name}
         interactionForm={interactionForm}
         setInteractionForm={setInteractionForm}
         saveInteraction={saveInteraction}
+        interactionSaving={interactionSaving}
         interactionAiStatus={interactionAiStatus}
       />
       </div>
@@ -1199,18 +1259,19 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
       openCreateContact={openCreateContact}
       openInteractionForFirstContact={openInteractionForFirstContact}
       openAiPage={openAiPage}
+      openReminderSetup={() => navigateToTab("mine")}
       contactCount={contacts.length}
       interactionCount={interactionLogs.length}
     />
     {saveSuccessTip ? (
-      <div className="fixed right-4 top-4 z-[95] rounded-ds border border-[#b7e4c7] bg-[#ecfdf3] px-3 py-2 text-ds-caption font-medium text-[#166534] shadow-md">
+      <div className="fixed right-4 top-4 z-[80] rounded-ds border border-[#b7e4c7] bg-[#ecfdf3] px-3 py-2 text-ds-caption font-medium text-[#166534] shadow-md">
         {saveSuccessTip}
       </div>
     ) : null}
 
     {showLocalWelcomeModal ? (
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+        className="fixed inset-0 z-[160] flex items-center justify-center bg-black/45 p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="local-welcome-title"
@@ -1243,7 +1304,7 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
 
     {showGuestMergeModal && userId ? (
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+        className="fixed inset-0 z-[160] flex items-center justify-center bg-black/45 p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="guest-merge-title"

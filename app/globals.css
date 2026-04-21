@@ -4,6 +4,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 :root {
@@ -16,10 +17,23 @@ body {
   font-size: 14px;
   font-weight: 400;
   line-height: 1.55;
+  overflow-x: hidden;
+  color: #5f4334;
+  background: #faf8f5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 /* 文本选中：避免系统默认「蓝底白字」，与落地页暖色风格一致 */
@@ -37,5 +51,18 @@ body {
   button,
   a.rounded-btn-ds {
     min-height: 44px;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  [role="dialog"] > div,
+  .fixed.inset-0 > div {
+    width: min(100%, calc(100vw - 1rem));
+    max-width: calc(100vw - 1rem);
   }
 }

@@ -48,6 +48,7 @@ type AppDialogsProps = {
   setSmartGrouping: (value: boolean) => void
   setShowRecommendHint: (value: boolean) => void
   saveContactForm: () => void
+  contactSaving: boolean
   contactFormError?: string
   showInteractionDialog: boolean
   setShowInteractionDialog: (value: boolean) => void
@@ -55,6 +56,7 @@ type AppDialogsProps = {
   interactionForm: InteractionFormState
   setInteractionForm: Dispatch<SetStateAction<InteractionFormState>>
   saveInteraction: () => void
+  interactionSaving: boolean
   interactionAiStatus: "idle" | "analyzing" | "done"
 }
 
@@ -78,6 +80,7 @@ export function AppDialogs({
   setSmartGrouping,
   setShowRecommendHint,
   saveContactForm,
+  contactSaving,
   contactFormError,
   showInteractionDialog,
   setShowInteractionDialog,
@@ -85,6 +88,7 @@ export function AppDialogs({
   interactionForm,
   setInteractionForm,
   saveInteraction,
+  interactionSaving,
   interactionAiStatus,
 }: AppDialogsProps) {
   const [interactionTemplates, setInteractionTemplates] = useState<Record<string, Pick<InteractionFormState, "what" | "reaction" | "feel">>>({})
@@ -118,12 +122,19 @@ export function AppDialogs({
             placeholder="例如：兴趣伙伴"
             value={newGroupName}
             onChange={(e) => setNewGroupName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return
+              e.preventDefault()
+              handleCreateGroup()
+            }}
           />
           <div className="flex justify-end gap-ds-xs">
             <Button className="border-warm-soft bg-white" variant="outline" onClick={() => setShowNewGroupDialog(false)}>
               取消
             </Button>
-            <Button onClick={handleCreateGroup}>创建</Button>
+            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>
+              创建
+            </Button>
           </div>
         </div>
       </Dialog>
@@ -133,6 +144,7 @@ export function AppDialogs({
         onClose={() => setShowContactDialog(false)}
         title={isEditingContact ? `编辑 ${contactForm.name || "联系人"}` : "新建联系人"}
         description="画布双击、左侧＋或右键菜单可触发。"
+        fullScreen
       >
         <div className="space-y-ds-xs">
           <label className="block text-ds-body font-medium">
@@ -291,7 +303,9 @@ export function AppDialogs({
               <Button className="border-warm-soft bg-white" variant="outline" onClick={() => setShowContactDialog(false)}>
                 取消
               </Button>
-              <Button onClick={saveContactForm}>保存</Button>
+              <Button onClick={saveContactForm} disabled={contactSaving}>
+                {contactSaving ? "保存中..." : "保存"}
+              </Button>
             </div>
           </div>
         </div>
@@ -425,7 +439,9 @@ export function AppDialogs({
             <Button className="border-warm-soft bg-white" variant="outline" onClick={() => setShowInteractionDialog(false)}>
               取消
             </Button>
-            <Button onClick={saveInteraction}>保存</Button>
+            <Button onClick={saveInteraction} disabled={interactionSaving}>
+              {interactionSaving ? "保存中..." : "保存"}
+            </Button>
           </div>
           {interactionAiStatus === "analyzing" ? (
             <p className="text-ds-caption text-[#7a5a2e]">AI 正在分析本次互动...</p>

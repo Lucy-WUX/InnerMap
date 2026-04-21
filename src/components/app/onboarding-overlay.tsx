@@ -12,6 +12,7 @@ type OnboardingOverlayProps = {
   openCreateContact: () => void
   openInteractionForFirstContact: () => void
   openAiPage: (seedText?: string) => void
+  openReminderSetup: () => void
   contactCount: number
   interactionCount: number
   onFinishOnboarding: () => void
@@ -24,6 +25,7 @@ export function OnboardingOverlay({
   openCreateContact,
   openInteractionForFirstContact,
   openAiPage,
+  openReminderSetup,
   contactCount,
   interactionCount,
   onFinishOnboarding,
@@ -57,7 +59,7 @@ export function OnboardingOverlay({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-ds-md pb-ds-md backdrop-blur-[2px] md:items-center">
+    <div className="fixed inset-0 z-[145] flex items-end justify-center bg-black/40 p-ds-md pb-ds-md backdrop-blur-[2px] md:items-center">
       <div className="relative w-full max-w-md rounded-ds border border-warm-base bg-paper p-ds-lg shadow-xl">
         <div className="absolute -top-2 left-8 h-4 w-4 rotate-45 border-l border-t border-warm-base bg-paper" aria-hidden />
         <p className="text-ds-caption font-medium text-[#7a5a2e]">新手指引 · 第 {step} / 3 步</p>
@@ -117,6 +119,15 @@ export function OnboardingOverlay({
                 }}
               >
                 打开 AI 咨询
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  openReminderSetup()
+                  finish()
+                }}
+              >
+                去设立提醒
               </Button>
               <Button variant="outline" onClick={finish}>
                 稍后体验，进入观系
