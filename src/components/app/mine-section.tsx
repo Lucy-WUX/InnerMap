@@ -468,7 +468,7 @@ export function MineSection({
           以下为本地界面入口：具体问答与次数限制取决于是否登录及服务端 AI 配置；未配置时部分能力可能不可用。
         </p>
         <Button className="mt-ds-xs" onClick={() => openAiPage("总结我这周的人际模式并给出下周建议")}>
-          打开 AI 分析页
+          打开晓观页
         </Button>
       </Card>
     </section>

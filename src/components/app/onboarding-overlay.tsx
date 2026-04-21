@@ -72,8 +72,9 @@ export function OnboardingOverlay({
             <div className="mt-ds-md flex flex-wrap gap-2">
               <Button
                 onClick={() => {
+                  onClose()
                   setTab("relations")
-                  openCreateContact()
+                  setTimeout(() => openCreateContact(), 0)
                 }}
               >
                 去添加联系人
@@ -93,8 +94,15 @@ export function OnboardingOverlay({
             <div className="mt-ds-md flex flex-wrap gap-2">
               <Button
                 onClick={() => {
+                  onClose()
                   setTab("relations")
-                  openInteractionForFirstContact()
+                  setTimeout(() => {
+                    if (contactCount > 0) {
+                      openInteractionForFirstContact()
+                    } else {
+                      openCreateContact()
+                    }
+                  }, 0)
                 }}
               >
                 去记一笔互动

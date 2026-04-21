@@ -47,18 +47,9 @@ export function PublicLanding() {
             <p className="text-base font-semibold text-[#6d5443]">InnerMap</p>
             <p className="text-xs text-[#5c4d42]">Your Relationship Guardian</p>
           </div>
-          <div className="mx-auto">
-            <Link
-              href={LOCAL_MODE_HREF}
-              className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#7a5a2e] px-5 py-2 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(122,90,46,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(122,90,46,0.3)]"
-            >
-              晓观
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <NavButtonSecondary href={LOCAL_MODE_HREF}>模式切换</NavButtonSecondary>
-            <NavButtonSecondary href="/login">消息 / 通知</NavButtonSecondary>
-            <NavButtonPrimary href="/register">我的</NavButtonPrimary>
+          <div className="ml-auto flex items-center gap-2">
+            <NavButtonSecondary href="/register">注册</NavButtonSecondary>
+            <NavButtonPrimary href="/login">登录</NavButtonPrimary>
           </div>
         </nav>
       </header>
@@ -104,30 +95,6 @@ export function PublicLanding() {
                 <p className="mt-2 text-sm leading-7 text-[#3e2723]">{item.desc}</p>
               </article>
             ))}
-          </div>
-        </section>
-
-        <section className="border-t border-land-border/60 bg-[#f7f4ef] px-4 py-14 sm:px-6">
-          <div className="mx-auto max-w-[1200px]">
-            <h2 className="text-2xl font-bold text-ink">两种模式，随心选择</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[16px] border border-[#c8e6c9] bg-[#f1f8f2] p-5 shadow-landing">
-                <p className="text-sm font-semibold text-[#1b5e20]">✅ 隐私优先</p>
-                <h3 className="mt-2 text-lg font-semibold">本地模式（默认推荐）</h3>
-                <p className="mt-2 text-sm leading-7 text-[#2f4a34]">数据本地存储，不上传云端，保护你的关系隐私</p>
-                <Link href={LOCAL_MODE_HREF} className="mt-4 inline-flex rounded-[16px] bg-[#2e7d32] px-4 py-2 text-sm font-semibold text-white">
-                  立即进入
-                </Link>
-              </div>
-              <div className="rounded-[16px] border border-land-border bg-white p-5 shadow-landing">
-                <p className="text-sm font-semibold text-[#546e7a]">☁️ 多设备同步</p>
-                <h3 className="mt-2 text-lg font-semibold">登录模式</h3>
-                <p className="mt-2 text-sm leading-7 text-[#3e2723]">注册账号，支持多设备同步数据，换设备也不中断</p>
-                <Link href="/register" className="mt-4 inline-flex rounded-[16px] border border-[#795548] px-4 py-2 text-sm font-semibold text-[#795548]">
-                  注册并同步
-                </Link>
-              </div>
-            </div>
           </div>
         </section>
 

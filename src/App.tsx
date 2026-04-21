@@ -101,7 +101,7 @@ function normalizeGroupNameInput(value: string) {
   return value.trim().replace(/\s+/g, " ")
 }
 
-function App({ initialTab = "home" }: { initialTab?: TabKey }) {
+function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isLocalModeUrl = searchParams.get("local") === "1"
@@ -1182,6 +1182,12 @@ function App({ initialTab = "home" }: { initialTab?: TabKey }) {
               openPage4WithContact(contactId)
             },
             onOpenAiPage: () => openAiPage("我想先快速梳理这周最消耗我的关系。"),
+            openCreateContact: () => {
+              navigateToTab("relations")
+              openCreateContact()
+            },
+            openOnboarding: () => setShowOnboarding(true),
+            storageScope,
             diarySaveTip,
             diarySaving,
             handleSaveDiary,

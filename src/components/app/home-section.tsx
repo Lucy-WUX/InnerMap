@@ -1,18 +1,13 @@
 import Link from "next/link"
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 
+import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
+import { isProSubscriber } from "../../lib/product-limits"
+import { normalizeCustomMoodInput } from "../../lib/diary-mood"
 import { Button } from "../ui/button"
 import { Card } from "../ui/card"
 import { Textarea } from "../ui/textarea"
-
 import type { RelationContact } from "./types"
-import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
-import {
-  DIARY_CUSTOM_MOOD_MAX_LEN,
-  diaryMoodDotClass,
-  isPresetMood,
-  normalizeCustomMoodInput,
-} from "../../lib/diary-mood"
 
 type CalendarCell = {
   day: number
@@ -59,537 +54,313 @@ type HomeSectionProps = {
   handleDeleteDiary: (dateKey: string) => void
   weeklyDigest: WeeklyDigest | null
   energyAlerts: EnergyAlert[]
+  openCreateContact?: () => void
+  openOnboarding?: () => void
+  storageScope?: string
 }
 
-export function HomeSection({
-  monthLabel,
-  viewYear,
-  viewMonth,
-  formatMonthValue,
-  setDiaryViewMonth,
-  setDiarySelectedDate,
-  calendarFadeIn,
-  calendarCells,
-  diarySelectedDate,
-  monthTimeline,
-  diaryViewMode,
-  setDiaryViewMode,
-  diarySearchQuery,
-  setDiarySearchQuery,
-  diarySearchResults,
-  totalDiaryCount,
-  diaryEmotion,
-  setDiaryEmotion,
-  diaryEditorText,
-  setDiaryEditorText,
-  mentionKeyword,
-  mentionSuggestions,
-  mentionActiveIndex,
-  setMentionActiveIndex,
-  insertDiaryMention,
-  linkedContacts,
-  linkedContactItems,
-  contacts,
-  onJumpToContact,
-  onOpenAiPage,
-  diarySaveTip,
-  diarySaving,
-  handleSaveDiary,
-  handleDeleteDiary,
-  weeklyDigest,
-  energyAlerts,
-}: HomeSectionProps) {
-  const diaryTextareaRef = useRef<HTMLTextAreaElement | null>(null)
-  const [customMoodDraft, setCustomMoodDraft] = useState("")
-  const [showMentionPicker, setShowMentionPicker] = useState(false)
-  const [mentionSearch, setMentionSearch] = useState("")
-  const [diaryExpanded, setDiaryExpanded] = useState(false)
-  const pickerSuggestions = useMemo(
-    () => contacts.filter((c) => c.name.includes(mentionSearch.trim())).slice(0, 8),
-    [contacts, mentionSearch]
-  )
+type ChatMessage = {
+  id: string
+  role: "user" | "assistant"
+  content: string
+}
 
-  const monthDiaryCount = monthTimeline.length
-  const monthMentionedContactCount = useMemo(() => {
-    const ids = new Set<string>()
-    for (const [, content] of monthTimeline) {
-      for (const c of contacts) {
-        if (content.includes(`@${c.name}`)) ids.add(c.id)
+const DAILY_LIMIT = 15
+
+function usageStorageKey(scope: string) {
+  return `xiaoguan-usage:${scope}`
+}
+
+function chatStorageKey(scope: string) {
+  return `xiaoguan-chat:${scope}`
+}
+
+function todayToken() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+export function HomeSection(props: HomeSectionProps) {
+  const {
+    contacts,
+    energyAlerts,
+    linkedContactItems,
+    onJumpToContact,
+    onOpenAiPage,
+    diarySelectedDate,
+    diaryEmotion,
+    setDiaryEmotion,
+    diaryEditorText,
+    setDiaryEditorText,
+    diarySaveTip,
+    diarySaving,
+    handleSaveDiary,
+    handleDeleteDiary,
+    totalDiaryCount,
+    openCreateContact,
+    openOnboarding,
+    storageScope = "guest",
+  } = props
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = useState("")
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState("")
+  const [freeUsed, setFreeUsed] = useState(0)
+  const [expandEnergy, setExpandEnergy] = useState(false)
+  const [expandDiary, setExpandDiary] = useState(false)
+  const [expandContacts, setExpandContacts] = useState(false)
+
+  const isPro = isProSubscriber()
+  const freeLeft = Math.max(0, DAILY_LIMIT - freeUsed)
+  const hitLimit = !isPro && freeLeft <= 0
+  const isEmptyUser = contacts.length === 0 && totalDiaryCount === 0
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return
+    const historyRaw = localStorage.getItem(chatStorageKey(storageScope))
+    if (historyRaw) {
+      try {
+        setChatMessages(JSON.parse(historyRaw) as ChatMessage[])
+      } catch {
+        setChatMessages([])
       }
+    } else {
+      setChatMessages([])
     }
-    return ids.size
-  }, [monthTimeline, contacts])
+    const usageRaw = localStorage.getItem(usageStorageKey(storageScope))
+    if (usageRaw) {
+      try {
+        const usage = JSON.parse(usageRaw) as { day: string; count: number }
+        setFreeUsed(usage.day === todayToken() ? usage.count : 0)
+      } catch {
+        setFreeUsed(0)
+      }
+    } else {
+      setFreeUsed(0)
+    }
+  }, [storageScope])
 
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      const isSave = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s"
-      if (!isSave) return
-      event.preventDefault()
-      handleSaveDiary()
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [handleSaveDiary])
+    if (typeof localStorage === "undefined") return
+    localStorage.setItem(chatStorageKey(storageScope), JSON.stringify(chatMessages.slice(-80)))
+  }, [chatMessages, storageScope])
 
   useEffect(() => {
-    if (diaryEmotion && !isPresetMood(diaryEmotion)) setCustomMoodDraft(diaryEmotion)
-    else setCustomMoodDraft("")
-  }, [diaryEmotion, diarySelectedDate])
+    if (typeof localStorage === "undefined") return
+    localStorage.setItem(usageStorageKey(storageScope), JSON.stringify({ day: todayToken(), count: freeUsed }))
+  }, [freeUsed, storageScope])
 
-  function insertAtTrigger() {
-    const el = diaryTextareaRef.current
-    const start = el?.selectionStart ?? diaryEditorText.length
-    const end = el?.selectionEnd ?? diaryEditorText.length
-    const before = diaryEditorText.slice(0, start)
-    const after = diaryEditorText.slice(end)
-    const needLeadingSpace = before.length > 0 && !/\s$/.test(before)
-    const next = `${before}${needLeadingSpace ? " " : ""}@${after}`
-    const caret = before.length + (needLeadingSpace ? 1 : 0) + 1
-    setDiaryEditorText(next)
-    setShowMentionPicker(true)
-    setMentionSearch("")
-    requestAnimationFrame(() => {
-      const target = diaryTextareaRef.current
-      if (!target) return
-      target.focus()
-      target.setSelectionRange(caret, caret)
-    })
+  async function sendMessage() {
+    const text = chatInput.trim()
+    if (!text || chatLoading) return
+    if (hitLimit) {
+      setChatError("今日免费对话次数已用完，开通Pro版解锁无限对话")
+      return
+    }
+
+    setChatError("")
+    setChatInput("")
+    setChatMessages((prev) => [...prev, { id: `${Date.now()}-u`, role: "user", content: text }])
+    setChatLoading(true)
+
+    try {
+      const response = await fetch("/api/ai/contact-advisor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          context: `联系人:${contacts.length}; 预警:${energyAlerts.length}; 日期:${diarySelectedDate}`,
+        }),
+      })
+      const data = (await response.json().catch(() => ({}))) as { reply?: string; error?: string }
+      if (!response.ok || !data.reply) {
+        setChatError(data.error ?? "晓观暂时无法回复，请稍后再试。")
+        return
+      }
+      setChatMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: "assistant", content: data.reply ?? "" }])
+      if (!isPro) setFreeUsed((prev) => prev + 1)
+    } catch {
+      setChatError("网络连接异常，请稍后重试。")
+    } finally {
+      setChatLoading(false)
+    }
   }
 
   return (
-    <section className="space-y-ds-md">
+    <section className="space-y-ds-md pb-28">
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg text-center">
-        <h2 className="text-2xl font-semibold text-ink">晓观 · 你的专属人际关系AI</h2>
-        <p className="mt-2 text-ds-body text-soft">看清关系、减少内耗、AI陪伴分析</p>
-        <div className="mt-4">
-          <Button onClick={onOpenAiPage}>进入晓观对话</Button>
+        <div className="mx-auto h-20 w-20 rounded-full bg-[#d4b79d]" />
+        <h2 className="mt-3 text-2xl font-semibold text-[#5C4B3E]">晓观 · 你的专属人际关系AI</h2>
+        <p className="mt-1 text-ds-body text-soft">看清关系，减少内耗，AI陪伴分析</p>
+      </Card>
+
+      <Card className="rounded-[16px] border border-warm-base bg-[#F9F5F0] p-ds-lg shadow-[inset_0_1px_6px_rgba(0,0,0,0.04)]">
+        <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-1">
+          {chatMessages.length === 0 ? (
+            <div className="rounded-[16px] rounded-br-sm bg-white px-3 py-3 text-[#5C4B3E]">
+              你好，我是晓观。
+              <br />
+              你可以和我聊聊人际关系困惑、情绪内耗、相处难题，我会帮你分析、陪伴、给出真正适合你的建议。
+            </div>
+          ) : (
+            chatMessages.map((item) => (
+              <div key={item.id} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[82%] whitespace-pre-wrap px-3 py-3 ${
+                    item.role === "user"
+                      ? "rounded-[16px] rounded-bl-sm bg-[#8B5A42] text-white"
+                      : "rounded-[16px] rounded-br-sm bg-white text-[#5C4B3E]"
+                  }`}
+                >
+                  {item.content}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Card>
-      <div className="grid gap-ds-md md:grid-cols-2">
-        {weeklyDigest ? (
-          <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
-            <div className="flex items-start justify-between gap-ds-xs">
-              <div>
-                <h3 className="text-ds-title">📬 人际关系周报</h3>
-                <p className="mt-1 text-ds-caption text-soft">每周一展示，统计上一完整周（上周一～上周日）</p>
-              </div>
-              <span className="rounded-btn-ds bg-surface-warm-soft px-2 py-0.5 text-ds-caption text-soft">{weeklyDigest.weekLabel}</span>
-            </div>
-            <ul className="mt-ds-xs space-y-1 text-ds-body text-soft">
-              <li>上周互动次数：{weeklyDigest.interactionCount} 次</li>
-              <li>
-                关系波动最大：
-                {weeklyDigest.topScoreMovers.length
-                  ? weeklyDigest.topScoreMovers.map((x) => `${x.name}（${x.delta}）`).join("、")
-                  : "上周暂无足够记录"}
-              </li>
-              <li>
-                能量消耗最高：
-                {weeklyDigest.topEnergyDrains.length
-                  ? weeklyDigest.topEnergyDrains.map((x) => `${x.name}（${x.sumEnergy}）`).join("、")
-                  : "上周暂无负向汇总"}
-              </li>
-              <li>
-                建议本周联系：
-                {weeklyDigest.focusNextWeek.length ? weeklyDigest.focusNextWeek.map((x) => x.name).join("、") : "暂无需优先名单"}
-              </li>
-            </ul>
-          </Card>
-        ) : null}
-        <Card
-          className={`rounded-ds border p-ds-lg ${
-            energyAlerts.length ? "border-[#f5c2c7] bg-[#fff5f5]" : "border-warm-base bg-paper"
-          } ${weeklyDigest ? "" : "md:col-span-2"}`}
-        >
-          <h3 className="text-ds-title">⚡ 近期能量与预警</h3>
-          {energyAlerts.length ? (
-            <ul className="mt-ds-xs space-y-ds-xs">
-              {energyAlerts.map((a) => (
-                <li key={a.contactId} className="text-ds-caption text-[#B42318]">
+
+      <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
+        <button type="button" className="w-full text-left text-ds-body font-semibold text-ink" onClick={() => setExpandEnergy((v) => !v)}>
+          近期能量与预警 {expandEnergy ? "−" : "+"}
+        </button>
+        {expandEnergy ? (
+          <div className="mt-ds-xs space-y-1 text-ds-caption text-soft">
+            {energyAlerts.length === 0 ? (
+              <p>暂无红色预警。记录互动后，观系会持续观察能量走势。</p>
+            ) : (
+              energyAlerts.map((a) => (
+                <p key={a.contactId}>
                   ⚠️ {a.name}：{a.reason}
-                  <button
-                    className="ml-2 text-[#795548] underline underline-offset-2"
-                    onClick={() => onJumpToContact(a.contactId)}
-                  >
-                    查看
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-ds-xs text-ds-caption text-soft">暂无红色预警。记录互动后，观系会持续观察能量走势。</p>
-          )}
-        </Card>
-      </div>
-      <div className="grid gap-ds-md lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
-        <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
-          <div className="flex items-center justify-between">
-            <h3 className="text-ds-title">日记记录</h3>
-            <Button type="button" variant="outline" size="sm" onClick={() => setDiaryExpanded((v) => !v)}>
-              {diaryExpanded ? "收起" : "展开"}
-            </Button>
-          </div>
-          {!diaryExpanded ? (
-            <p className="mt-ds-xs text-ds-caption text-soft">默认收起，点击展开后可继续使用完整日记功能（增删改、心情、@联系人、搜索等）。</p>
-          ) : null}
-          {diaryExpanded ? (
-            <div className="mt-ds-sm">
-              <div className="grid gap-ds-md lg:grid-cols-[420px_1fr]">
-                <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg">
-          <div className="mb-ds-md flex items-center justify-between">
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover"
-              onClick={() => {
-                const prevMonth = new Date(viewYear, viewMonth - 2, 1)
-                const nextMonthValue = formatMonthValue(prevMonth)
-                setDiaryViewMonth(nextMonthValue)
-                setDiarySelectedDate(`${nextMonthValue}-01`)
-              }}
-            >
-              ←
-            </button>
-            <div className="text-center">
-              <p className="text-ds-title tracking-wide text-slate-800">{monthLabel}</p>
-              <p className="text-ds-caption text-soft">关系日记日历</p>
-            </div>
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover"
-              onClick={() => {
-                const nextMonth = new Date(viewYear, viewMonth, 1)
-                const nextMonthValue = formatMonthValue(nextMonth)
-                setDiaryViewMonth(nextMonthValue)
-                setDiarySelectedDate(`${nextMonthValue}-01`)
-              }}
-            >
-              →
-            </button>
-          </div>
-          <div className="mb-ds-xs flex items-center justify-between gap-ds-xs">
-            <div className="flex gap-1">
-              <button
-                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${diaryViewMode === "calendar" ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]" : "border-warm-soft bg-paper text-soft"}`}
-                onClick={() => setDiaryViewMode("calendar")}
-              >
-                日历视图
-              </button>
-              <button
-                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${diaryViewMode === "list" ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]" : "border-warm-soft bg-paper text-soft"}`}
-                onClick={() => setDiaryViewMode("list")}
-              >
-                列表视图
-              </button>
-            </div>
-            <input
-              className="w-48 rounded-btn-ds border border-warm-soft bg-paper px-2 py-1 text-ds-caption"
-              placeholder="搜索日记内容/联系人"
-              value={diarySearchQuery}
-              onChange={(e) => setDiarySearchQuery(e.target.value)}
-            />
-          </div>
-          {diaryViewMode === "list" ? (
-            <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-              {diarySearchResults.length > 0 ? (
-                diarySearchResults.map(([dateKey, content]) => (
-                  <div key={dateKey} className="rounded-ds border border-warm-soft bg-paper p-ds-xs">
-                    <div className="flex items-center justify-between">
-                      <button
-                        className="text-ds-caption font-medium text-ink underline-offset-2 hover:underline"
-                        onClick={() => {
-                          setDiarySelectedDate(dateKey)
-                          setDiaryViewMode("calendar")
-                        }}
-                      >
-                        {dateKey}
-                      </button>
-                      <button className="text-ds-caption text-[#B42318]" onClick={() => handleDeleteDiary(dateKey)}>
-                        删除
-                      </button>
-                    </div>
-                    <p className="mt-1 line-clamp-3 text-ds-caption text-soft">{content}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-ds-caption text-soft">
-                  {totalDiaryCount === 0 ? "记录你的人际感悟，AI 会帮你分析相关的关系" : "暂无匹配日记"}
-                </p>
-              )}
-            </div>
-          ) : null}
-          {diaryViewMode === "calendar" ? (
-            <>
-          <div className="grid grid-cols-7 gap-ds-xs text-center text-ds-caption text-soft">
-            {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
-              <div key={w} className="py-1 font-medium tracking-wide">
-                {w}
-              </div>
-            ))}
-          </div>
-          <div
-            className="mt-ds-xs grid grid-cols-7 gap-ds-xs text-center transition-all duration-300"
-            style={{ opacity: calendarFadeIn ? 1 : 0.45, transform: calendarFadeIn ? "translateY(0)" : "translateY(4px)" }}
-          >
-            {calendarCells.map((cell, idx) =>
-              cell ? (
-                <button
-                  key={cell.dateValue}
-                  className={`relative h-14 rounded-2xl border text-[30px] leading-none transition-all duration-200 ${
-                    diarySelectedDate === cell.dateValue
-                      ? "border-warm-strong bg-surface-warm-soft text-[#0F172A] shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
-                      : cell.hasRecord
-                        ? "border-[#D7DEE8] bg-[#F8FAFC] text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
-                        : "border-warm-soft bg-paper text-slate-500 hover:border-warm-strong hover:bg-surface-warm-soft"
-                  }`}
-                  onClick={() => setDiarySelectedDate(cell.dateValue)}
-                >
-                  {diarySelectedDate === cell.dateValue ? (
-                    <>
-                      <span className="pointer-events-none absolute inset-0 rounded-2xl border border-warm-soft" />
-                      <span className="pointer-events-none absolute inset-[2px] rounded-[14px] border border-[#0F172A]" />
-                    </>
-                  ) : null}
-                  {cell.hasRecord && diarySelectedDate !== cell.dateValue ? (
-                    <>
-                      <span className="pointer-events-none absolute inset-0 rounded-2xl border border-warm-soft" />
-                      <span className="pointer-events-none absolute inset-[3px] rounded-[13px] border border-dashed border-[#C7D2E3]" />
-                    </>
-                  ) : null}
-                  <div className="flex h-full flex-col items-center justify-center">
-                    <span
-                      className={`font-light tabular-nums tracking-[-0.03em] text-[34px] ${cell.isToday ? "flex h-8 w-8 items-center justify-center rounded-full bg-[#795548] text-white text-[20px] font-medium tracking-normal" : ""}`}
-                    >
-                      {cell.day}
-                    </span>
-                    {cell.hasRecord ? (
-                      <span
-                        className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${diaryMoodDotClass(cell.emotion)}`}
-                        title={cell.emotion?.trim() ? `心情：${cell.emotion}` : "未记录心情"}
-                      />
-                    ) : null}
-                  </div>
-                </button>
-              ) : (
-                <div key={`empty-${idx}`} className="h-14" />
-              )
-            )}
-          </div>
-            </>
-          ) : null}
-          <div className="mt-ds-md rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-md">
-            <p className="mb-ds-xs text-ds-caption font-medium tracking-wide text-soft">本月记录</p>
-            {monthTimeline.length > 0 ? (
-              monthTimeline.map(([dateKey, note]) => (
-                <p key={dateKey} className="text-ds-caption text-soft">
-                  {dateKey.slice(5)}：{note}
                 </p>
               ))
-            ) : (
-              <p className="text-ds-caption text-soft">本月暂无日记记录</p>
             )}
           </div>
-                </Card>
+        ) : null}
+      </Card>
 
-                <div className="space-y-ds-md">
-                  <Card className="hidden rounded-ds border border-warm-base bg-paper p-ds-lg sm:block">
-            <div className="flex items-center justify-between text-ds-body text-[#5c4d42]">
-              <p>本月记录：{monthDiaryCount} 篇</p>
-              <p>提及联系人：{monthMentionedContactCount} 人</p>
-            </div>
-          </Card>
-
-                  <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
-            <p className="text-[24px] font-semibold">{diarySelectedDate}</p>
-            {totalDiaryCount === 0 ? (
-              <p className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-soft">
-                记录你的人际感悟，AI 会帮你分析相关的关系
-              </p>
-            ) : null}
-            <div className="mt-ds-xs flex flex-wrap gap-ds-xs">
-              {(["😊愉悦", "😐平静", "😞低落", "😠愤怒"] as const).map((m) => {
-                const key = m.slice(2)
+      <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
+        <button type="button" className="w-full text-left text-ds-body font-semibold text-ink" onClick={() => setExpandDiary((v) => !v)}>
+          日记记录 {expandDiary ? "−" : "+"}
+        </button>
+        {expandDiary ? (
+          <div className="mt-ds-xs space-y-ds-xs">
+            <div className="flex flex-wrap gap-1.5">
+              {["😊愉悦", "😐平静", "😞低落", "😠愤怒", "不记录心情"].map((label) => {
+                const value = label === "不记录心情" ? "" : normalizeCustomMoodInput(label.slice(2))
+                const active = diaryEmotion === value
                 return (
                   <button
-                    key={m}
+                    key={label}
                     type="button"
-                    className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
-                      diaryEmotion === key ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft"
-                    }`}
-                    onClick={() => setDiaryEmotion(key)}
+                    className={`rounded-btn-ds border px-3 py-1 text-ds-body ${active ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft"}`}
+                    onClick={() => setDiaryEmotion(value)}
                   >
-                    {m}
+                    {label}
                   </button>
                 )
               })}
-              <button
-                type="button"
-                className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
-                  diaryEmotion === "" ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft"
-                }`}
-                onClick={() => setDiaryEmotion("")}
-              >
-                不记录心情
-              </button>
             </div>
-            <div className="mt-ds-xs flex flex-wrap items-center gap-ds-xs">
-              <input
-                type="text"
-                className="min-w-[11rem] flex-1 rounded-btn-ds border border-warm-soft bg-paper px-3 py-1.5 text-ds-body text-ink placeholder:text-soft"
-                placeholder="自定义心情（最多 24 字）"
-                maxLength={DIARY_CUSTOM_MOOD_MAX_LEN}
-                value={customMoodDraft}
-                onChange={(e) => setCustomMoodDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return
-                  e.preventDefault()
-                  const v = normalizeCustomMoodInput(customMoodDraft)
-                  setDiaryEmotion(v)
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-9 min-h-9 shrink-0 border-warm-soft px-3 py-0 text-ds-body"
-                onClick={() => {
-                  const v = normalizeCustomMoodInput(customMoodDraft)
-                  setDiaryEmotion(v)
-                }}
-              >
-                应用自定义
-              </Button>
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-soft">
-              日历圆点：预设四色 · 自定义为紫 · 不记录为灰。保存日记后生效。
-            </p>
             <Textarea
-              ref={diaryTextareaRef}
-              className="mt-4 min-h-[260px]"
+              className="min-h-[180px]"
               placeholder="今天发生了什么..."
               value={diaryEditorText}
               onChange={(e) => setDiaryEditorText(e.target.value)}
-              onKeyDown={(e) => {
-                if (mentionKeyword === null || mentionSuggestions.length === 0) return
-                if (e.key === "ArrowDown") {
-                  e.preventDefault()
-                  setMentionActiveIndex((prev) => (prev + 1) % mentionSuggestions.length)
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault()
-                  setMentionActiveIndex((prev) => (prev === 0 ? mentionSuggestions.length - 1 : prev - 1))
-                } else if (e.key === "Enter") {
-                  e.preventDefault()
-                  insertDiaryMention(mentionSuggestions[mentionActiveIndex].name)
-                }
-              }}
             />
-            <div className="mt-ds-xs flex items-center gap-ds-xs">
-              <button
-                type="button"
-                className="rounded-btn-ds border border-warm-soft bg-surface-warm-soft px-2.5 py-1 text-ds-caption text-soft"
-                onClick={insertAtTrigger}
-              >
-                @ 提及联系人
-              </button>
-              <div className="flex flex-wrap gap-1.5">
-                {linkedContacts.map((name) => (
-                  <span key={name} className="rounded-btn-ds bg-[#EEF2FF] px-2 py-0.5 text-ds-caption text-[#3730A3]">
-                    @{name}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {showMentionPicker ? (
-              <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs">
-                <input
-                  className="w-full rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption"
-                  placeholder="搜索联系人后点击插入 @"
-                  value={mentionSearch}
-                  onChange={(e) => setMentionSearch(e.target.value)}
-                />
-                <div className="mt-ds-xs flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
-                  {pickerSuggestions.map((c) => (
-                    <button
-                      key={c.id}
-                      className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption text-soft hover:bg-surface-warm-soft"
-                      onClick={() => {
-                        insertDiaryMention(c.name)
-                        setShowMentionPicker(false)
-                        setMentionSearch("")
-                      }}
-                    >
-                      @{c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {mentionKeyword !== null ? (
-              <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs">
-                {mentionSuggestions.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {mentionSuggestions.map((c, idx) => (
-                      <button
-                        key={c.id}
-                        className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${
-                          mentionActiveIndex === idx
-                            ? "border-[#6366F1] bg-[#EEF2FF] text-[#3730A3]"
-                            : "border-warm-soft bg-surface-warm-soft text-slate-600"
-                        }`}
-                        onClick={() => insertDiaryMention(c.name)}
-                      >
-                        @{c.name}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                      <p className="text-ds-caption text-soft">未找到匹配联系人</p>
-                )}
-              </div>
-            ) : null}
-            <div className="mt-ds-xs flex flex-wrap items-center gap-1.5 text-ds-body text-soft">
-              <span>关联联系人：</span>
-              {linkedContactItems.length > 0 ? (
-                linkedContactItems.map((item) => (
-                  <button
-                    key={item.id}
-                    className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption hover:bg-surface-warm-soft"
-                    onClick={() => onJumpToContact(item.id)}
-                  >
-                    {item.name}
-                  </button>
-                ))
-              ) : (
-                <span>暂无</span>
-              )}
-            </div>
-            <div className="mt-ds-xs flex items-center justify-between gap-ds-xs">
+            <div className="flex items-center justify-between">
               <p className="text-ds-caption text-soft">{diarySaveTip}</p>
-              <Button onClick={handleSaveDiary} disabled={diarySaving}>
-                {diarySaving ? "保存中..." : "保存日记"}
-              </Button>
-            </div>
-                  </Card>
-                </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => handleDeleteDiary(diarySelectedDate)}>
+                  删除当日
+                </Button>
+                <Button onClick={handleSaveDiary} disabled={diarySaving}>
+                  {diarySaving ? "保存中..." : "保存日记"}
+                </Button>
               </div>
             </div>
-          ) : null}
-        </Card>
-        <div className="space-y-ds-sm">
-          <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-            <h3 className="text-ds-body font-semibold text-ink">联系人快捷入口</h3>
-            <div className="mt-ds-xs flex flex-wrap gap-1.5">
-              {contacts.slice(0, 8).map((item) => (
+          </div>
+        ) : null}
+      </Card>
+
+      <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
+        <button type="button" className="w-full text-left text-ds-body font-semibold text-ink" onClick={() => setExpandContacts((v) => !v)}>
+          联系人快捷入口 {expandContacts ? "−" : "+"}
+        </button>
+        {expandContacts ? (
+          <div className="mt-ds-xs flex flex-wrap gap-1.5">
+            {linkedContactItems.length > 0 ? (
+              linkedContactItems.map((item) => (
                 <button
                   key={item.id}
-                  className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption hover:bg-surface-warm-soft"
+                  className="rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption hover:bg-surface-warm-soft"
                   onClick={() => onJumpToContact(item.id)}
                 >
                   {item.name}
                 </button>
-              ))}
-              {contacts.length === 0 ? <span className="text-ds-caption text-soft">暂无联系人</span> : null}
-            </div>
-          </Card>
+              ))
+            ) : (
+              <p className="text-ds-caption text-soft">暂无联系人，添加后可在这里快速进入详情。</p>
+            )}
+          </div>
+        ) : null}
+      </Card>
+
+      {isEmptyUser ? (
+        <Card className="rounded-ds border border-[#e6d7c5] bg-[#fff8ee] p-ds-md">
+          <p className="text-ds-caption text-soft">新用户快速开始：先添加联系人，再记录互动，最后查看关系洞察。</p>
+          <div className="mt-ds-xs flex flex-wrap gap-2">
+            {openCreateContact ? <Button onClick={openCreateContact}>立即添加联系人</Button> : null}
+            {openOnboarding ? (
+              <Button variant="outline" onClick={openOnboarding}>
+                打开新手引导
+              </Button>
+            ) : null}
+            <Button variant="ghost" onClick={onOpenAiPage}>
+              打开完整晓观页
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      <div className="fixed bottom-0 left-0 right-0 border-t border-warm-soft bg-base/95 p-3 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center gap-2">
+          <input
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            disabled={hitLimit}
+            className="h-12 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft disabled:opacity-70"
+            placeholder="和晓观聊聊你的关系与情绪…"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                void sendMessage()
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="h-12 w-12 rounded-full bg-[#8B5A42] text-white transition hover:opacity-90 disabled:opacity-50"
+            onClick={() => void sendMessage()}
+            disabled={chatLoading || hitLimit}
+            aria-label="发送消息"
+          >
+            ➤
+          </button>
         </div>
+        {!isPro ? (
+          <p className="mt-2 text-center text-ds-caption text-soft">
+            {hitLimit ? (
+              <Link href="/pricing" className="text-[#7a5a2e] underline underline-offset-2">
+                今日免费对话次数已用完，开通Pro版解锁无限对话
+              </Link>
+            ) : (
+              `今日剩余AI对话：${freeLeft}/${DAILY_LIMIT}次`
+            )}
+          </p>
+        ) : null}
+        {chatError ? <p className="mt-1 text-center text-ds-caption text-[#B42318]">{chatError}</p> : null}
       </div>
+
       <div className="mt-ds-lg hidden rounded-ds border-2 border-[#2e7d32]/35 bg-[#e8f5e9] px-ds-md py-ds-md text-center shadow-sm sm:block">
         <p className="text-ds-body font-semibold leading-relaxed text-[#1b5e20]">
           🔒 内容与账户绑定，经 Supabase 安全同步至云端，仅你本人可访问；AI 与数据处理以{" "}

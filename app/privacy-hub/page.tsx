@@ -96,7 +96,7 @@ export default function PrivacyHubPage() {
             href="/"
             className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
           >
-            返回首页
+            返回晓观页
           </Link>
           <Link
             href="/privacy"

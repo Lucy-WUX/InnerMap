@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const onCover = pathname === "/" && tabParam !== "relations" && tabParam !== "mine"
     const onAuthEntry = pathname === "/login" || pathname === "/register"
     if (onAuthEntry || onCover) {
-      router.replace("/?tab=home")
+      router.replace("/?tab=relations")
     }
   }, [authed, pathname, tabParam, router])
 
@@ -241,8 +241,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative">
             <button
               type="button"
-              title={useLocalQs ? "账户与同步" : "账户与登录"}
-              aria-label={useLocalQs ? "账户与同步" : "账户与登录"}
+              title="账户"
+              aria-label="账户"
               className={
                 useLocalQs
                   ? "flex h-9 w-9 items-center justify-center rounded-full border border-warm-base/60 bg-paper/90 text-ink/80 transition-colors hover:border-warm-strong hover:bg-[#f8f1e7] hover:text-ink"

@@ -63,17 +63,17 @@ export function AiAnalysisOverlay({
   return (
     <section className="rounded-ds border border-warm-base bg-paper p-ds-lg">
       <div className="mb-ds-xs flex items-center justify-between">
-        <h2 className="text-ds-title">AI 分析页</h2>
+        <h2 className="text-ds-title">晓观页</h2>
         <button
           className="rounded-md p-2 text-[#907f6f] hover:bg-[#f3eadf]"
-          aria-label="关闭 AI 分析弹窗"
+          aria-label="关闭晓观页"
           onClick={onClose}
         >
           <X className="h-5 w-5" />
         </button>
       </div>
       <p className="mb-ds-xs text-ds-body text-soft">
-        不向界面注入任何演示回复；上下文来自你本机已保存的联系人、分组、日记与互动。若本机已启动 Next 且配置了 AI
+        晓观不会向界面注入任何演示回复；上下文来自你本机已保存的联系人、分组、日记与互动。若本机已启动 Next 且配置了 AI
         密钥，可通过「发送」调用同域 API 获得分析（无需登录）。
       </p>
       <Card className="mb-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-md text-ds-caption text-[#5c4d42]">

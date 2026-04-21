@@ -206,7 +206,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
     if (signInError) {
       setError(mapSignInError(signInError as { message?: string; code?: string }))
     } else {
-      router.replace("/?tab=home")
+      router.replace("/?tab=relations")
     }
     setLoading(false)
   }
@@ -236,7 +236,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS)
       setStatus("注册成功，验证码已发送到邮箱。请填写验证码完成验证。")
     } else {
-      router.replace("/?tab=home")
+      router.replace("/?tab=relations")
     }
     setLoading(false)
   }
@@ -269,7 +269,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
       setError(mapAnonymousDisabledMessage(otpError.message || "") ?? mapOtpErrorMessage(otpError.message))
     } else {
       setStatus("邮箱验证成功，正在进入应用…")
-      setTimeout(() => router.replace("/?tab=home"), 250)
+      setTimeout(() => router.replace("/?tab=relations"), 250)
     }
     setVerifyingOtp(false)
   }
@@ -353,6 +353,12 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#efe6dc] via-[#e8dfd4] to-[#d9c8b8]"
         aria-hidden
       />
+      <Link
+        href="/"
+        className="absolute left-8 top-6 z-10 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white/90 px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-[#f8f1e7] sm:left-12"
+      >
+        ← 返回封面页
+      </Link>
       <div className="relative max-w-lg">
         <p className="text-lg font-semibold tracking-tight text-[#5d4037]">InnerMap</p>
         <h1 className="mt-4 text-2xl font-bold leading-snug text-ink sm:text-3xl lg:text-[1.85rem] lg:leading-tight">
