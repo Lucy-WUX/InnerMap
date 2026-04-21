@@ -507,7 +507,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                         type="button"
                         disabled={forgotSending || missingEnv}
                         onClick={() => void sendPasswordReset()}
-                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-4 py-2 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41] disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-4 py-2 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50"
                       >
                         {forgotSending ? "发送中…" : "确认发送"}
                       </button>
@@ -518,7 +518,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                 <button
                   type="submit"
                   disabled={loading || missingEnv}
-                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41] disabled:opacity-50"
+                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50"
                 >
                   {loading ? "登录中…" : "登录"}
                 </button>
@@ -609,7 +609,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                 <button
                   type="submit"
                   disabled={loading || missingEnv}
-                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41] disabled:opacity-50"
+                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50"
                 >
                   {loading ? "注册中…" : "注册"}
                 </button>
@@ -669,7 +669,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                   </div>
                   <button
                     type="button"
-                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41] disabled:opacity-50 sm:w-auto"
+                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50 sm:w-auto"
                     onClick={() => void verifyEmailOtp()}
                     disabled={verifyingOtp}
                   >
@@ -689,7 +689,7 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
             </p>
             <Link
               href={LOCAL_MODE_HREF}
-              className="mt-5 flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-4 py-3 text-center text-sm font-bold text-[#5C4B3E] shadow-lg transition-colors hover:bg-[#6d4c41]"
+              className="mt-5 flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-4 py-3 text-center text-sm font-bold text-[#fffdf9] shadow-lg transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]"
             >
               直接进入本地模式 →
             </Link>

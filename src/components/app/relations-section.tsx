@@ -293,14 +293,6 @@ export function RelationsSection({
           </div>
         </Card>
 
-        <Card className="rounded-ds border border-[#E9D5B8] bg-[#FFF8EA] p-ds-lg">
-          <p className="text-ds-title text-[#6d5433]">👑 解锁无限 AI 分析与完整报告</p>
-          <ul className="mt-2 list-inside list-disc space-y-1 text-ds-caption leading-[1.6] text-[#8a6a45]">
-            <li>免费版：最多 20 位联系人，每日 15 次 AI。</li>
-            <li>Pro：无限问答、完整报告导出、评分自动更新。</li>
-          </ul>
-        </Card>
-
         <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
           <h3 className="text-ds-title">⚡ 近期能量消耗</h3>
           <p className="mt-1 text-ds-caption text-soft">结合互动能量与 AI 预警，优先关注标红条目。</p>

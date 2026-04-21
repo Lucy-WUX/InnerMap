@@ -86,9 +86,9 @@ export default function PricingPayPage({ params }: PayPageProps) {
       <div className="mx-auto w-full max-w-[1200px] space-y-6">
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)]">
           <h1 className="text-2xl font-bold text-[#2f251d] md:text-3xl">💛 InnerMap Pro・一次支持，长期陪伴</h1>
-          <p className="mt-3 text-base leading-7 text-[#5c4637]">
+          <p className="mt-3 text-base leading-7 text-[#3e2e22]">
             重要承诺：所有核心功能永久免费，无广告，无强制注册。<br />
-            Pro 版仅为支持开发、解锁高级能力，你可以一直免费使用到完全满意再升级。
+            <span className="text-[#4f3a2c]">Pro 版仅为支持开发、解锁高级能力，你可以一直免费使用到完全满意再升级。</span>
           </p>
           <p className="mt-4 rounded-[12px] border border-[#f0cbc8] bg-[#fff5f4] px-4 py-3 text-sm font-semibold text-[#b3473f]">
             ⚠️ 重要提示：兑换码一经发放，无法退款，请谨慎付费。

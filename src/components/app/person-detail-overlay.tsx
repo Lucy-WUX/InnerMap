@@ -288,15 +288,17 @@ export function PersonDetailOverlay({
           </Card>
 
           <Card className="rounded-ds border border-warm-base p-ds-md">
-            <div className="mb-ds-xs flex gap-1">
+            <div className="mb-ds-xs flex gap-2">
               <button
-                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${activeTab === "advisor" ? "border-[#8B5A42] bg-[#f5e7cf] text-soft" : "border-warm-soft bg-paper text-soft"}`}
+                type="button"
+                className={`rounded-btn-ds border px-3 py-2 text-ds-body font-medium ${activeTab === "advisor" ? "border-[#8B5A42] bg-[#f5e7cf] text-ink" : "border-warm-soft bg-paper text-soft"}`}
                 onClick={() => setActiveTab("advisor")}
               >
                 AI 顾问
               </button>
               <button
-                className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${activeTab === "history" ? "border-[#8B5A42] bg-[#f5e7cf] text-soft" : "border-warm-soft bg-paper text-soft"}`}
+                type="button"
+                className={`rounded-btn-ds border px-3 py-2 text-ds-body font-medium ${activeTab === "history" ? "border-[#8B5A42] bg-[#f5e7cf] text-ink" : "border-warm-soft bg-paper text-soft"}`}
                 onClick={() => setActiveTab("history")}
               >
                 互动历史
@@ -304,29 +306,33 @@ export function PersonDetailOverlay({
             </div>
             {activeTab === "advisor" ? (
               <>
-            <h3 className="text-ds-title">🤖 观系 · 关于 {selectedContactName} 的顾问</h3>
-            <div className="mt-ds-xs space-y-ds-xs">
+            <h3 className="text-lg font-semibold leading-snug text-ink sm:text-xl">🤖 观系 · 关于 {selectedContactName} 的顾问</h3>
+            <div className="mt-ds-md space-y-ds-md">
               {hasHistory ? (
                 <>
-                <div className="ml-auto w-[86%] rounded-ds bg-[#8B5A42] p-ds-xs text-ds-body text-[#fffdf9]">
+                <div className="ml-auto w-[min(92%,28rem)] rounded-ds bg-[#8B5A42] p-ds-md text-[15px] leading-relaxed text-[#fffdf9] sm:text-base">
                     {latestUserMessage}
                   </div>
-                  <div className="w-[92%] rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs text-ds-body">
-                    {isAiTyping ? (
-                      <span>
-                        {aiReplyText}
-                        <span className="ml-0.5 inline-block animate-pulse">|</span>
-                      </span>
-                    ) : (
-                      aiReplyText
-                    )}
-                    <p className="mt-1 text-ds-caption text-soft">由大模型基于上方档案与互动记录生成</p>
+                  <div className="flex w-[min(100%,32rem)] flex-col rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-md text-[15px] leading-relaxed text-ink sm:text-base">
+                    <div className="min-h-[11rem] sm:min-h-[13rem]">
+                      {isAiTyping ? (
+                        <span className="whitespace-pre-wrap">
+                          {aiReplyText}
+                          <span className="ml-0.5 inline-block animate-pulse">|</span>
+                        </span>
+                      ) : (
+                        <span className="whitespace-pre-wrap">{aiReplyText || "\u00a0"}</span>
+                      )}
+                    </div>
+                    <p className="mt-ds-md border-t border-warm-soft/70 pt-ds-md text-ds-caption leading-relaxed text-soft">
+                      由大模型基于上方档案与互动记录生成
+                    </p>
                   </div>
                 </>
               ) : (
-                <div className="w-[92%] rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs text-ds-body">
-                  {welcomeMessage}
-                  <p className="mt-1 text-ds-caption text-soft">当前未生成 AI 分析</p>
+                <div className="flex w-[min(100%,32rem)] min-h-[11rem] flex-col justify-center rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-md text-[15px] leading-relaxed text-ink sm:min-h-[13rem] sm:text-base">
+                  <p>{welcomeMessage}</p>
+                  <p className="mt-ds-md text-ds-caption leading-relaxed text-soft">当前未生成 AI 分析</p>
                 </div>
               )}
             </div>
@@ -361,12 +367,13 @@ export function PersonDetailOverlay({
             )}
           </Card>
 
-          <div className="my-ds-xs space-y-ds-xs">
-            <div className="flex items-center gap-ds-xs overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-ds-lg space-y-ds-md">
+            <div className="flex items-center gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {quickPrompts.map((q) => (
                 <button
+                  type="button"
                   key={q}
-                  className="shrink-0 rounded-full border border-warm-soft bg-[#f3f2ef] px-3 py-1 text-ds-caption transition-colors hover:bg-[#efe6d7]"
+                  className="shrink-0 rounded-full border border-warm-soft bg-[#f3f2ef] px-4 py-2.5 text-left text-[13px] font-medium leading-snug text-ink shadow-sm transition-colors hover:bg-[#efe6d7] sm:text-sm"
                   onClick={() => {
                     setDetailInput(q)
                     triggerAiReply(q)
@@ -376,7 +383,8 @@ export function PersonDetailOverlay({
                 </button>
               ))}
               <button
-                className="shrink-0 rounded-full border border-warm-strong bg-surface-warm-soft px-3 py-1 text-ds-caption transition-colors hover:bg-[#efe6d7]"
+                type="button"
+                className="shrink-0 rounded-full border border-warm-strong bg-surface-warm-soft px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-[#efe6d7]"
                 onClick={() => setShowCustomPromptInput((prev) => !prev)}
               >
                 + 自定义
@@ -409,7 +417,7 @@ export function PersonDetailOverlay({
           </div>
 
           <Textarea
-            className="min-h-24 focus-visible:border-[#795548]"
+            className="min-h-[5.5rem] resize-y text-[15px] leading-relaxed focus-visible:border-[#795548] sm:min-h-24"
             placeholder="输入你的困惑..."
             value={detailInput}
             onChange={(e) => {

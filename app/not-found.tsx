@@ -13,7 +13,7 @@ export default function NotFound() {
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/"
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41]"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]"
         >
           返回首页
         </Link>

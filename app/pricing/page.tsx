@@ -28,7 +28,7 @@ export default function PricingPage() {
         </div>
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] md:p-8">
           <h1 className="text-3xl font-bold text-[#3e2e22] md:text-4xl">四档付费方案（主推终身版）</h1>
-          <p className="mt-3 text-base font-medium leading-relaxed text-[#5C4B3E] md:text-lg">
+          <p className="mt-3 text-base font-medium leading-relaxed text-[#3e2e22] md:text-lg">
             温和透明的订阅设计，核心原则是「永久免费」与「数据属于用户」。
           </p>
           <p className="mt-3 text-sm font-semibold text-[#b3473f]">⚠️ 重要提示：兑换码一经发放，无法退款，请谨慎付费。</p>

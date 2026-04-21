@@ -9,7 +9,7 @@ function NavButtonPrimary({ href, children }: { href: string; children: ReactNod
   return (
     <Link
       href={href}
-      className="rounded-btn-ds inline-flex min-h-11 items-center justify-center bg-ink px-4 py-2 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41]"
+      className="rounded-btn-ds inline-flex min-h-11 items-center justify-center bg-ink px-4 py-2 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]"
     >
       {children}
     </Link>
@@ -31,7 +31,7 @@ function HeroButtonPrimary({ href, children }: { href: string; children: ReactNo
   return (
     <Link
       href={href}
-      className="rounded-full inline-flex min-h-11 items-center justify-center bg-ink px-6 py-2.5 text-sm font-medium text-[#5C4B3E] shadow-sm transition-colors hover:bg-[#6d4c41]"
+      className="rounded-full inline-flex min-h-11 items-center justify-center bg-ink px-6 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]"
     >
       {children}
     </Link>

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ChevronDown } from "lucide-react"
+import { CalendarDays, ChevronDown, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 
 import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
@@ -161,7 +161,7 @@ export function HomeSection(props: HomeSectionProps) {
   const [chatError, setChatError] = useState("")
   const [freeUsed, setFreeUsed] = useState(0)
   const [expandEnergy, setExpandEnergy] = useState(false)
-  const [expandDiary, setExpandDiary] = useState(true)
+  const [showDiaryModal, setShowDiaryModal] = useState(false)
   const [expandContacts, setExpandContacts] = useState(false)
 
   const pickerSuggestions = useMemo(
@@ -185,7 +185,7 @@ export function HomeSection(props: HomeSectionProps) {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (!expandDiary) return
+      if (!showDiaryModal) return
       const isSave = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s"
       if (!isSave) return
       event.preventDefault()
@@ -193,7 +193,27 @@ export function HomeSection(props: HomeSectionProps) {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [handleSaveDiary, expandDiary])
+  }, [handleSaveDiary, showDiaryModal])
+
+  useEffect(() => {
+    if (!showDiaryModal) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return
+      event.preventDefault()
+      setShowDiaryModal(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [showDiaryModal])
+
+  useEffect(() => {
+    if (!showDiaryModal) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [showDiaryModal])
 
   useEffect(() => {
     if (diaryEmotion && !isPresetMood(diaryEmotion)) setCustomMoodDraft(diaryEmotion)
@@ -379,32 +399,36 @@ export function HomeSection(props: HomeSectionProps) {
         </Card>
       ) : null}
 
-      <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            className="flex min-w-0 flex-1 items-center gap-2 text-left text-ds-body font-semibold text-ink"
-            onClick={() => setExpandDiary((v) => !v)}
-          >
-            <span className="min-w-0 truncate">日记与日历</span>
-            <CollapseChevron open={expandDiary} className="ml-auto shrink-0" />
-          </button>
-          <span className="shrink-0 text-ds-caption text-[#5C4B3E]">本月 {monthDiaryCount} 篇</span>
-        </div>
+      {showDiaryModal ? (
         <div
-          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none ${
-            expandDiary ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-          }`}
+          className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-[#412f1f]/30 p-3 backdrop-blur-[6px] sm:items-center sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="diary-calendar-modal-title"
+          onClick={() => setShowDiaryModal(false)}
         >
-          <div className="min-h-0 overflow-hidden">
-            <p className="mt-ds-xs text-ds-caption leading-[1.6] text-[#5C4B3E]">
-              点击展开：日历视图、列表搜索、心情与 @ 联系人。
-            </p>
-          </div>
-        </div>
-        <CollapsiblePanel open={expandDiary}>
-          <div className="mt-ds-sm">
-            <div className="grid gap-ds-md lg:grid-cols-[minmax(0,420px)_1fr]">
+          <div
+            className="my-4 flex max-h-[min(92dvh,calc(100dvh-1.5rem-env(safe-area-inset-bottom)))] min-h-0 w-full max-w-5xl flex-col overflow-hidden rounded-[16px] border border-[#e4d8cb] bg-paper shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-warm-soft px-4 py-3 sm:px-6">
+              <div className="min-w-0">
+                <h2 id="diary-calendar-modal-title" className="text-ds-title font-semibold text-ink">
+                  日记与日历
+                </h2>
+                <p className="text-ds-caption text-soft">本月 {monthDiaryCount} 篇</p>
+              </div>
+              <button
+                type="button"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-soft transition hover:bg-surface-warm-soft"
+                aria-label="关闭"
+                onClick={() => setShowDiaryModal(false)}
+              >
+                <X className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-ds-md sm:p-ds-lg">
+              <div className="grid gap-ds-md lg:grid-cols-[minmax(0,420px)_1fr]">
               <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg">
                 <div className="mb-ds-md flex items-center justify-between">
                   <button
@@ -553,7 +577,7 @@ export function HomeSection(props: HomeSectionProps) {
               </Card>
 
               <div className="space-y-ds-md">
-                <Card className="hidden rounded-ds border border-warm-base bg-paper p-ds-lg sm:block">
+                <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
                   <div className="flex items-center justify-between text-ds-body text-[#5C4B3E]">
                     <p>本月记录：{monthDiaryCount} 篇</p>
                     <p>提及联系人：{monthMentionedContactCount} 人</p>
@@ -725,10 +749,11 @@ export function HomeSection(props: HomeSectionProps) {
                   </div>
                 </Card>
               </div>
+              </div>
             </div>
           </div>
-        </CollapsiblePanel>
-      </Card>
+        </div>
+      ) : null}
 
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
         <button
@@ -759,13 +784,32 @@ export function HomeSection(props: HomeSectionProps) {
         </CollapsiblePanel>
       </Card>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-warm-soft bg-base/95 p-3 backdrop-blur">
+      <div className="fixed bottom-0 left-0 right-0 z-[120] border-t border-warm-soft bg-base/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-2">
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-warm-soft bg-surface-warm-elevated text-ink shadow-[0_4px_14px_rgba(95,73,53,0.18)] transition duration-200 hover:border-warm-strong hover:bg-surface-warm-hover hover:shadow-[0_6px_18px_rgba(95,73,53,0.22)] active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+              aria-label={`打开日记与日历，本月 ${monthDiaryCount} 篇`}
+              title="日记与日历"
+              onClick={() => setShowDiaryModal(true)}
+            >
+              <CalendarDays className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            </button>
+            {monthDiaryCount > 0 ? (
+              <span
+                className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B5A42] px-1 text-[10px] font-semibold text-[#fffdf9] shadow-sm"
+                aria-hidden
+              >
+                {monthDiaryCount > 9 ? "9+" : monthDiaryCount}
+              </span>
+            ) : null}
+          </div>
           <input
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             disabled={hitLimit}
-            className="h-12 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft/90 disabled:opacity-70"
+            className="h-12 min-w-0 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft/90 disabled:opacity-70"
             placeholder="和晓观聊聊你的关系与情绪…"
             title="Enter 发送；可先说说具体场景或感受"
             onKeyDown={(e) => {

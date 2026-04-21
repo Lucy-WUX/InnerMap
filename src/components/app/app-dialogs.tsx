@@ -711,11 +711,6 @@ export function AppDialogs({
           />
           <div>
             <p className="mb-1 text-ds-body font-medium">能量变化</p>
-            <div className="mb-1 flex items-center justify-between text-ds-caption text-soft">
-              <span>😫 -2</span>
-              <span>😐 0</span>
-              <span>🙂 +2</span>
-            </div>
             <input
               type="range"
               min={-5}

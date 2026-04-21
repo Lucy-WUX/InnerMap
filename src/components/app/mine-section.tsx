@@ -460,12 +460,6 @@ export function MineSection({
           </div>
         )}
       </Card>
-      <Card className="rounded-ds border border-warm-base p-ds-lg">
-        <p className="text-ds-body font-medium text-ink">AI 关系分析</p>
-        <p className="mt-1 text-ds-caption leading-relaxed text-soft">
-          晓观对话在底部导航「晓观」中打开。具体问答与次数限制取决于是否登录及服务端 AI 配置；未配置时部分能力可能不可用。
-        </p>
-      </Card>
     </section>
   )
 }
