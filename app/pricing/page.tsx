@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { PricingPaymentReminderCard } from "@/components/pricing-payment-reminder"
 import { FEATURE_ROWS, PRICING_PLANS, TRUST_PROMISES, type PlanKey } from "@/lib/pricing-config"
 
 export default function PricingPage() {
@@ -16,9 +17,18 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen bg-[#faf8f5] px-4 py-8 text-[#4f3a2c] sm:px-6 md:px-8 md:py-10">
       <div className="mx-auto w-full max-w-[1200px] space-y-8">
+        <div>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1 rounded-full border border-[#d8c9b8] bg-[#fffdf9] px-4 py-2 text-sm font-medium text-[#5C4B3E] transition-colors hover:bg-[#f8f1e7]"
+          >
+            ← 返回上一页
+          </button>
+        </div>
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] md:p-8">
           <h1 className="text-3xl font-bold text-[#3e2e22] md:text-4xl">四档付费方案（主推终身版）</h1>
-          <p className="mt-3 text-base text-[#725948] md:text-lg">
+          <p className="mt-3 text-base font-medium leading-relaxed text-[#5C4B3E] md:text-lg">
             温和透明的订阅设计，核心原则是「永久免费」与「数据属于用户」。
           </p>
           <p className="mt-3 text-sm font-semibold text-[#b3473f]">⚠️ 重要提示：兑换码一经发放，无法退款，请谨慎付费。</p>
@@ -102,9 +112,12 @@ export default function PricingPage() {
           ))}
         </section>
 
+        <PricingPaymentReminderCard />
+
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 text-center shadow-[0_6px_18px_rgba(95,73,53,0.08)] md:p-8">
-          <p className="text-base text-[#6b5342]">
-            当前选择：<span className="font-semibold text-[#2f251d]">{currentPlan.title}</span>
+          <p className="text-base leading-relaxed">
+            <span className="font-medium text-[#5C4B3E]">当前选择：</span>
+            <span className="font-semibold text-[#2f251d]">{currentPlan.title}</span>
           </p>
           <button
             type="button"

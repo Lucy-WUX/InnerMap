@@ -27,7 +27,6 @@ import { Input } from "../ui/input"
 
 type MineSectionProps = {
   storageScope: string
-  openAiPage: (seedText?: string) => void
   buildExportSnapshot: () => Omit<AppDataSnapshot, "version" | "exportedAt">
   onRestoreSnapshot: (snapshot: AppDataSnapshot) => void
   onLockSettingsChange: (settings: LockSettings | null) => void
@@ -40,7 +39,6 @@ type MineSectionProps = {
 
 export function MineSection({
   storageScope,
-  openAiPage,
   buildExportSnapshot,
   onRestoreSnapshot,
   onLockSettingsChange,
@@ -465,11 +463,8 @@ export function MineSection({
       <Card className="rounded-ds border border-warm-base p-ds-lg">
         <p className="text-ds-body font-medium text-ink">AI 关系分析</p>
         <p className="mt-1 text-ds-caption leading-relaxed text-soft">
-          以下为本地界面入口：具体问答与次数限制取决于是否登录及服务端 AI 配置；未配置时部分能力可能不可用。
+          晓观对话在底部导航「晓观」中打开。具体问答与次数限制取决于是否登录及服务端 AI 配置；未配置时部分能力可能不可用。
         </p>
-        <Button className="mt-ds-xs" onClick={() => openAiPage("总结我这周的人际模式并给出下周建议")}>
-          打开晓观页
-        </Button>
       </Card>
     </section>
   )

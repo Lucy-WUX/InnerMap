@@ -3,6 +3,7 @@
 import { use, useState } from "react"
 import { useRouter } from "next/navigation"
 
+import { PricingPaymentReminderCard } from "@/components/pricing-payment-reminder"
 import { getPlanByKey, PLAN_TITLE_MAP, type PayChannel } from "@/lib/pricing-config"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { activateLocalProOffline } from "@/src/lib/local-pro-license"

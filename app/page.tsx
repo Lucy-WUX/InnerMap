@@ -3,7 +3,9 @@ import type { TabKey } from "../src/components/app/types"
 
 function parseTab(tab: string | string[] | undefined): TabKey {
   const v = Array.isArray(tab) ? tab[0] : tab
-  if (v === "relations" || v === "mine") return v
+  if (v === "home") return "home"
+  if (v === "relations") return "relations"
+  if (v === "mine") return "mine"
   return "relations"
 }
 

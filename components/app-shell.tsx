@@ -131,9 +131,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (authed !== true) return
-    const onCover = pathname === "/" && tabParam !== "relations" && tabParam !== "mine"
     const onAuthEntry = pathname === "/login" || pathname === "/register"
-    if (onAuthEntry || onCover) {
+    const onBareHome = pathname === "/" && tabParam == null
+    if (onAuthEntry || onBareHome) {
       router.replace("/?tab=relations")
     }
   }, [authed, pathname, tabParam, router])
@@ -177,16 +177,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const useLocalQs = Boolean(localParam && !authed)
   function tabHref(tabKey: "home" | "relations" | "mine") {
     if (!useLocalQs) {
-      if (tabKey === "home") return "/"
       return `/?tab=${tabKey}`
     }
-    if (tabKey === "home") return "/?local=1"
     return `/?tab=${tabKey}&local=1`
   }
 
   const onMainTabs = pathname === "/"
-  const navHome = onMainTabs && tabParam !== "relations" && tabParam !== "mine"
-  const navRelations = onMainTabs && tabParam === "relations"
+  const navHome = onMainTabs && tabParam === "home"
+  const navRelations = onMainTabs && (tabParam === "relations" || tabParam == null)
   const navMine = onMainTabs && tabParam === "mine"
 
   const hasSupabaseMissing = envMissing.some((item) => item.includes("SUPABASE"))

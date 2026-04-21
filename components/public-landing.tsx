@@ -4,6 +4,7 @@ import Link from "next/link"
 import { type ReactNode } from "react"
 
 import { LOCAL_MODE_HREF } from "@/lib/local-mode"
+import { PricingPaymentReminderCard } from "@/components/pricing-payment-reminder"
 
 function NavButtonPrimary({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -57,8 +58,10 @@ export function PublicLanding() {
       <main>
         <section className="mx-auto max-w-[1200px] px-4 pb-14 pt-12 sm:px-6">
           <h1 className="text-3xl font-bold leading-tight text-[#5d4037] sm:text-4xl">遇见更好的关系，遇见更从容的自己</h1>
-          <p className="mt-3 text-lg font-semibold text-[#5d4037]">晓观・你的专属人际关系 AI 顾问</p>
-          <p className="mt-2 max-w-2xl text-base text-[#3e2723]">用 AI 看清关系本质，远离消耗，守住真心</p>
+          <p className="mt-3 text-lg font-semibold text-[#5C4B3E]">晓观・你的专属人际关系 AI 顾问</p>
+          <p className="mt-2 max-w-2xl text-base font-medium leading-relaxed text-[#5C4B3E]">
+            用 AI 看清关系本质，远离消耗，守住真心
+          </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <HeroButtonPrimary href={LOCAL_MODE_HREF}>立即使用・晓观</HeroButtonPrimary>
             <Link
@@ -99,10 +102,7 @@ export function PublicLanding() {
         </section>
 
         <section className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6">
-          <div className="rounded-[16px] border border-[#d8c9b9] bg-[#fffdf9] px-6 py-8 text-center shadow-landing">
-            <p className="text-base font-semibold text-[#2a1810]">所有核心功能永久免费，无广告，无强制注册</p>
-            <p className="mt-2 text-sm text-[#7a5a2e]">Pro 版为自愿支持，兑换码一经发放无法退款，请谨慎付费</p>
-          </div>
+          <PricingPaymentReminderCard />
         </section>
       </main>
     </div>

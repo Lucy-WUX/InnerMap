@@ -165,6 +165,10 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   const [unlockTick, setUnlockTick] = useState(0)
   const [lockSettings, setLockSettings] = useState<LockSettings | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const showOnboardingRef = useRef(false)
+  showOnboardingRef.current = showOnboarding
+  /** 与 localStorage 同步：新手引导已结束或已关闭后不再自动弹出，也不再显示顶栏「新用户快速开始」 */
+  const [onboardingHandled, setOnboardingHandled] = useState(false)
   const [contactFormError, setContactFormError] = useState("")
   const [saveSuccessTip, setSaveSuccessTip] = useState("")
   const [contactSaving, setContactSaving] = useState(false)
@@ -187,13 +191,14 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     setShowContactDialog(value)
   }
 
+  const markOnboardingHandled = useCallback(() => {
+    setOnboardingDone(storageScope)
+    setOnboardingHandled(true)
+  }, [storageScope])
+
   function navigateToTab(next: TabKey) {
     setOverlay("none")
-    if (next === "home") {
-      router.push(isLocalModeUrl ? "/?local=1" : "/")
-    } else {
-      router.push(isLocalModeUrl ? `/?tab=${next}&local=1` : `/?tab=${next}`)
-    }
+    router.push(isLocalModeUrl ? `/?tab=${next}&local=1` : `/?tab=${next}`)
   }
 
   function openAiPage(seedText?: string) {
@@ -803,6 +808,11 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   }, [sessionLoading, storageScope])
 
   useEffect(() => {
+    if (!appReady) return
+    setOnboardingHandled(onboardingDone(storageScope))
+  }, [appReady, storageScope])
+
+  useEffect(() => {
     if (typeof localStorage === "undefined") return
     localStorage.setItem(`pss-diary-drafts:${storageScope}`, JSON.stringify(diaryDrafts))
   }, [diaryDrafts, storageScope])
@@ -882,7 +892,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
   useEffect(() => {
     if (!appReady || lockVisible) return
     if (isLocalModeUrl && !userId && !hasSeenLocalModeWelcome()) return
-    if (onboardingDone(storageScope)) return
+    if (onboardingHandled) return
     if (!isAppDataEmpty(contacts.length, interactionLogs.length, countDiaryEntriesWithContent(diaryRecords)))
       return
     setShowOnboarding(true)
@@ -896,6 +906,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     storageScope,
     isLocalModeUrl,
     userId,
+    onboardingHandled,
   ])
 
   useEffect(() => {
@@ -914,11 +925,14 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       setShowInteractionDialog(false)
       setShowContactDialog(false)
       setShowNewGroupDialog(false)
+      if (showOnboardingRef.current) {
+        markOnboardingHandled()
+      }
       setShowOnboarding(false)
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [])
+  }, [markOnboardingHandled])
 
   useEffect(() => {
     const [year, month] = diarySelectedDate.split("-")
@@ -1067,14 +1081,11 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
           </button>
         </div>
       ) : null}
-      {firstUseEmpty && overlay === "none" ? (
+      {firstUseEmpty && overlay === "none" && !onboardingHandled ? (
         <div className="mb-3 rounded-ds border border-[#e6d7c5] bg-[#fff8ee] px-3 py-2.5 text-[#5f4a32] shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-ds-body font-medium">新用户快速开始：先添加联系人，再记录互动，最后查看关系洞察。</p>
             <div className="ml-auto flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => setShowOnboarding(true)}>
-                打开新手引导
-              </Button>
               <Button
                 size="sm"
                 onClick={() => {
@@ -1186,7 +1197,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
               navigateToTab("relations")
               openCreateContact()
             },
-            openOnboarding: () => setShowOnboarding(true),
+            suppressNewUserQuickStart: onboardingHandled,
             storageScope,
             diarySaveTip,
             diarySaving,
@@ -1201,7 +1212,6 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       {overlay === "none" && tab === "mine" ? (
         <MineSection
           storageScope={storageScope}
-          openAiPage={openAiPage}
           buildExportSnapshot={buildExportCore}
           onRestoreSnapshot={restoreSnapshot}
           lockEnabled={Boolean(lockSettings?.enabled)}
@@ -1259,8 +1269,11 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     </main>
     <OnboardingOverlay
       open={showOnboarding}
-      onClose={() => setShowOnboarding(false)}
-      onFinishOnboarding={() => setOnboardingDone(storageScope)}
+      onClose={() => {
+        setShowOnboarding(false)
+        markOnboardingHandled()
+      }}
+      onFinishOnboarding={markOnboardingHandled}
       setTab={navigateToTab}
       openCreateContact={openCreateContact}
       openInteractionForFirstContact={openInteractionForFirstContact}
