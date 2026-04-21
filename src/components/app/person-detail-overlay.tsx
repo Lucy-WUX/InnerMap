@@ -237,7 +237,9 @@ export function PersonDetailOverlay({
     const vv = window.visualViewport
     if (!vv) return
     function update() {
-      const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      const vp = window.visualViewport
+      if (!vp) return
+      const covered = Math.max(0, window.innerHeight - vp.height - vp.offsetTop)
       setKeyboardShift(covered)
     }
     update()
