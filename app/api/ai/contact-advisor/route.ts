@@ -6,8 +6,8 @@ const MAX_MESSAGE_LEN = 8000
 const MAX_CONTEXT_LEN = 12000
 
 /**
- * 联系人「AI 顾问」：不依赖登录与 Supabase 配额，仅需服务端配置 AI_API_KEY / OPENAI_API_KEY。
- * 供本地模式等场景在配置密钥后获得真实模型回复；上下文由客户端传入（本地已保存的档案与互动）。
+ * 晓观对话（联系人上下文）：与首页同一 Agent，不依赖登录与 Supabase 配额，仅需 AI_API_KEY / OPENAI_API_KEY。
+ * 上下文由客户端传入该联系人的档案与互动摘要。
  */
 export async function POST(request: Request) {
   const client = getAiClient()
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         { role: "system", content: coachCorePrompt },
         {
           role: "system",
-          content: `请基于以下 JSON 上下文回答；字段为 null 表示缺失，不得编造缺失信息。\n\n${JSON.stringify(
+          content: `你是晓观。用户正在就「某位联系人」向你提问；以下 JSON 中的 contact_context 是该联系人的档案与互动摘要。请基于这些材料个性化回答；字段为 null 表示缺失，不得编造缺失信息。\n\n${JSON.stringify(
             {
               contact_context: context === "null" ? null : context,
             },
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
 
     const reply = completion.choices[0]?.message?.content?.trim() ?? ""
     if (!reply) {
-      return NextResponse.json({ error: "模型未返回有效内容" }, { status: 502 })
+      return NextResponse.json({ error: "晓观暂时无法回复，请稍后重试" }, { status: 502 })
     }
 
     return NextResponse.json({ reply })
   } catch {
-    return NextResponse.json({ error: "调用模型失败，请稍后重试" }, { status: 502 })
+    return NextResponse.json({ error: "晓观暂时无法回复，请稍后重试" }, { status: 502 })
   }
 }

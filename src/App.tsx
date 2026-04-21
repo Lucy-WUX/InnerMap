@@ -1129,6 +1129,8 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
 
       {overlay === "person-detail" ? (
         <PersonDetailOverlay
+          storageScope={storageScope}
+          selectedContactId={selectedContactId}
           selectedContactName={selectedContact?.name}
           selectedContactGroup={selectedContact?.group}
           selectedContactTraits={selectedContact?.traits}

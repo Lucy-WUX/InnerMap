@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { CalendarDays, ChevronDown, X } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
+import { CalendarDays, X } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react"
 
 import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
 import { isProSubscriber } from "../../lib/product-limits"
@@ -83,32 +83,6 @@ function todayToken() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function CollapsiblePanel({ open, children }: { open: boolean; children: ReactNode }) {
-  return (
-    <div
-      className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none ${
-        open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-      }`}
-    >
-      <div className="min-h-0 overflow-hidden">
-        <div className="pt-ds-xs">{children}</div>
-      </div>
-    </div>
-  )
-}
-
-function CollapseChevron({ open, className = "" }: { open: boolean; className?: string }) {
-  return (
-    <ChevronDown
-      className={`h-5 w-5 shrink-0 text-soft transition-transform duration-300 ease-out motion-reduce:transition-none ${
-        open ? "rotate-180" : "rotate-0"
-      } ${className}`}
-      strokeWidth={1.75}
-      aria-hidden
-    />
-  )
-}
-
 export function HomeSection(props: HomeSectionProps) {
   const {
     monthLabel,
@@ -160,9 +134,7 @@ export function HomeSection(props: HomeSectionProps) {
   const [chatLoading, setChatLoading] = useState(false)
   const [chatError, setChatError] = useState("")
   const [freeUsed, setFreeUsed] = useState(0)
-  const [expandEnergy, setExpandEnergy] = useState(false)
   const [showDiaryModal, setShowDiaryModal] = useState(false)
-  const [expandContacts, setExpandContacts] = useState(false)
 
   const pickerSuggestions = useMemo(
     () => contacts.filter((c) => c.name.includes(mentionSearch.trim())).slice(0, 8),
@@ -345,37 +317,6 @@ export function HomeSection(props: HomeSectionProps) {
             ))
           )}
         </div>
-      </Card>
-
-      <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between gap-2 text-left text-ds-body font-semibold text-ink"
-          onClick={() => setExpandEnergy((v) => !v)}
-        >
-          <span>近期能量与预警</span>
-          <CollapseChevron open={expandEnergy} />
-        </button>
-        <CollapsiblePanel open={expandEnergy}>
-          <div className="space-y-1 text-ds-caption text-[#5C4B3E]">
-            {energyAlerts.length === 0 ? (
-              <p>暂无红色预警。记录互动后，观系会持续观察能量走势。</p>
-            ) : (
-              energyAlerts.map((a) => (
-                <p key={a.contactId}>
-                  ⚠️ {a.name}：{a.reason}
-                  <button
-                    type="button"
-                    className="ml-2 text-[#7a5a2e] underline underline-offset-2"
-                    onClick={() => onJumpToContact(a.contactId)}
-                  >
-                    查看
-                  </button>
-                </p>
-              ))
-            )}
-          </div>
-        </CollapsiblePanel>
       </Card>
 
       {weeklyDigest ? (
@@ -754,35 +695,6 @@ export function HomeSection(props: HomeSectionProps) {
           </div>
         </div>
       ) : null}
-
-      <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between gap-2 text-left text-ds-body font-semibold text-ink"
-          onClick={() => setExpandContacts((v) => !v)}
-        >
-          <span>联系人快捷入口</span>
-          <CollapseChevron open={expandContacts} />
-        </button>
-        <CollapsiblePanel open={expandContacts}>
-          <div className="flex flex-wrap gap-1.5">
-            {contacts.slice(0, 12).length > 0 ? (
-              contacts.slice(0, 12).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption text-[#5C4B3E] hover:bg-surface-warm-soft"
-                  onClick={() => onJumpToContact(item.id)}
-                >
-                  {item.name}
-                </button>
-              ))
-            ) : (
-              <p className="text-ds-caption text-[#5C4B3E]">暂无联系人，添加后可在这里快速进入详情。</p>
-            )}
-          </div>
-        </CollapsiblePanel>
-      </Card>
 
       <div className="fixed bottom-0 left-0 right-0 z-[120] border-t border-warm-soft bg-base/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-2">
