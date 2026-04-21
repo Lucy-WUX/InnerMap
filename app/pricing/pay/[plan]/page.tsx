@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { use, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { getPlanByKey, PLAN_TITLE_MAP, type PayChannel } from "@/lib/pricing-config"
@@ -9,13 +9,14 @@ import { activateLocalProOffline } from "@/src/lib/local-pro-license"
 import { setProSubscriberDemo } from "@/src/lib/product-limits"
 
 type PayPageProps = {
-  params: { plan: string }
+  params: Promise<{ plan: string }>
 }
 
 export default function PricingPayPage({ params }: PayPageProps) {
   const router = useRouter()
   const accessToken = useAuthStore((s) => s.accessToken)
-  const plan = getPlanByKey(params.plan)
+  const { plan: planParam } = use(params)
+  const plan = getPlanByKey(planParam)
   const [redeemCode, setRedeemCode] = useState("")
   const [redeemBusy, setRedeemBusy] = useState(false)
   const [redeemTip, setRedeemTip] = useState("")
@@ -24,7 +25,7 @@ export default function PricingPayPage({ params }: PayPageProps) {
   async function openChannel(channel: PayChannel) {
     setPayTip("")
     try {
-      const res = await fetch(`/api/billing/payment-link?plan=${encodeURIComponent(params.plan)}&channel=${channel}`)
+      const res = await fetch(`/api/billing/payment-link?plan=${encodeURIComponent(planParam)}&channel=${channel}`)
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
       if (!res.ok || !data.url) {
         setPayTip(data.error ?? "支付链接暂不可用，请稍后再试。")

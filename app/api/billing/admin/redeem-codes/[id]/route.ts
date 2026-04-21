@@ -7,7 +7,7 @@ type Body = {
   action?: "disable" | "enable"
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!isBillingAdminRequest(req)) {
     return NextResponse.json({ error: "未授权" }, { status: 401 })
   }
@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "action 参数无效" }, { status: 400 })
   }
 
-  const id = params.id
+  const { id } = await context.params
   const { data: current, error: currentErr } = await admin
     .from("billing_redeem_codes")
     .select("id,status,used_by,used_at")
