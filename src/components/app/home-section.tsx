@@ -6,7 +6,7 @@ import type { EnergyAlert, WeeklyDigest } from "../../lib/relationship-ai-demo"
 import { isProSubscriber } from "../../lib/product-limits"
 import {
   DIARY_CUSTOM_MOOD_MAX_LEN,
-  diaryMoodDotClass,
+  diaryMoodCalendarIcon,
   isPresetMood,
   normalizeCustomMoodInput,
 } from "../../lib/diary-mood"
@@ -450,7 +450,7 @@ export function HomeSection(props: HomeSectionProps) {
                       ))
                     ) : (
                       <p className="text-ds-caption text-[#5C4B3E]">
-                        {totalDiaryCount === 0 ? "记录你的人际感悟，日历上会显示心情圆点。" : "暂无匹配日记"}
+                        {totalDiaryCount === 0 ? "记录你的人际感悟；若选择心情，保存后日历上会显示对应图标。" : "暂无匹配日记"}
                       </p>
                     )}
                   </div>
@@ -488,12 +488,17 @@ export function HomeSection(props: HomeSectionProps) {
                               >
                                 {cell.day}
                               </span>
-                              {cell.hasRecord ? (
-                                <span
-                                  className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${diaryMoodDotClass(cell.emotion)}`}
-                                  title={cell.emotion?.trim() ? `心情：${cell.emotion}` : "未记录心情"}
-                                />
-                              ) : null}
+                              {(() => {
+                                const moodIcon = diaryMoodCalendarIcon(cell.emotion)
+                                return moodIcon ? (
+                                  <span
+                                    className="pointer-events-none absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[13px] leading-none"
+                                    title={`心情：${cell.emotion?.trim() ?? ""}`}
+                                  >
+                                    {moodIcon}
+                                  </span>
+                                ) : null
+                              })()}
                             </div>
                           </button>
                         ) : (
@@ -529,7 +534,7 @@ export function HomeSection(props: HomeSectionProps) {
                   <p className="text-[24px] font-semibold text-[#5C4B3E]">{diarySelectedDate}</p>
                   {totalDiaryCount === 0 ? (
                     <p className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5C4B3E]">
-                      记录你的人际感悟，保存后可在日历上查看心情圆点。
+                      记录你的人际感悟；若选择心情，保存后可在日历上查看对应图标。
                     </p>
                   ) : null}
                   <div className="mt-ds-xs flex flex-wrap gap-ds-xs">
@@ -578,7 +583,6 @@ export function HomeSection(props: HomeSectionProps) {
                       应用自定义
                     </Button>
                   </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-[#5C4B3E]">日历圆点：预设四色 · 自定义为紫 · 不记录为灰。保存日记后生效。</p>
                   <Textarea
                     ref={diaryTextareaRef}
                     className="mt-4 min-h-[220px] text-[#5C4B3E]"
@@ -753,19 +757,6 @@ export function HomeSection(props: HomeSectionProps) {
           </p>
         ) : null}
         {chatError ? <p className="mt-1 text-center text-ds-caption text-[#B42318]">{chatError}</p> : null}
-      </div>
-
-      <div className="mt-ds-lg hidden rounded-ds border-2 border-energy-positive/30 bg-[#e8f0ea] px-ds-md py-ds-md text-center shadow-sm sm:block">
-        <p className="text-ds-body font-semibold leading-[1.5] text-energy-positive">
-          🔒 内容与账户绑定，经 Supabase 同步至云端，仅你本人可访问。
-        </p>
-        <p className="mt-1 text-ds-caption leading-[1.6] text-energy-positive">
-          AI 与数据处理以{" "}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-[#245c36]">
-            《隐私政策》
-          </Link>{" "}
-          为准。
-        </p>
       </div>
     </section>
   )

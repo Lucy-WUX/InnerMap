@@ -7,7 +7,7 @@ export type RelationContact = {
   name: string
   group: GroupKey
   stars: number
-  /** 0–10，与人物详情页「真朋友指数」一致 */
+  /** 0–10，与人物详情页「真心指数」一致 */
   trueFriendScore: number
   /** 0–10，与人物详情页「表面关系指数」一致 */
   surfaceRelationScore: number

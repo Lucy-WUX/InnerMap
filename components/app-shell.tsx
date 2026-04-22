@@ -16,14 +16,22 @@ function isPublicUnauthedRoute(pathname: string, tab: string | null, localMode: 
   const isPublicCover = pathname === "/" && tab !== "relations" && tab !== "mine"
   const isAuthEntry = pathname === "/login" || pathname === "/register"
   const isPublicInfo =
-    pathname === "/privacy" || pathname === "/terms" || pathname === "/privacy-hub" || pathname.startsWith("/pricing")
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/privacy-hub" ||
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/legal")
   return isPublicCover || isAuthEntry || isPublicInfo
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isPublicLegal =
-    pathname === "/privacy" || pathname === "/terms" || pathname === "/privacy-hub" || pathname.startsWith("/pricing")
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/privacy-hub" ||
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/legal")
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
@@ -199,13 +207,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const showEnvBanner = Boolean(envBannerText) && !useLocalQs
 
   return (
-    <div className="min-h-screen bg-base text-ink">
-      <header className="sticky top-0 z-40 border-b border-warm-base/80 bg-paper/85 backdrop-blur-md supports-[backdrop-filter]:bg-paper/75">
+    <div className="min-h-screen bg-base text-ink dark:bg-stone-950 dark:text-stone-100">
+      <header className="sticky top-0 z-40 border-b border-warm-base/80 bg-paper/85 backdrop-blur-md supports-[backdrop-filter]:bg-paper/75 dark:border-stone-800 dark:bg-stone-950/90 dark:supports-[backdrop-filter]:bg-stone-950/85">
         <nav className="mx-auto flex max-w-5xl items-center gap-1 px-3 py-2 sm:gap-ds-xs sm:px-ds-md sm:py-ds-xs">
           <Link
             href={tabHref("home")}
             className={`rounded-[16px] px-4 py-2 text-ds-body font-semibold transition-all ${
-              navHome ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)]" : "text-soft hover:bg-[#f4ebdf]"
+              navHome
+                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-stone-800 dark:text-stone-100 dark:shadow-[inset_0_0_0_1px_rgba(120,113,108,0.5)]"
+                : "text-soft hover:bg-[#f4ebdf] dark:text-stone-300 dark:hover:bg-stone-800/80"
             }`}
           >
             晓观
@@ -213,7 +223,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href={tabHref("relations")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
-              navRelations ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)]" : "text-soft hover:bg-[#f4ebdf]"
+              navRelations
+                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-stone-800 dark:text-stone-100 dark:shadow-[inset_0_0_0_1px_rgba(120,113,108,0.5)]"
+                : "text-soft hover:bg-[#f4ebdf] dark:text-stone-300 dark:hover:bg-stone-800/80"
             }`}
           >
             观系
@@ -221,7 +233,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href={tabHref("mine")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
-              navMine ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)]" : "text-soft hover:bg-[#f4ebdf]"
+              navMine
+                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-stone-800 dark:text-stone-100 dark:shadow-[inset_0_0_0_1px_rgba(120,113,108,0.5)]"
+                : "text-soft hover:bg-[#f4ebdf] dark:text-stone-300 dark:hover:bg-stone-800/80"
             }`}
           >
             系统
@@ -243,15 +257,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="账户"
               className={
                 useLocalQs
-                  ? "flex h-8 w-8 items-center justify-center rounded-full bg-paper/80 text-ink/65 transition-colors hover:bg-[#f8f1e7] hover:text-ink"
-                  : "flex h-8 w-8 items-center justify-center rounded-full bg-paper text-ds-body font-semibold text-[#6d5433] transition-colors hover:bg-[#f8f1e7]"
+                  ? "flex h-8 w-8 items-center justify-center rounded-full bg-paper/80 text-ink/65 transition-colors hover:bg-[#f8f1e7] hover:text-ink dark:bg-stone-900/80 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+                  : "flex h-8 w-8 items-center justify-center rounded-full bg-paper text-ds-body font-semibold text-[#6d5433] transition-colors hover:bg-[#f8f1e7] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800"
               }
               onClick={() => setShowUserMenu((prev) => !prev)}
             >
               <UserRound className="h-[1rem] w-[1rem]" strokeWidth={1.75} aria-hidden />
             </button>
             {showUserMenu ? (
-              <div className="absolute right-0 top-11 z-[90] w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg">
+              <div className="absolute right-0 top-11 z-[90] w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg dark:border-stone-700 dark:bg-stone-900">
                 {localGuest ? (
                   <>
                     <Link

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
+import { AppPreferencesBootstrap } from "@/components/app-preferences-bootstrap"
 import { AppShell } from "@/components/app-shell"
 
 import Loading from "./loading"
@@ -17,8 +18,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body>
+        <AppPreferencesBootstrap />
         <Suspense fallback={<Loading />}>
           <AppShell>{children}</AppShell>
         </Suspense>

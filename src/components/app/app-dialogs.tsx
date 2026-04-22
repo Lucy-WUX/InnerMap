@@ -558,7 +558,7 @@ export function AppDialogs({
           </label>
           <div className="grid gap-ds-xs sm:grid-cols-2">
             <label className="block text-ds-body font-medium">
-              真朋友指数：{contactForm.trueFriendScore.toFixed(1)}
+              真心指数：{contactForm.trueFriendScore.toFixed(1)}
               <div className="mt-1 space-y-1">
                 <div className="h-2 w-full rounded-full bg-[#efe7db]">
                   <div

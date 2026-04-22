@@ -5,6 +5,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  --pss-font-scale: 1;
 }
 
 :root {
@@ -12,9 +13,18 @@ html {
   background: #faf8f5;
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  color: #e7e5e4;
+  background: #1c1917;
+}
+
 body {
   margin: 0;
-  font-size: 14px;
+  font-size: calc(14px * var(--pss-font-scale, 1));
   font-weight: 400;
   line-height: 1.5;
   overflow-x: hidden;

@@ -9,6 +9,14 @@ export default function PrivacyPage() {
         <p className="mt-4 text-sm leading-7 text-soft">
           本页说明 InnerMap 实际产品中的信息处理方式。使用 InnerMap 即表示你理解并同意相关约定；应用内营销与功能介绍均不应与本页及《使用条款》相冲突。
         </p>
+        <div className="mt-6 rounded-ds border-2 border-energy-positive/30 bg-[#e8f0ea] px-ds-md py-ds-md text-center shadow-sm">
+          <p className="text-sm font-semibold leading-[1.5] text-energy-positive">
+            🔒 内容与账户绑定，经 Supabase 同步至云端，仅你本人可访问。
+          </p>
+          <p className="mt-1 text-xs leading-[1.6] text-energy-positive">
+            晓观等 AI 与数据处理以本页（隐私政策）说明为准。
+          </p>
+        </div>
         <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-7 text-soft">
           <li>
             <strong className="font-medium text-ink">登录与账户：</strong>

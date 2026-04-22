@@ -1,6 +1,6 @@
 import type { RelationContact } from "../components/app/types"
 
-/** 关系页环形图 / 列表：与「真朋友 / 需观察 / 表面关系」三分法一致，由真实联系人评分推导 */
+/** 关系页环形图 / 列表：与「真心 / 需观察 / 表面关系」三分法一致，由真实联系人评分推导 */
 export type RelationHealthBucket = {
   label: string
   count: number
@@ -11,7 +11,7 @@ export type RelationHealthBucket = {
 
 export function computeRelationHealthBuckets(contacts: RelationContact[]): RelationHealthBucket[] {
   const palette = [
-    { label: "真朋友", color: "#2d7a4a" },
+    { label: "真心", color: "#2d7a4a" },
     { label: "需观察", color: "#c45c3e" },
     { label: "表面关系", color: "#a39a91" },
   ] as const
@@ -269,7 +269,7 @@ export function computeWeeklyDigest(
 export function buildTrueFriendReport(contact: RelationContact, logs: InteractionLogLike[]): TrueFriendReport {
   const support: string[] = []
   const against: string[] = []
-  if (contact.trueFriendScore >= 7.5) support.push(`真朋友指数维持高位（${contact.trueFriendScore.toFixed(1)}/10），整体信任基础较好。`)
+  if (contact.trueFriendScore >= 7.5) support.push(`真心指数维持高位（${contact.trueFriendScore.toFixed(1)}/10），整体信任基础较好。`)
   if (logs.filter((l) => l.energy > 0).length >= logs.length * 0.5 && logs.length >= 2) {
     support.push("历史互动中正向能量占比过半，说明相处体验总体偏滋养。")
   }
@@ -284,6 +284,6 @@ export function buildTrueFriendReport(contact: RelationContact, logs: Interactio
   const summary =
     contact.trueFriendScore >= contact.surfaceRelationScore + 3
       ? "综合判断：更像「有情感厚度」的关系，但请以你的感受为准。"
-      : "综合判断：仍在「真朋友 vs 表面关系」之间摇摆，建议用 2–3 周的小实验验证。"
+      : "综合判断：仍在「真心 vs 表面关系」之间摇摆，建议用 2–3 周的小实验验证。"
   return { support, against, summary }
 }

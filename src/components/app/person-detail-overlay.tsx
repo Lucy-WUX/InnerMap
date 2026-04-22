@@ -122,7 +122,7 @@ export function PersonDetailOverlay({
     "🤔 我们之间的问题出在哪？",
     "💬 该怎么和 TA 沟通难事？",
     "🔁 我重复什么模式？",
-    "❓ 真朋友还是表面关系？",
+    "❓ 真心还是表面关系？",
     "📂 建议移到哪个分组？",
   ])
   const [customPrompt, setCustomPrompt] = useState("")
@@ -316,7 +316,7 @@ export function PersonDetailOverlay({
       if (selectedContactGroup?.trim()) lines.push(`分组：${selectedContactGroup.trim()}`)
       if (selectedContactTraits?.trim()) lines.push(`特点：${selectedContactTraits.trim()}`)
     }
-    lines.push(`真朋友指数 ${trueFriendScore}/10，表面关系指数 ${surfaceRelationScore}/10`)
+    lines.push(`真心指数 ${trueFriendScore}/10，表面关系指数 ${surfaceRelationScore}/10`)
     lines.push(`相处模式（本地摘要）：${patternSummary}`)
     if (interactionLogs.length > 0) {
       lines.push("互动记录（从新到旧节选）：")
@@ -484,6 +484,15 @@ export function PersonDetailOverlay({
     )
   }
 
+  function renderQuickPromptsInsideChat(extraClass = "") {
+    return (
+      <div className={`space-y-2 border-t border-[#e8d9ca] pt-4 ${extraClass}`}>
+        {renderQuickRow("")}
+        {renderCustomPromptEditor()}
+      </div>
+    )
+  }
+
   function renderQuickRow(className: string) {
     return (
       <div
@@ -591,7 +600,7 @@ export function PersonDetailOverlay({
 
   function renderDesktopAiColumn() {
     return (
-      <div className="flex min-h-0 w-full flex-col border-l border-[#ebe3d9] bg-[#F9F5F0] md:w-[40%]">
+      <div className="flex min-h-0 w-full flex-col border-l border-[#ebe3d9] bg-[#F9F5F0] md:sticky md:top-24 md:max-h-[calc(100dvh-6rem)] md:w-[40%] md:shrink-0 md:self-start">
         <div className="flex h-20 shrink-0 flex-col justify-center gap-0.5 border-b border-[#ebe3d9] bg-[#F9F5F0] px-3">
           <div className="flex items-center gap-3">
             <XiaoguanAvatar className="h-12 w-12" />
@@ -607,13 +616,10 @@ export function PersonDetailOverlay({
         </div>
         <div
           ref={chatScrollRef}
-          className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#F9F5F0] px-3 py-4"
+          className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#F9F5F0] px-3 py-4 pb-5"
         >
           {renderChatMessages(false)}
-        </div>
-        <div className="flex min-h-[60px] shrink-0 flex-col justify-center gap-1 border-t border-[#ebe3d9] bg-white px-2 py-1">
-          {renderQuickRow("")}
-          {renderCustomPromptEditor()}
+          {renderQuickPromptsInsideChat()}
         </div>
         <div className="flex min-h-[88px] shrink-0 flex-col bg-white">{renderInputFooter(false)}</div>
         {advisorError ? (
@@ -663,7 +669,7 @@ export function PersonDetailOverlay({
               </div>
             </div>
             <div>
-              <p className="text-ds-caption text-soft">🧡 真朋友指数</p>
+              <p className="text-ds-caption text-soft">🧡 真心指数</p>
               <p className="text-ds-caption font-medium text-ink">{friendScore}</p>
             </div>
           </div>
@@ -688,7 +694,7 @@ export function PersonDetailOverlay({
         <div className="flex flex-wrap items-center justify-between gap-ds-xs">
           <p className="text-ds-caption font-medium text-soft">近 3 个月指数趋势</p>
           <Button size="sm" variant="outline" onClick={() => setShowTrueFriendReport(true)}>
-            一键验证真朋友
+            一键验证真心
           </Button>
         </div>
         <ScoreTrendChart data={trendData} className="mt-ds-xs" />
@@ -739,7 +745,7 @@ export function PersonDetailOverlay({
 
   return (
     <section>
-      <div className="rounded-ds border border-warm-base bg-paper md:flex md:h-[calc(100dvh-3.5rem)] md:max-h-[calc(100dvh-3.5rem)] md:min-h-0 md:flex-col md:overflow-hidden">
+      <div className="rounded-ds border border-warm-base bg-paper md:flex md:min-h-0 md:flex-col">
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-warm-soft bg-paper px-ds-md md:px-ds-lg">
           <div>
             <h2 className="text-ds-title text-ink">{selectedContactName}</h2>
@@ -754,8 +760,8 @@ export function PersonDetailOverlay({
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row md:overflow-hidden">
-          <aside className="min-h-0 md:w-[60%] md:overflow-y-auto md:border-r md:border-warm-soft md:px-ds-lg md:py-ds-md">
+        <div className="flex min-h-0 flex-1 flex-col md:flex-row md:items-start">
+          <aside className="min-w-0 md:w-[60%] md:border-r md:border-warm-soft md:px-ds-lg md:py-ds-md">
             <div className="p-ds-md pb-24 md:p-0 md:pb-ds-md">{dataColumnInner}</div>
           </aside>
 
@@ -853,16 +859,12 @@ export function PersonDetailOverlay({
                   </button>
                 </div>
 
-                <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-3">
+                <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#F9F5F0] px-3 py-3 pb-4">
                   {renderChatMessages(true)}
+                  {renderQuickPromptsInsideChat("pt-1")}
                 </div>
 
-                <div className="flex h-14 shrink-0 flex-col justify-center border-t border-[#ebe3d9] bg-white px-2">
-                  {renderQuickRow("")}
-                  {renderCustomPromptEditor()}
-                </div>
-
-                <div className="min-h-[80px] shrink-0">{renderInputFooter(true)}</div>
+                <div className="min-h-[80px] shrink-0 bg-white">{renderInputFooter(true)}</div>
                 {advisorError ? (
                   <p className="shrink-0 bg-white px-3 pb-2 text-center text-ds-caption font-medium text-[#b42318]" role="alert">
                     {advisorError}
@@ -878,7 +880,7 @@ export function PersonDetailOverlay({
         <Dialog
           open={showTrueFriendReport}
           onClose={() => setShowTrueFriendReport(false)}
-          title={`真朋友验证 · ${selectedContact.name}`}
+          title={`真心验证 · ${selectedContact.name}`}
           description="基于当前档案与互动记录的关系摘要"
           maxWidthClassName="max-w-lg"
         >
@@ -887,7 +889,7 @@ export function PersonDetailOverlay({
             return (
               <div className="space-y-ds-md text-ds-body text-soft">
                 <div>
-                  <p className="text-ds-title text-ink">支持「真朋友」的证据</p>
+                  <p className="text-ds-title text-ink">支持「真心」的证据</p>
                   <ul className="mt-1 list-inside list-disc space-y-1">
                     {rep.support.map((s, i) => (
                       <li key={i}>{s}</li>

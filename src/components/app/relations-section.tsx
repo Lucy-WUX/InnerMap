@@ -281,7 +281,7 @@ export function RelationsSection({
           <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5c4d42]">
             {!hasContacts ? (
               <ul className="list-inside list-disc space-y-1">
-                <li>添加联系人后，按真朋友 / 表面关系指数自动归入三类。</li>
+                <li>添加联系人后，按真心 / 表面关系指数自动归入三类。</li>
                 <li>环形图与占比均来自你的真实数据。</li>
               </ul>
             ) : (
@@ -354,7 +354,7 @@ export function RelationsSection({
             >
               <option value="recent">按最近互动</option>
               <option value="intimacy">按亲密度</option>
-              <option value="trueFriend">按真朋友指数</option>
+              <option value="trueFriend">按真心指数</option>
             </select>
             <button
               className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${
@@ -520,14 +520,11 @@ export function RelationsSection({
               {relationVisibleContacts.map((c) => (
                 <div
                   key={c.id}
-                  className="group relative w-full rounded-xl bg-surface-warm-soft p-3 text-left shadow-ds-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ds-card-hover"
+                  className="group relative w-full cursor-pointer rounded-xl border border-transparent bg-surface-warm-soft p-3 text-left shadow-ds-card transition-all duration-200 hover:-translate-y-0.5 hover:border-warm-soft/50 hover:bg-[#f2e8db] hover:shadow-ds-card-hover active:translate-y-0 active:border-warm-soft/60 active:bg-[#dfd3c4] active:shadow-[inset_0_2px_8px_rgba(80,60,40,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                  onClick={() => openPage4WithContact(c.id)}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <button
-                      type="button"
-                      className="flex flex-1 items-center gap-2 rounded-btn-ds p-1 transition-colors hover:bg-[#f5e9d9]"
-                      onClick={() => openPage4WithContact(c.id)}
-                    >
+                    <div className="flex flex-1 items-center gap-2 rounded-btn-ds p-1">
                       <span className="flex h-8 w-8 items-center justify-center rounded-btn-ds bg-[#efe4d3] text-ds-caption text-soft">
                         {c.name.slice(0, 1)}
                       </span>
@@ -540,12 +537,12 @@ export function RelationsSection({
                               style={getTrueFriendBarStyle(c.trueFriendScore)}
                             />
                           </div>
-                          <p className="mt-0.5 text-ds-caption text-muted">真朋友 {c.trueFriendScore.toFixed(1)}/10</p>
+                          <p className="mt-0.5 text-ds-caption text-muted">真心 {c.trueFriendScore.toFixed(1)}/10</p>
                         </div>
                       </div>
-                    </button>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-btn-ds bg-surface-warm-soft px-2 py-0.5 text-ds-caption text-muted">{c.group}</span>
+                      <span className="rounded-btn-ds bg-[#f8f1e8] px-2 py-0.5 text-ds-caption text-muted">{c.group}</span>
                       {bulkMode ? (
                         <button
                           className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
@@ -569,17 +566,24 @@ export function RelationsSection({
                           <button
                             type="button"
                             className="flex h-7 w-7 items-center justify-center rounded-btn-ds text-soft transition-colors hover:bg-[#f5e9d9]"
-                            onClick={() => setOpenContactMenuFor((prev) => (prev === c.id ? null : c.id))}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOpenContactMenuFor((prev) => (prev === c.id ? null : c.id))
+                            }}
                             aria-label={`${c.name} 操作菜单`}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
                           {openContactMenuFor === c.id ? (
-                            <div className="absolute right-0 top-full z-30 mt-1 min-w-[8.5rem] rounded-ds border border-warm-soft bg-paper py-1 shadow-ds-card">
+                            <div
+                              className="absolute right-0 top-full z-30 mt-1 min-w-[8.5rem] rounded-ds border border-warm-soft bg-paper py-1 shadow-ds-card"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 type="button"
                                 className="block w-full px-3 py-2 text-left text-ds-caption hover:bg-surface-warm-soft"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   setOpenContactMenuFor(null)
                                   onEditContact(c.id)
                                 }}
@@ -589,7 +593,8 @@ export function RelationsSection({
                               <button
                                 type="button"
                                 className="block w-full px-3 py-2 text-left text-ds-caption text-[#b42318] hover:bg-[#fef2f2]"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   setOpenContactMenuFor(null)
                                   onDeleteContact(c.id)
                                 }}
@@ -610,8 +615,11 @@ export function RelationsSection({
                     {!bulkMode ? (
                       <button
                         type="button"
-                        className="rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption text-soft transition-colors hover:bg-[#f5e9d9]"
-                        onClick={() => openInteractionForContact(c.id)}
+                        className="rounded-btn-ds border border-warm-soft bg-paper/80 px-2 py-1 text-ds-caption text-soft transition-colors hover:bg-[#f5e9d9]"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openInteractionForContact(c.id)
+                        }}
                       >
                         记录互动
                       </button>

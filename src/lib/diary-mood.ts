@@ -7,21 +7,21 @@ export function isPresetMood(value: string): value is DiaryMoodPreset {
   return (DIARY_MOOD_PRESETS as readonly string[]).includes(value)
 }
 
-/** 日历圆点颜色：预设四色 + 自定义紫色 + 无心情浅灰 */
-export function diaryMoodDotClass(mood: string | null | undefined): string {
+/** 日历格底部：仅在有心情时显示图标（与编辑器预设一致；自定义心情用 ✨） */
+export function diaryMoodCalendarIcon(mood: string | null | undefined): string | null {
   const m = mood?.trim() ?? ""
-  if (!m) return "bg-[#94A3B8]"
+  if (!m) return null
   switch (m) {
     case "愉悦":
-      return "bg-[#66BB6A]"
+      return "😊"
     case "平静":
-      return "bg-[#BDBDBD]"
+      return "😐"
     case "低落":
-      return "bg-[#60A5FA]"
+      return "😞"
     case "愤怒":
-      return "bg-[#EF5350]"
+      return "😠"
     default:
-      return "bg-[#A78BFA]"
+      return "✨"
   }
 }
 

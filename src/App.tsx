@@ -320,9 +320,11 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     setContactFormError("")
     setIsEditingContact(false)
     setTagInput("")
+    const defaultGroup: GroupKey =
+      relationsFocusGroup !== "全部" ? relationsFocusGroup : DEFAULT_CONTACT_GROUP
     setContactForm({
       name: "",
-      group: DEFAULT_CONTACT_GROUP,
+      group: defaultGroup,
       tags: [],
       intimacy: 5,
       trueFriendScore: 7,
@@ -484,6 +486,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
     setCustomGroups((prev) => [...prev, name])
     setNewGroupName("")
     setShowNewGroupDialog(false)
+    setRelationsFocusGroup(name)
     showSaveSuccess("分组已创建 ✓")
   }
 
@@ -736,7 +739,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       lines.push("联系人节选（最多 12 人）：")
       for (const c of contacts.slice(0, 12)) {
         lines.push(
-          `- ${c.name} · 分组「${c.group}」· 真朋友 ${c.trueFriendScore}/10 · 表面 ${c.surfaceRelationScore}/10`
+          `- ${c.name} · 分组「${c.group}」· 真心 ${c.trueFriendScore}/10 · 表面 ${c.surfaceRelationScore}/10`
         )
       }
     }
@@ -1265,7 +1268,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
       </div>
     </main>
     {saveSuccessTip ? (
-      <div className="fixed right-4 top-4 z-[80] rounded-ds border border-energy-positive/25 bg-[#e8f0ea] px-3 py-2 text-ds-caption font-medium text-energy-positive shadow-md">
+      <div className="fixed right-4 top-4 z-[80] rounded-ds border border-warm-strong/45 bg-[#faf6ef] px-3 py-2 text-ds-caption font-medium text-[#5C4B3E] shadow-md">
         {saveSuccessTip}
       </div>
     ) : null}

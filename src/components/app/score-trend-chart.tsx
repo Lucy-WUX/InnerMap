@@ -48,7 +48,7 @@ export function ScoreTrendChart({ data, className = "" }: ScoreTrendChartProps) 
       <div className="mt-ds-xs flex flex-wrap gap-ds-xs text-ds-caption text-soft">
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-4 rounded-sm bg-[#66BB6A]" />
-          真朋友指数
+          真心指数
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-0.5 w-4 border-t-2 border-dashed border-[#BDBDBD]" />
