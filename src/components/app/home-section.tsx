@@ -285,18 +285,20 @@ export function HomeSection(props: HomeSectionProps) {
 
   return (
     <section className="space-y-ds-md pb-28">
-      <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg text-center">
-        <div className="mx-auto h-20 w-20 rounded-full bg-[#d4b79d]" />
-        <h2 className="mt-3 text-ds-title font-semibold text-[#5C4B3E]">晓观 · 你的专属人际关系AI</h2>
-        <p className="mt-1 text-ds-body font-medium leading-[1.5] text-[#5C4B3E]">看清关系，减少内耗，AI陪伴分析</p>
+      <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg text-center dark:border-stone-700/80">
+        <div className="mx-auto h-20 w-20 rounded-full bg-[#d4b79d] dark:bg-stone-700" />
+        <h2 className="mt-3 text-ds-title font-semibold text-[#5C4B3E] dark:text-stone-100">晓观 · 你的专属人际关系AI</h2>
+        <p className="mt-1 text-ds-body font-medium leading-[1.5] text-[#5C4B3E] dark:text-stone-300">
+          看清关系，减少内耗，AI陪伴分析
+        </p>
       </Card>
 
-      <Card className="rounded-[16px] border border-warm-base bg-[#F9F5F0] p-ds-lg shadow-[inset_0_1px_6px_rgba(0,0,0,0.04)]">
+      <Card className="rounded-[16px] border border-warm-base bg-[#F9F5F0] p-ds-lg shadow-[inset_0_1px_6px_rgba(0,0,0,0.04)] dark:border-stone-700/70 dark:bg-stone-900/55 dark:shadow-[inset_0_1px_8px_rgba(0,0,0,0.35)]">
         <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
           {chatMessages.length === 0 ? (
-            <div className="rounded-[16px] rounded-br-sm border border-[#e8d9ca] bg-[#F0E8DE] px-3 py-3 text-ds-body text-[#5C4B3E] shadow-[0_1px_2px_rgba(95,73,53,0.06)]">
+            <div className="rounded-[16px] rounded-br-sm border border-[#e8d9ca] bg-[#F0E8DE] px-3 py-3 text-ds-body text-[#5C4B3E] shadow-[0_1px_2px_rgba(95,73,53,0.06)] dark:border-stone-600 dark:bg-stone-800/90 dark:text-stone-200 dark:shadow-none">
               <p className="font-medium">你好，我是晓观。</p>
-              <ul className="mt-2 list-inside list-disc space-y-1 text-ds-caption leading-[1.6]">
+              <ul className="mt-2 list-inside list-disc space-y-1 text-ds-caption leading-[1.6] dark:text-stone-400">
                 <li>可聊人际困惑、情绪内耗、相处难题。</li>
                 <li>我会陪你梳理，并给出适合你的建议。</li>
               </ul>
@@ -305,10 +307,10 @@ export function HomeSection(props: HomeSectionProps) {
             chatMessages.map((item) => (
               <div key={item.id} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[85%] whitespace-pre-wrap px-3.5 py-3 shadow-[0_1px_3px_rgba(60,40,30,0.08)] ${
+                  className={`max-w-[85%] whitespace-pre-wrap px-3.5 py-3 shadow-[0_1px_3px_rgba(60,40,30,0.08)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.35)] ${
                     item.role === "user"
-                      ? "rounded-[16px] rounded-bl-sm bg-[#6B3F2E] text-[#fffdf9]"
-                      : "rounded-[16px] rounded-br-sm border border-[#e5d8ca] bg-[#F0E8DE] text-[#5C4B3E]"
+                      ? "rounded-[16px] rounded-bl-sm bg-[#6B3F2E] text-[#fffdf9] dark:bg-[#7a4d38]"
+                      : "rounded-[16px] rounded-br-sm border border-[#e5d8ca] bg-[#F0E8DE] text-[#5C4B3E] dark:border-stone-600 dark:bg-stone-800/95 dark:text-stone-200"
                   }`}
                 >
                   {item.content}
@@ -320,9 +322,9 @@ export function HomeSection(props: HomeSectionProps) {
       </Card>
 
       {weeklyDigest ? (
-        <Card className="rounded-ds border border-warm-base bg-paper p-ds-md">
-          <p className="text-ds-body font-semibold text-[#5C4B3E]">📬 人际关系周报 · {weeklyDigest.weekLabel}</p>
-          <ul className="mt-ds-xs space-y-1 text-ds-caption text-[#5C4B3E]">
+        <Card className="rounded-ds border border-warm-base bg-paper p-ds-md dark:border-stone-700/80">
+          <p className="text-ds-body font-semibold text-[#5C4B3E] dark:text-stone-100">📬 人际关系周报 · {weeklyDigest.weekLabel}</p>
+          <ul className="mt-ds-xs space-y-1 text-ds-caption text-[#5C4B3E] dark:text-stone-300">
             <li>上周互动次数：{weeklyDigest.interactionCount} 次</li>
             <li>
               关系波动最大：
@@ -342,26 +344,26 @@ export function HomeSection(props: HomeSectionProps) {
 
       {showDiaryModal ? (
         <div
-          className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-[#412f1f]/30 p-3 backdrop-blur-[6px] sm:items-center sm:p-6"
+          className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-[#412f1f]/30 p-3 backdrop-blur-[6px] dark:bg-black/55 sm:items-center sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="diary-calendar-modal-title"
           onClick={() => setShowDiaryModal(false)}
         >
           <div
-            className="my-4 flex max-h-[min(92dvh,calc(100dvh-1.5rem-env(safe-area-inset-bottom)))] min-h-0 w-full max-w-5xl flex-col overflow-hidden rounded-[16px] border border-[#e4d8cb] bg-paper shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+            className="my-4 flex max-h-[min(92dvh,calc(100dvh-1.5rem-env(safe-area-inset-bottom)))] min-h-0 w-full max-w-5xl flex-col overflow-hidden rounded-[16px] border border-[#e4d8cb] bg-paper shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:border-stone-700 dark:bg-stone-900 dark:shadow-[0_8px_40px_rgba(0,0,0,0.55)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-warm-soft px-4 py-3 sm:px-6">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-warm-soft px-4 py-3 dark:border-stone-700 sm:px-6">
               <div className="min-w-0">
-                <h2 id="diary-calendar-modal-title" className="text-ds-title font-semibold text-ink">
+                <h2 id="diary-calendar-modal-title" className="text-ds-title font-semibold text-ink dark:text-stone-100">
                   日记与日历
                 </h2>
-                <p className="text-ds-caption text-soft">本月 {monthDiaryCount} 篇</p>
+                <p className="text-ds-caption text-soft dark:text-stone-400">本月 {monthDiaryCount} 篇</p>
               </div>
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-soft transition hover:bg-surface-warm-soft"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-soft transition hover:bg-surface-warm-soft dark:text-stone-400 dark:hover:bg-stone-800"
                 aria-label="关闭"
                 onClick={() => setShowDiaryModal(false)}
               >
@@ -370,11 +372,11 @@ export function HomeSection(props: HomeSectionProps) {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-ds-md sm:p-ds-lg">
               <div className="grid gap-ds-md lg:grid-cols-[minmax(0,420px)_1fr]">
-              <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg">
+              <Card className="rounded-ds border border-warm-base bg-gradient-to-b from-surface-warm-elevated to-surface-warm-soft p-ds-lg dark:border-stone-700/80 dark:from-stone-900 dark:to-stone-900/85">
                 <div className="mb-ds-md flex items-center justify-between">
                   <button
                     type="button"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
                     onClick={() => {
                       const prevMonth = new Date(viewYear, viewMonth - 2, 1)
                       const nextMonthValue = formatMonthValue(prevMonth)
@@ -385,12 +387,12 @@ export function HomeSection(props: HomeSectionProps) {
                     ←
                   </button>
                   <div className="text-center">
-                    <p className="text-ds-title tracking-wide text-[#5C4B3E]">{monthLabel}</p>
-                    <p className="text-ds-caption text-[#5C4B3E]">关系日记日历</p>
+                    <p className="text-ds-title tracking-wide text-[#5C4B3E] dark:text-stone-100">{monthLabel}</p>
+                    <p className="text-ds-caption text-[#5C4B3E] dark:text-stone-400">关系日记日历</p>
                   </div>
                   <button
                     type="button"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-soft bg-surface-warm-soft text-ds-body text-soft transition hover:bg-surface-warm-hover dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
                     onClick={() => {
                       const nextMonth = new Date(viewYear, viewMonth, 1)
                       const nextMonthValue = formatMonthValue(nextMonth)
@@ -405,21 +407,29 @@ export function HomeSection(props: HomeSectionProps) {
                   <div className="flex gap-1">
                     <button
                       type="button"
-                      className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${diaryViewMode === "calendar" ? "border-[#8B5A42] bg-[#f5e7cf] text-[#5C4B3E]" : "border-warm-soft bg-paper text-[#5C4B3E]"}`}
+                      className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${
+                        diaryViewMode === "calendar"
+                          ? "border-[#8B5A42] bg-[#f5e7cf] text-[#5C4B3E] dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100"
+                          : "border-warm-soft bg-paper text-[#5C4B3E] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-300"
+                      }`}
                       onClick={() => setDiaryViewMode("calendar")}
                     >
                       日历视图
                     </button>
                     <button
                       type="button"
-                      className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${diaryViewMode === "list" ? "border-[#8B5A42] bg-[#f5e7cf] text-[#5C4B3E]" : "border-warm-soft bg-paper text-[#5C4B3E]"}`}
+                      className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${
+                        diaryViewMode === "list"
+                          ? "border-[#8B5A42] bg-[#f5e7cf] text-[#5C4B3E] dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100"
+                          : "border-warm-soft bg-paper text-[#5C4B3E] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-300"
+                      }`}
                       onClick={() => setDiaryViewMode("list")}
                     >
                       列表视图
                     </button>
                   </div>
                   <input
-                    className="max-w-[11rem] rounded-btn-ds border border-warm-soft bg-paper px-2 py-1 text-ds-caption text-[#5C4B3E] placeholder:text-[#9c8f83]"
+                    className="max-w-[11rem] rounded-btn-ds border border-warm-soft bg-paper px-2 py-1 text-ds-caption text-[#5C4B3E] placeholder:text-[#9c8f83] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-300 dark:placeholder:text-stone-500"
                     placeholder="搜索日记/联系人"
                     value={diarySearchQuery}
                     onChange={(e) => setDiarySearchQuery(e.target.value)}
@@ -429,11 +439,11 @@ export function HomeSection(props: HomeSectionProps) {
                   <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
                     {diarySearchResults.length > 0 ? (
                       diarySearchResults.map(([dateKey, content]) => (
-                        <div key={dateKey} className="rounded-ds border border-warm-soft bg-paper p-ds-xs">
+                        <div key={dateKey} className="rounded-ds border border-warm-soft bg-paper p-ds-xs dark:border-stone-600 dark:bg-stone-900/80">
                           <div className="flex items-center justify-between">
                             <button
                               type="button"
-                              className="text-ds-caption font-medium text-[#5C4B3E] underline-offset-2 hover:underline"
+                              className="text-ds-caption font-medium text-[#5C4B3E] underline-offset-2 hover:underline dark:text-stone-200"
                               onClick={() => {
                                 setDiarySelectedDate(dateKey)
                                 setDiaryViewMode("calendar")
@@ -445,11 +455,11 @@ export function HomeSection(props: HomeSectionProps) {
                               删除
                             </button>
                           </div>
-                          <p className="mt-1 line-clamp-3 text-ds-caption text-[#5C4B3E]">{content}</p>
+                          <p className="mt-1 line-clamp-3 text-ds-caption text-[#5C4B3E] dark:text-stone-400">{content}</p>
                         </div>
                       ))
                     ) : (
-                      <p className="text-ds-caption text-[#5C4B3E]">
+                      <p className="text-ds-caption text-[#5C4B3E] dark:text-stone-400">
                         {totalDiaryCount === 0 ? "记录你的人际感悟；若选择心情，保存后日历上会显示对应图标。" : "暂无匹配日记"}
                       </p>
                     )}
@@ -457,7 +467,7 @@ export function HomeSection(props: HomeSectionProps) {
                 ) : null}
                 {diaryViewMode === "calendar" ? (
                   <>
-                    <div className="grid grid-cols-7 gap-ds-xs text-center text-ds-caption text-[#5C4B3E]">
+                    <div className="grid grid-cols-7 gap-ds-xs text-center text-ds-caption text-[#5C4B3E] dark:text-stone-400">
                       {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
                         <div key={w} className="py-1 font-medium tracking-wide">
                           {w}
@@ -475,10 +485,10 @@ export function HomeSection(props: HomeSectionProps) {
                             type="button"
                             className={`relative h-14 rounded-2xl border text-[30px] leading-none transition-all duration-200 ${
                               diarySelectedDate === cell.dateValue
-                                ? "border-[#8B5A42] bg-[#f5e7cf] text-soft shadow-[0_6px_16px_rgba(139,90,66,0.18)]"
+                                ? "border-[#8B5A42] bg-[#f5e7cf] text-soft shadow-[0_6px_16px_rgba(139,90,66,0.18)] dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100 dark:shadow-none"
                                 : cell.hasRecord
-                                  ? "border-warm-strong bg-surface-warm-elevated text-soft shadow-[0_2px_8px_rgba(95,73,53,0.08)]"
-                                  : "border-warm-soft bg-paper text-muted hover:border-warm-strong hover:bg-surface-warm-soft"
+                                  ? "border-warm-strong bg-surface-warm-elevated text-soft shadow-[0_2px_8px_rgba(95,73,53,0.08)] dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:shadow-none"
+                                  : "border-warm-soft bg-paper text-muted hover:border-warm-strong hover:bg-surface-warm-soft dark:border-stone-700 dark:bg-stone-900 dark:text-stone-500 dark:hover:border-stone-500 dark:hover:bg-stone-800"
                             }`}
                             onClick={() => setDiarySelectedDate(cell.dateValue)}
                           >
@@ -508,32 +518,32 @@ export function HomeSection(props: HomeSectionProps) {
                     </div>
                   </>
                 ) : null}
-                <div className="mt-ds-md rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-md">
-                  <p className="mb-ds-xs text-ds-caption font-medium text-[#5C4B3E]">本月记录摘要</p>
+                <div className="mt-ds-md rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-md dark:border-stone-600 dark:bg-stone-800/55">
+                  <p className="mb-ds-xs text-ds-caption font-medium text-[#5C4B3E] dark:text-stone-200">本月记录摘要</p>
                   {monthTimeline.length > 0 ? (
                     monthTimeline.map(([dateKey, note]) => (
-                      <p key={dateKey} className="text-ds-caption text-[#5C4B3E]">
+                      <p key={dateKey} className="text-ds-caption text-[#5C4B3E] dark:text-stone-400">
                         {dateKey.slice(5)}：{note}
                       </p>
                     ))
                   ) : (
-                    <p className="text-ds-caption text-[#5C4B3E]">本月暂无日记记录</p>
+                    <p className="text-ds-caption text-[#5C4B3E] dark:text-stone-500">本月暂无日记记录</p>
                   )}
                 </div>
               </Card>
 
               <div className="space-y-ds-md">
-                <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
-                  <div className="flex items-center justify-between text-ds-body text-[#5C4B3E]">
+                <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg dark:border-stone-700/80 dark:bg-stone-900/60">
+                  <div className="flex items-center justify-between text-ds-body text-[#5C4B3E] dark:text-stone-300">
                     <p>本月记录：{monthDiaryCount} 篇</p>
                     <p>提及联系人：{monthMentionedContactCount} 人</p>
                   </div>
                 </Card>
 
-                <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg">
-                  <p className="text-[24px] font-semibold text-[#5C4B3E]">{diarySelectedDate}</p>
+                <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg dark:border-stone-700/80 dark:bg-stone-900/60">
+                  <p className="text-[24px] font-semibold text-[#5C4B3E] dark:text-stone-100">{diarySelectedDate}</p>
                   {totalDiaryCount === 0 ? (
-                    <p className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5C4B3E]">
+                    <p className="mt-ds-xs rounded-ds border border-dashed border-warm-soft bg-surface-warm-soft px-3 py-2 text-ds-caption text-[#5C4B3E] dark:border-stone-600 dark:bg-stone-800/55 dark:text-stone-400">
                       记录你的人际感悟；若选择心情，保存后可在日历上查看对应图标。
                     </p>
                   ) : null}
@@ -544,7 +554,11 @@ export function HomeSection(props: HomeSectionProps) {
                         <button
                           key={m}
                           type="button"
-                          className={`rounded-btn-ds border px-3 py-1 text-ds-body ${diaryEmotion === key ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft text-[#5C4B3E]"}`}
+                          className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
+                            diaryEmotion === key
+                              ? "border-[#c8ab83] bg-[#f5e7cf] dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100"
+                              : "border-warm-soft text-[#5C4B3E] dark:border-stone-600 dark:text-stone-300"
+                          }`}
                           onClick={() => setDiaryEmotion(key)}
                         >
                           {m}
@@ -553,7 +567,11 @@ export function HomeSection(props: HomeSectionProps) {
                     })}
                     <button
                       type="button"
-                      className={`rounded-btn-ds border px-3 py-1 text-ds-body ${diaryEmotion === "" ? "border-[#c8ab83] bg-[#f5e7cf]" : "border-warm-soft text-[#5C4B3E]"}`}
+                      className={`rounded-btn-ds border px-3 py-1 text-ds-body ${
+                        diaryEmotion === ""
+                          ? "border-[#c8ab83] bg-[#f5e7cf] dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100"
+                          : "border-warm-soft text-[#5C4B3E] dark:border-stone-600 dark:text-stone-300"
+                      }`}
                       onClick={() => setDiaryEmotion("")}
                     >
                       不记录心情
@@ -562,7 +580,7 @@ export function HomeSection(props: HomeSectionProps) {
                   <div className="mt-ds-xs flex flex-wrap items-center gap-ds-xs">
                     <input
                       type="text"
-                      className="min-w-[11rem] flex-1 rounded-btn-ds border border-warm-soft bg-paper px-3 py-1.5 text-ds-body text-[#5C4B3E] placeholder:text-[#9c8f83]"
+                      className="min-w-[11rem] flex-1 rounded-btn-ds border border-warm-soft bg-paper px-3 py-1.5 text-ds-body text-[#5C4B3E] placeholder:text-[#9c8f83] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-300 dark:placeholder:text-stone-500"
                       placeholder={`自定义心情（最多 ${DIARY_CUSTOM_MOOD_MAX_LEN} 字）`}
                       maxLength={DIARY_CUSTOM_MOOD_MAX_LEN}
                       value={customMoodDraft}
@@ -577,7 +595,7 @@ export function HomeSection(props: HomeSectionProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 min-h-9 shrink-0 border-warm-soft px-3 py-0 text-ds-body"
+                      className="h-9 min-h-9 shrink-0 border-warm-soft px-3 py-0 text-ds-body dark:border-stone-600 dark:bg-stone-800/90 dark:text-stone-200 dark:hover:bg-stone-700"
                       onClick={() => setDiaryEmotion(normalizeCustomMoodInput(customMoodDraft))}
                     >
                       应用自定义
@@ -585,7 +603,7 @@ export function HomeSection(props: HomeSectionProps) {
                   </div>
                   <Textarea
                     ref={diaryTextareaRef}
-                    className="mt-4 min-h-[220px] text-[#5C4B3E]"
+                    className="mt-4 min-h-[220px] text-[#5C4B3E] dark:text-stone-200"
                     placeholder="今天发生了什么..."
                     value={diaryEditorText}
                     onChange={(e) => setDiaryEditorText(e.target.value)}
@@ -606,23 +624,26 @@ export function HomeSection(props: HomeSectionProps) {
                   <div className="mt-ds-xs flex flex-wrap items-center gap-ds-xs">
                     <button
                       type="button"
-                      className="rounded-btn-ds border border-warm-soft bg-surface-warm-soft px-2.5 py-1 text-ds-caption text-[#5C4B3E]"
+                      className="rounded-btn-ds border border-warm-soft bg-surface-warm-soft px-2.5 py-1 text-ds-caption text-[#5C4B3E] dark:border-stone-600 dark:bg-stone-800/70 dark:text-stone-300 dark:hover:bg-stone-700"
                       onClick={insertAtTrigger}
                     >
                       @ 提及联系人
                     </button>
                     <div className="flex flex-wrap gap-1.5">
                       {linkedContacts.map((name) => (
-                        <span key={name} className="rounded-btn-ds bg-[#f5e7cf] px-2 py-0.5 text-ds-caption text-[#5C4B3E]">
+                        <span
+                          key={name}
+                          className="rounded-btn-ds bg-[#f5e7cf] px-2 py-0.5 text-ds-caption text-[#5C4B3E] dark:bg-amber-950/45 dark:text-amber-100"
+                        >
                           @{name}
                         </span>
                       ))}
                     </div>
                   </div>
                   {showMentionPicker ? (
-                    <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs">
+                    <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs dark:border-stone-600 dark:bg-stone-800/55">
                       <input
-                        className="w-full rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption text-[#5C4B3E]"
+                        className="w-full rounded-btn-ds border border-warm-soft px-2 py-1 text-ds-caption text-[#5C4B3E] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-300 dark:placeholder:text-stone-500"
                         placeholder="搜索联系人后点击插入 @"
                         value={mentionSearch}
                         onChange={(e) => setMentionSearch(e.target.value)}
@@ -632,7 +653,7 @@ export function HomeSection(props: HomeSectionProps) {
                           <button
                             key={c.id}
                             type="button"
-                            className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption text-[#5C4B3E] hover:bg-surface-warm-soft"
+                            className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption text-[#5C4B3E] hover:bg-surface-warm-soft dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
                             onClick={() => {
                               insertDiaryMention(c.name)
                               setShowMentionPicker(false)
@@ -646,7 +667,7 @@ export function HomeSection(props: HomeSectionProps) {
                     </div>
                   ) : null}
                   {mentionKeyword !== null ? (
-                    <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs">
+                    <div className="mt-ds-xs rounded-ds border border-warm-soft bg-surface-warm-soft p-ds-xs dark:border-stone-600 dark:bg-stone-800/55">
                       {mentionSuggestions.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {mentionSuggestions.map((c, idx) => (
@@ -655,8 +676,8 @@ export function HomeSection(props: HomeSectionProps) {
                               type="button"
                               className={`rounded-btn-ds border px-2 py-1 text-ds-caption ${
                                 mentionActiveIndex === idx
-                                  ? "border-[#8B5A42] bg-[#f5e7cf] text-[#5C4B3E]"
-                                  : "border-warm-soft text-[#5C4B3E]"
+                                  ? "border-[#8B5A42] bg-[#f5e7cf] text-[#5C4B3E] dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100"
+                                  : "border-warm-soft text-[#5C4B3E] dark:border-stone-600 dark:text-stone-300"
                               }`}
                               onClick={() => insertDiaryMention(c.name)}
                             >
@@ -665,18 +686,18 @@ export function HomeSection(props: HomeSectionProps) {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-ds-caption text-[#5C4B3E]">未找到匹配联系人</p>
+                        <p className="text-ds-caption text-[#5C4B3E] dark:text-stone-500">未找到匹配联系人</p>
                       )}
                     </div>
                   ) : null}
-                  <div className="mt-ds-xs flex flex-wrap items-center gap-1.5 text-ds-body text-[#5C4B3E]">
+                  <div className="mt-ds-xs flex flex-wrap items-center gap-1.5 text-ds-body text-[#5C4B3E] dark:text-stone-300">
                     <span>关联联系人：</span>
                     {linkedContactItems.length > 0 ? (
                       linkedContactItems.map((item) => (
                         <button
                           key={item.id}
                           type="button"
-                          className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption hover:bg-surface-warm-soft"
+                          className="rounded-btn-ds border border-warm-soft px-2 py-0.5 text-ds-caption hover:bg-surface-warm-soft dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
                           onClick={() => onJumpToContact(item.id)}
                         >
                           {item.name}
@@ -687,7 +708,7 @@ export function HomeSection(props: HomeSectionProps) {
                     )}
                   </div>
                   <div className="mt-ds-xs flex items-center justify-between gap-ds-xs">
-                    <p className="text-ds-caption text-[#5C4B3E]">{diarySaveTip}</p>
+                    <p className="text-ds-caption text-[#5C4B3E] dark:text-stone-400">{diarySaveTip}</p>
                     <Button onClick={handleSaveDiary} disabled={diarySaving}>
                       {diarySaving ? "保存中..." : "保存日记"}
                     </Button>
@@ -700,7 +721,7 @@ export function HomeSection(props: HomeSectionProps) {
         </div>
       ) : null}
 
-      <div className="fixed bottom-0 left-0 right-0 z-[120] border-t border-warm-soft bg-base/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+      <div className="fixed bottom-0 left-0 right-0 z-[120] border-t border-warm-soft bg-base/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur dark:border-stone-800 dark:bg-stone-950/92 dark:backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-2">
           <div className="relative shrink-0">
             <button
@@ -725,7 +746,7 @@ export function HomeSection(props: HomeSectionProps) {
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             disabled={hitLimit}
-            className="h-12 min-w-0 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft/90 disabled:opacity-70"
+            className="h-12 min-w-0 flex-1 rounded-[20px] border border-warm-soft bg-paper px-4 text-ds-body text-ink placeholder:text-soft/90 disabled:opacity-70 dark:border-stone-600 dark:bg-stone-900/95 dark:text-stone-100 dark:placeholder:text-stone-500"
             placeholder="和晓观聊聊你的关系与情绪…"
             title="Enter 发送；可先说说具体场景或感受"
             onKeyDown={(e) => {
@@ -737,7 +758,7 @@ export function HomeSection(props: HomeSectionProps) {
           />
           <button
             type="button"
-            className="h-12 w-12 shrink-0 rounded-full bg-[#8B5A42] text-[#fffdf9] shadow-[0_2px_8px_rgba(107,63,46,0.35)] transition duration-200 hover:scale-110 hover:shadow-[0_4px_14px_rgba(107,63,46,0.4)] active:scale-95 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:scale-100"
+            className="h-12 w-12 shrink-0 rounded-full bg-[#8B5A42] text-[#fffdf9] shadow-[0_2px_8px_rgba(107,63,46,0.35)] transition duration-200 hover:scale-110 hover:shadow-[0_4px_14px_rgba(107,63,46,0.4)] active:scale-95 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:scale-100 dark:bg-[#9a6248] dark:shadow-[0_2px_12px_rgba(0,0,0,0.45)] dark:hover:shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
             onClick={() => void sendMessage()}
             disabled={chatLoading || hitLimit}
             aria-label="发送消息"
@@ -746,7 +767,7 @@ export function HomeSection(props: HomeSectionProps) {
           </button>
         </div>
         {!isPro ? (
-          <p className="mt-2 text-center text-ds-caption text-[#5C4B3E]">
+          <p className="mt-2 text-center text-ds-caption text-[#5C4B3E] dark:text-stone-400">
             {hitLimit ? (
               <Link href="/pricing" className="text-[#7a5a2e] underline underline-offset-2">
                 今日免费对话次数已用完，开通Pro版解锁无限对话
@@ -756,7 +777,9 @@ export function HomeSection(props: HomeSectionProps) {
             )}
           </p>
         ) : null}
-        {chatError ? <p className="mt-1 text-center text-ds-caption text-[#B42318]">{chatError}</p> : null}
+        {chatError ? (
+          <p className="mt-1 text-center text-ds-caption text-[#B42318] dark:text-red-400">{chatError}</p>
+        ) : null}
       </div>
     </section>
   )

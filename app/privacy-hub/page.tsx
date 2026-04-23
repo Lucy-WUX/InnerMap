@@ -18,6 +18,12 @@ export default function PrivacyHubPage() {
             </Link>
             为准。
           </p>
+          <div className="mt-5 rounded-ds border-2 border-energy-positive/30 bg-[#e8f0ea] px-ds-md py-ds-md text-center shadow-sm">
+            <p className="text-sm font-semibold leading-[1.5] text-energy-positive">
+              🔒 内容与账户绑定，经 Supabase 同步至云端，仅你本人可访问。
+            </p>
+            <p className="mt-1 text-xs leading-[1.6] text-energy-positive">AI 与数据处理以《隐私政策》为准。</p>
+          </div>
         </header>
 
         <section className="rounded-landing-card border border-land-border bg-white p-6 shadow-landing sm:p-8">

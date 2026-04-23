@@ -15,11 +15,14 @@ html {
 
 html.dark {
   color-scheme: dark;
+  /* 略偏暖的深底，避免纯黑与浅卡对比过硬 */
+  --pss-page-bg: #0c0a09;
+  --pss-elevated: rgba(28, 25, 23, 0.92);
 }
 
 html.dark body {
   color: #e7e5e4;
-  background: #1c1917;
+  background: var(--pss-page-bg);
 }
 
 body {
@@ -60,6 +63,16 @@ textarea {
 ::-moz-selection {
   color: #2a1810;
   background-color: #d8cbbd;
+}
+
+html.dark ::selection {
+  color: #fafaf9;
+  background-color: #57534e;
+}
+
+html.dark ::-moz-selection {
+  color: #fafaf9;
+  background-color: #57534e;
 }
 
 @media (max-width: 640px) {

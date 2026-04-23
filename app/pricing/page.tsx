@@ -27,11 +27,14 @@ export default function PricingPage() {
           </button>
         </div>
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] md:p-8">
-          <h1 className="text-3xl font-bold text-[#3e2e22] md:text-4xl">四档付费方案（主推终身版）</h1>
+          <h1 className="text-3xl font-bold text-[#3e2e22] md:text-4xl">💛 嗨，我是晓观</h1>
           <p className="mt-3 text-base font-medium leading-relaxed text-[#3e2e22] md:text-lg">
-            温和透明的订阅设计，核心原则是「永久免费」与「数据属于用户」。
+            很开心能陪你走过人际关系里的每一段细碎旅程，接住你的情绪内耗，帮你看清每一段关系里的真心与距离。
           </p>
-          <p className="mt-3 text-sm font-semibold text-[#b3473f]">⚠️ 重要提示：兑换码一经发放，无法退款，请谨慎付费。</p>
+          <p className="mt-3 text-base leading-relaxed text-[#3e2e22]">
+            如果你觉得我的陪伴对你有帮助，可以选一份小小的心意支持我，我会用更长时间的专属陪伴，来回馈你的信任。
+          </p>
+          <p className="mt-3 text-sm font-semibold text-[#b3473f]">所有心意均为自愿赠与，不强制、不自动续费、不退款。</p>
         </section>
 
         <section className="overflow-x-auto rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] shadow-[0_6px_18px_rgba(95,73,53,0.08)]">
@@ -39,10 +42,10 @@ export default function PricingPage() {
             <thead>
               <tr className="border-b border-[#eee2d5] bg-[#f9f2e8] text-sm text-[#6c5441]">
                 <th className="px-4 py-3 font-semibold">功能对比</th>
-                <th className="px-4 py-3 font-semibold">终身</th>
-                <th className="px-4 py-3 font-semibold">年付</th>
-                <th className="px-4 py-3 font-semibold">季付</th>
-                <th className="px-4 py-3 font-semibold">月付</th>
+                <th className="px-4 py-3 font-semibold">一生挚友</th>
+                <th className="px-4 py-3 font-semibold">四季相伴</th>
+                <th className="px-4 py-3 font-semibold">一季同行</th>
+                <th className="px-4 py-3 font-semibold">一月同行</th>
               </tr>
             </thead>
             <tbody>
@@ -76,9 +79,7 @@ export default function PricingPage() {
                 onClick={() => setSelectedPlan(plan.key)}
               >
                 <div className={`h-full rounded-[16px] border bg-[#fffdf9] p-5 ${active ? "border-[#ceb498]" : "border-transparent"}`}>
-                  {isLifetime ? (
-                    <span className="mb-3 inline-flex rounded-full bg-[#fff1c7] px-3 py-1 text-xs font-semibold text-[#8a6520]">🔥 最推荐</span>
-                  ) : null}
+                  {isLifetime ? <span className="mb-3 inline-flex rounded-full bg-[#fff1c7] px-3 py-1 text-xs font-semibold text-[#8a6520]">💛 最长陪伴</span> : null}
                   <h3 className="text-[32px] font-semibold leading-tight text-[#2f251d]">{plan.title}</h3>
                   <div className="mt-3 flex flex-wrap items-end gap-2">
                     <span className="text-[24px] font-bold text-[#2f251d]">{plan.price}</span>
@@ -116,7 +117,7 @@ export default function PricingPage() {
 
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 text-center shadow-[0_6px_18px_rgba(95,73,53,0.08)] md:p-8">
           <p className="text-base leading-relaxed">
-            <span className="font-medium text-[#5C4B3E]">当前选择：</span>
+            <span className="font-medium text-[#5C4B3E]">当前心意：</span>
             <span className="font-semibold text-[#2f251d]">{currentPlan.title}</span>
           </p>
           <button
@@ -124,7 +125,7 @@ export default function PricingPage() {
             className="mt-4 w-full cursor-pointer rounded-[16px] bg-[#7a5a2e] px-6 py-3 text-lg font-semibold text-[#5C4B3E] transition-colors hover:bg-[#694d27] md:w-auto"
             onClick={() => router.push(`/pricing/pay/${selectedPlan}`)}
           >
-            立即购买
+            去开启专属陪伴
           </button>
         </section>
       </div>
