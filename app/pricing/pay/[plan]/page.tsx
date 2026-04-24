@@ -3,7 +3,7 @@
 import { use, useState } from "react"
 import { useRouter } from "next/navigation"
 
-import { getPlanByKey, type PayChannel } from "@/lib/pricing-config"
+import { getPlanByKey } from "@/lib/pricing-config"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { activateLocalProOffline } from "@/src/lib/local-pro-license"
 import { setProSubscriberDemo } from "@/src/lib/product-limits"
@@ -20,22 +20,6 @@ export default function PricingPayPage({ params }: PayPageProps) {
   const [redeemCode, setRedeemCode] = useState("")
   const [redeemBusy, setRedeemBusy] = useState(false)
   const [redeemTip, setRedeemTip] = useState("")
-  const [payTip, setPayTip] = useState("")
-
-  async function openChannel(channel: PayChannel) {
-    setPayTip("")
-    try {
-      const res = await fetch(`/api/billing/payment-link?plan=${encodeURIComponent(planParam)}&channel=${channel}`)
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
-      if (!res.ok || !data.url) {
-        setPayTip(data.error ?? "支付链接暂不可用，请稍后再试。")
-        return
-      }
-      window.open(data.url, "_blank", "noopener,noreferrer")
-    } catch {
-      setPayTip("支付链接暂不可用，请稍后再试。")
-    }
-  }
 
   async function redeemNow() {
     const code = redeemCode.trim()
@@ -143,73 +127,41 @@ export default function PricingPayPage({ params }: PayPageProps) {
 
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)]">
           <h2 className="text-xl font-semibold text-[#2f251d]">如何开启我的专属陪伴</h2>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-7 text-[#5c4637]">
-            <li>选一份你想表达的心意档位</li>
-            <li>
+          <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-7 text-[#5C3E2F]">
+            <li className="text-[#5C3E2F]">选一份你想表达的心意档位</li>
+            <li className="text-[#5C3E2F]">
               添加我的微信：<span className="font-semibold text-[#2f251d]">Soulrain--</span>
             </li>
-            <li>转账时记得备注你的注册账号/邮箱，让我能找到你</li>
-            <li>我会在当天内，为你开启专属的陪伴权限</li>
+            <li className="text-[#5C3E2F]">转账时记得备注你的注册账号/邮箱，让我能找到你</li>
+            <li className="text-[#5C3E2F]">我会在当天内，为你开启专属的陪伴权限</li>
           </ol>
           <p className="mt-4 rounded-[12px] border border-[#f0cbc8] bg-[#fff5f4] px-4 py-3 text-sm font-semibold text-[#b3473f]">
             所有心意均为自愿赠与，不强制、不自动续费、不退款。
           </p>
         </section>
 
-        <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)]">
-          <h2 className="text-xl font-semibold text-[#2f251d]">支付通道（当前选择：{plan.title} {plan.price}）</h2>
-
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <button
-              type="button"
-              className="cursor-pointer rounded-[16px] border border-[#e7dacc] bg-[#fff8ee] px-4 py-3 text-left shadow-[0_4px_12px_rgba(95,73,53,0.08)] transition-colors hover:bg-[#fff1df]"
-              onClick={() => openChannel("wechat")}
-            >
-              <p className="text-base font-semibold text-[#2f251d]">微信支付</p>
-              <p className="mt-1 text-sm text-[#725948]">点击打开对应套餐付款码并完成转账</p>
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer rounded-[16px] border border-[#e7dacc] bg-[#fff8ee] px-4 py-3 text-left shadow-[0_4px_12px_rgba(95,73,53,0.08)] transition-colors hover:bg-[#fff1df]"
-              onClick={() => openChannel("alipay")}
-            >
-              <p className="text-base font-semibold text-[#2f251d]">支付宝</p>
-              <p className="mt-1 text-sm text-[#725948]">点击打开对应套餐付款码并完成转账</p>
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer rounded-[16px] border border-[#e7dacc] bg-[#fff8ee] px-4 py-3 text-left shadow-[0_4px_12px_rgba(95,73,53,0.08)] transition-colors hover:bg-[#fff1df]"
-              onClick={() => openChannel("stripe")}
-            >
-              <p className="text-base font-semibold text-[#2f251d]">Stripe</p>
-              <p className="mt-1 text-sm text-[#725948]">国际卡支付通道（Checkout）</p>
-            </button>
-          </div>
-          {payTip ? <p className="mt-3 text-sm text-[#b3473f]">{payTip}</p> : null}
-        </section>
-
-        <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)]">
-          <h2 className="text-xl font-semibold text-[#2f251d]">🔑 已有兑换码？直接激活</h2>
-          <p className="mt-2 text-base text-[#5c4637]">
+        <section className="rounded-[16px] border border-[#d8c9b8] bg-[#fffaf4] p-6 shadow-[0_8px_20px_rgba(95,73,53,0.12)]">
+          <h2 className="text-xl font-semibold text-[#2a1c12]">🔑 已有兑换码？直接激活</h2>
+          <p className="mt-2 text-base text-[#4a3426]">
             输入兑换码后即可激活对应陪伴时长。无需强制注册，也支持本地模式激活。
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
               value={redeemCode}
               onChange={(e) => setRedeemCode(e.target.value.trim())}
-              className="h-11 w-full rounded-[16px] border border-[#d8c9b9] bg-paper px-4 text-base text-[#795548] outline-none ring-0 transition-shadow placeholder:text-soft focus:border-[#c3ae98] focus:shadow-[0_0_0_3px_rgba(121,85,72,0.12)]"
+              className="h-11 w-full rounded-[16px] border border-[#c8b49f] bg-[#fffdf9] px-4 text-base text-[#4a3426] outline-none ring-0 transition-shadow placeholder:text-[#8f7a68] focus:border-[#8b5a42] focus:shadow-[0_0_0_3px_rgba(139,90,66,0.18)]"
               placeholder="请输入兑换码"
             />
             <button
               type="button"
-              className="cursor-pointer rounded-[16px] bg-[#7a5a2e] px-6 py-3 text-base font-semibold text-[#5C4B3E] transition-colors hover:bg-[#694d27] disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer rounded-[16px] bg-[#7a4a2c] px-6 py-3 text-base font-semibold text-[#fffaf4] transition-colors hover:bg-[#653b21] disabled:cursor-not-allowed disabled:opacity-60"
               onClick={redeemNow}
               disabled={redeemBusy}
             >
               {redeemBusy ? "激活中..." : "立即激活"}
             </button>
           </div>
-          {redeemTip ? <p className="mt-3 text-sm text-[#725948]">{redeemTip}</p> : null}
+          {redeemTip ? <p className="mt-3 text-sm font-medium text-[#5a3f2f]">{redeemTip}</p> : null}
         </section>
       </div>
     </main>
