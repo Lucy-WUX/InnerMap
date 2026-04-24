@@ -35,9 +35,9 @@ function AnalyzingDots() {
 }
 
 const bubbleUser =
-  "max-w-[85%] whitespace-pre-wrap rounded-tl-[16px] rounded-tr-[16px] rounded-br-[16px] rounded-bl-none bg-[#8B5A42] px-3.5 py-3 text-ds-body text-[#fffdf9] shadow-[0_1px_3px_rgba(60,40,30,0.08)]"
+  "max-w-[85%] whitespace-pre-wrap rounded-tl-[16px] rounded-tr-[16px] rounded-br-[16px] rounded-bl-none bg-[#8B5A42] px-3.5 py-3 text-ds-body text-[#fffdf9] shadow-[0_1px_3px_rgba(60,40,30,0.08)] dark:border dark:border-amber-600/55 dark:bg-[var(--pss-surface-inset)] dark:text-[var(--pss-text-primary)] dark:shadow-[0_0_0_1px_rgba(251,191,36,0.14),0_1px_8px_rgba(0,0,0,0.38)]"
 const bubbleAi =
-  "whitespace-pre-wrap rounded-tl-[16px] rounded-tr-[16px] rounded-bl-[16px] rounded-br-none border border-[#e8d9ca] bg-white px-3.5 py-3 text-ds-body text-[#5C4B3E] shadow-[0_1px_3px_rgba(60,40,30,0.08)]"
+  "whitespace-pre-wrap rounded-tl-[16px] rounded-tr-[16px] rounded-bl-[16px] rounded-br-none border border-[#e8d9ca] bg-white px-3.5 py-3 text-ds-body text-[#5C4B3E] shadow-[0_1px_3px_rgba(60,40,30,0.08)] dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-body)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.35)]"
 
 const DAILY_LIMIT = 15
 

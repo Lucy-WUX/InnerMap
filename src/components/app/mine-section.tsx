@@ -53,6 +53,11 @@ type MineSectionProps = {
   onExportComplete?: () => void
 }
 
+/** 帮助与反馈：开发者收件邮箱（mailto 含主题与正文模板） */
+const DEVELOPER_FEEDBACK_EMAIL = "1289335262@qq.com"
+const DEVELOPER_FEEDBACK_MAILTO =
+  "mailto:1289335262@qq.com?subject=%E3%80%90InnerMap%C2%B7%E6%99%93%E8%A7%82%E3%80%91%E7%94%A8%E6%88%B7%E5%8F%8D%E9%A6%88&body=%E8%AF%B7%E5%9C%A8%E6%AD%A4%E6%8F%8F%E8%BF%B0%E9%97%AE%E9%A2%98%E6%88%96%E5%BB%BA%E8%AE%AE%EF%BC%88%E5%8F%AF%E9%99%84%E6%88%AA%E5%9B%BE%EF%BC%89%EF%BC%9A%0A%0A"
+
 function ExpandRow({
   title,
   subtitle,
@@ -75,15 +80,15 @@ function ExpandRow({
         aria-expanded={open}
       >
         <div className="min-w-0">
-          <div className="text-ds-body font-semibold text-ink dark:text-stone-100">{title}</div>
-          {subtitle ? <p className="mt-0.5 text-ds-caption text-soft dark:text-stone-400">{subtitle}</p> : null}
+          <div className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">{title}</div>
+          {subtitle ? <p className="mt-0.5 text-ds-caption text-soft dark:text-[var(--pss-text-muted)]">{subtitle}</p> : null}
         </div>
         <ChevronDown
-          className={`mt-0.5 h-5 w-5 shrink-0 text-soft transition-transform dark:text-stone-400 ${open ? "rotate-180" : ""}`}
+          className={`mt-0.5 h-5 w-5 shrink-0 text-soft transition-transform dark:text-[var(--pss-text-muted)] ${open ? "rotate-180" : ""}`}
           aria-hidden
         />
       </button>
-      {open ? <div className="mt-ds-md border-t border-warm-base pt-ds-md dark:border-stone-700">{children}</div> : null}
+      {open ? <div className="mt-ds-md border-t border-warm-base pt-ds-md dark:border-[var(--pss-border-subtle)]">{children}</div> : null}
     </Card>
   )
 }
@@ -381,11 +386,11 @@ export function MineSection({
   return (
     <section className="space-y-ds-md pb-ds-lg">
       <div>
-        <h1 className="text-ds-title text-ink dark:text-stone-100">系统</h1>
-        <p className="mt-1 text-ds-body text-soft dark:text-stone-400">账户、应用与关于</p>
+        <h1 className="text-ds-title text-ink dark:text-[var(--pss-text-primary)]">系统</h1>
+        <p className="mt-1 text-ds-body text-soft dark:text-[var(--pss-text-muted)]">账户、应用与关于</p>
       </div>
 
-      <p className="text-ds-caption font-semibold tracking-wide text-soft dark:text-stone-500">账户</p>
+      <p className="text-ds-caption font-semibold tracking-wide text-soft dark:text-[var(--pss-text-faint)]">账户</p>
 
       <ExpandRow
         title="账号管理"
@@ -395,9 +400,9 @@ export function MineSection({
       >
         {isLocalMode ? (
           <div className="space-y-ds-md">
-            <div className="rounded-ds border border-[#d8c9b9] bg-[#fff8ee] p-ds-md dark:border-stone-600 dark:bg-stone-800/60">
-              <p className="text-ds-body font-semibold text-ink dark:text-stone-100">本地模式</p>
-              <p className="mt-1 text-ds-caption leading-relaxed text-soft dark:text-stone-300">
+            <div className="rounded-ds border border-[#d8c9b9] bg-[#fff8ee] p-ds-md dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-muted)]">
+              <p className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">本地模式</p>
+              <p className="mt-1 text-ds-caption leading-relaxed text-soft dark:text-[var(--pss-text-body)]">
                 注册登录不是必须的；仅在你需要多设备同步、云备份和 Pro 跨设备同步时再开启即可。
               </p>
               <div className="mt-ds-xs flex flex-wrap gap-2">
@@ -424,16 +429,16 @@ export function MineSection({
           </div>
         ) : (
           <div className="space-y-ds-md">
-            <div className="space-y-1 text-ds-body text-ink dark:text-stone-100">
+            <div className="space-y-1 text-ds-body text-ink dark:text-[var(--pss-text-primary)]">
               {profile.email ? (
                 <p>
-                  <span className="text-soft dark:text-stone-400">邮箱：</span>
+                  <span className="text-soft dark:text-[var(--pss-text-muted)]">邮箱：</span>
                   {profile.email}
                 </p>
               ) : null}
               {profile.phone ? (
                 <p>
-                  <span className="text-soft dark:text-stone-400">手机：</span>
+                  <span className="text-soft dark:text-[var(--pss-text-muted)]">手机：</span>
                   {profile.phone}
                 </p>
               ) : null}
@@ -454,7 +459,7 @@ export function MineSection({
                   请输入「{ACCOUNT_DELETION_CONFIRM_PHRASE}」以确认：
                 </p>
                 <Input
-                  className="mt-ds-xs max-w-sm dark:border-stone-600 dark:bg-stone-900"
+                  className="mt-ds-xs max-w-sm dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-card)]"
                   value={accountDeleteConfirm}
                   onChange={(e) => setAccountDeleteConfirm(e.target.value)}
                   placeholder={ACCOUNT_DELETION_CONFIRM_PHRASE}
@@ -484,8 +489,8 @@ export function MineSection({
         <div className="space-y-ds-md">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-ds-body font-medium text-ink dark:text-stone-100">数据用于优化体验</p>
-              <p className="mt-1 text-ds-caption leading-relaxed text-soft dark:text-stone-400">
+              <p className="text-ds-body font-medium text-ink dark:text-[var(--pss-text-primary)]">数据用于优化体验</p>
+              <p className="mt-1 text-ds-caption leading-relaxed text-soft dark:text-[var(--pss-text-muted)]">
                 允许我们将你的对话内容用于优化晓观的使用体验。我们保障你的数据隐私安全；本地模式下默认关闭。
               </p>
             </div>
@@ -494,7 +499,7 @@ export function MineSection({
               role="switch"
               aria-checked={dataOptimize}
               className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${
-                dataOptimize ? "bg-[#8B5A42] dark:bg-amber-700" : "bg-warm-strong dark:bg-stone-600"
+                dataOptimize ? "bg-[#8B5A42] dark:bg-amber-700" : "bg-warm-strong dark:bg-[var(--pss-surface-muted)]"
               }`}
               onClick={() => {
                 const next = !dataOptimize
@@ -520,13 +525,13 @@ export function MineSection({
             <div className="mt-ds-xs flex flex-wrap gap-2">
               <Link
                 href="/privacy-hub"
-                className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#2e7d32]/45 bg-white px-4 text-sm font-medium text-[#1b5e20] shadow-sm transition-colors hover:bg-[#e8f5e9] dark:border-emerald-700 dark:bg-stone-900 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
+                className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#2e7d32]/45 bg-white px-4 text-sm font-medium text-[#1b5e20] shadow-sm transition-colors hover:bg-[#e8f5e9] dark:border-emerald-700 dark:bg-[var(--pss-surface-card)] dark:text-emerald-300 dark:hover:bg-emerald-950/50"
               >
                 查看完整隐私承诺
               </Link>
               <Link
                 href="/privacy"
-                className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#d8c9b9] bg-paper px-4 text-sm font-medium text-[#795548] transition-colors hover:bg-[#f3ece4] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+                className="inline-flex h-11 min-h-11 items-center justify-center rounded-btn-ds border border-[#d8c9b9] bg-paper px-4 text-sm font-medium text-[#795548] transition-colors hover:bg-[#f3ece4] dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-card)] dark:text-[var(--pss-text-body)] dark:hover:bg-[var(--pss-surface-muted)]"
               >
                 阅读《隐私政策》
               </Link>
@@ -534,8 +539,8 @@ export function MineSection({
           </div>
 
           <div>
-            <h3 className="text-ds-body font-semibold text-ink dark:text-stone-100">数据备份与恢复</h3>
-            <p className="mt-1 text-ds-caption text-soft dark:text-stone-400">
+            <h3 className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">数据备份与恢复</h3>
+            <p className="mt-1 text-ds-caption text-soft dark:text-[var(--pss-text-muted)]">
               将所有联系人、互动记录、日记与评分历史导出为 JSON 或 CSV；换机或重装后可导入 JSON 还原。
             </p>
             <div className="mt-ds-xs flex flex-wrap gap-2">
@@ -578,15 +583,15 @@ export function MineSection({
               />
             </div>
             {importTip ? <p className="mt-ds-xs text-ds-caption text-[#7a5a2e] dark:text-amber-200/90">{importTip}</p> : null}
-            <p className="mt-ds-xs text-[11px] leading-relaxed text-soft dark:text-stone-500">
-              开发调试：在控制台执行 <code className="rounded bg-surface-warm-soft px-1 dark:bg-stone-800">localStorage.setItem(&quot;pss-subscription&quot;,&quot;pro&quot;)</code>{" "}
+            <p className="mt-ds-xs text-[11px] leading-relaxed text-soft dark:text-[var(--pss-text-faint)]">
+              开发调试：在控制台执行 <code className="rounded bg-surface-warm-soft px-1 dark:bg-[var(--pss-surface-muted)]">localStorage.setItem(&quot;pss-subscription&quot;,&quot;pro&quot;)</code>{" "}
               并刷新，可解除免费版 20 人上限。
             </p>
           </div>
 
           <div>
-            <h3 className="text-ds-body font-semibold text-ink dark:text-stone-100">数据控制权</h3>
-            <p className="mt-1 text-ds-caption text-soft dark:text-stone-400">
+            <h3 className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">数据控制权</h3>
+            <p className="mt-1 text-ds-caption text-soft dark:text-[var(--pss-text-muted)]">
               由你决定数据留在本机、同步云端或彻底删除。清除本地仅影响此浏览器；清空云端与注销账号需登录，且依赖服务端配置 Service Role。
             </p>
             <div className="mt-ds-xs flex flex-wrap gap-2">
@@ -605,22 +610,22 @@ export function MineSection({
               ) : null}
             </div>
             {!isLoggedIn ? (
-              <p className="mt-ds-xs text-ds-caption text-soft dark:text-stone-500">登录后可清空与您账户绑定的云端数据或注销账号。</p>
+              <p className="mt-ds-xs text-ds-caption text-soft dark:text-[var(--pss-text-faint)]">登录后可清空与您账户绑定的云端数据或注销账号。</p>
             ) : !isBrowserSupabaseReady() ? (
-              <p className="mt-ds-xs text-ds-caption text-soft dark:text-stone-500">当前未连接 Supabase，云端相关按钮不可用。</p>
+              <p className="mt-ds-xs text-ds-caption text-soft dark:text-[var(--pss-text-faint)]">当前未连接 Supabase，云端相关按钮不可用。</p>
             ) : null}
           </div>
         </div>
       </ExpandRow>
 
-      <p className="pt-ds-xs text-ds-caption font-semibold tracking-wide text-soft dark:text-stone-500">应用</p>
+      <p className="pt-ds-xs text-ds-caption font-semibold tracking-wide text-soft dark:text-[var(--pss-text-faint)]">应用</p>
 
       <Card className="space-y-ds-md p-ds-md">
         <div>
-          <p className="text-ds-body font-semibold text-ink dark:text-stone-100">语言</p>
-          <p className="mt-0.5 text-ds-caption text-soft dark:text-stone-400">界面语言（更多语言将陆续支持）</p>
+          <p className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">语言</p>
+          <p className="mt-0.5 text-ds-caption text-soft dark:text-[var(--pss-text-muted)]">界面语言（更多语言将陆续支持）</p>
           <select
-            className="mt-ds-xs w-full max-w-xs rounded-btn-ds border border-land-input-border bg-paper px-3 py-2 text-ds-body text-ink dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+            className="mt-ds-xs w-full max-w-xs rounded-btn-ds border border-land-input-border bg-paper px-3 py-2 text-ds-body text-ink dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-card)] dark:text-[var(--pss-text-primary)]"
             value={lang}
             onChange={(e) => {
               const v = e.target.value as AppLang
@@ -633,7 +638,7 @@ export function MineSection({
         </div>
 
         <div>
-          <p className="text-ds-body font-semibold text-ink dark:text-stone-100">外观</p>
+          <p className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">外观</p>
           <div className="mt-ds-xs flex flex-wrap gap-2">
             {(
               [
@@ -657,8 +662,8 @@ export function MineSection({
 
         <div>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-ds-body font-semibold text-ink dark:text-stone-100">字号</p>
-            <span className="text-ds-caption text-soft dark:text-stone-400">{Math.round(fontScale * 100)}%</span>
+            <p className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">字号</p>
+            <span className="text-ds-caption text-soft dark:text-[var(--pss-text-muted)]">{Math.round(fontScale * 100)}%</span>
           </div>
           <input
             type="range"
@@ -669,13 +674,13 @@ export function MineSection({
             className="mt-ds-xs w-full max-w-md accent-[#8B5A42] dark:accent-amber-600"
             onChange={(e) => setFontAndPersist(parseFloat(e.target.value))}
           />
-          <p className="mt-1 text-ds-caption text-soft dark:text-stone-500">从小到大拖动；仅影响正文字号比例。</p>
+          <p className="mt-1 text-ds-caption text-soft dark:text-[var(--pss-text-faint)]">从小到大拖动；仅影响正文字号比例。</p>
         </div>
       </Card>
 
       <Card className="p-ds-md">
-        <h3 className="text-ds-body font-semibold text-ink dark:text-stone-100">应用锁（密码 / WebAuthn）</h3>
-        <p className="mt-1 text-ds-caption text-soft dark:text-stone-400">
+        <h3 className="text-ds-body font-semibold text-ink dark:text-[var(--pss-text-primary)]">应用锁（密码 / WebAuthn）</h3>
+        <p className="mt-1 text-ds-caption text-soft dark:text-[var(--pss-text-muted)]">
           每次打开观系需验证。可使用密码，或使用本机指纹、面容、系统 PIN（Web 标准 WebAuthn，密钥保存在系统安全芯片/浏览器中）。
         </p>
         {lockEnabled ? (
@@ -699,14 +704,14 @@ export function MineSection({
               placeholder="设置密码（至少 4 位）"
               value={pinA}
               onChange={(e) => setPinA(e.target.value)}
-              className="dark:border-stone-600 dark:bg-stone-900"
+              className="dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-card)]"
             />
             <Input
               type="password"
               placeholder="再次输入"
               value={pinB}
               onChange={(e) => setPinB(e.target.value)}
-              className="dark:border-stone-600 dark:bg-stone-900"
+              className="dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-card)]"
             />
             <Button type="button" disabled={lockBusy} onClick={() => void handleEnableLock()}>
               开启密码锁
@@ -716,13 +721,13 @@ export function MineSection({
                 不设密码，仅用指纹/系统密钥锁定
               </Button>
             ) : (
-              <p className="text-ds-caption text-soft dark:text-stone-500">当前环境不支持 WebAuthn，请使用密码锁。</p>
+              <p className="text-ds-caption text-soft dark:text-[var(--pss-text-faint)]">当前环境不支持 WebAuthn，请使用密码锁。</p>
             )}
           </div>
         )}
       </Card>
 
-      <p className="pt-ds-xs text-ds-caption font-semibold tracking-wide text-soft dark:text-stone-500">关于</p>
+      <p className="pt-ds-xs text-ds-caption font-semibold tracking-wide text-soft dark:text-[var(--pss-text-faint)]">关于</p>
 
       <ExpandRow
         title="服务协议"
@@ -782,12 +787,23 @@ export function MineSection({
         open={openHelp}
         onToggle={() => setOpenHelp((o) => !o)}
       >
-        <p className="text-ds-caption leading-relaxed text-soft dark:text-stone-400">
-          我们重视你的建议与体验反馈。若你在使用中遇到困惑、有功能想法或希望优化某处流程，欢迎通过邮件联系我们；后续版本也将逐步提供应用内反馈入口。
+        <p className="text-ds-caption leading-relaxed text-soft dark:text-[var(--pss-text-muted)]">
+          我们重视你的建议与体验反馈。若你在使用中遇到困惑、有功能想法或希望优化某处流程，欢迎发信给开发者；点击按钮将打开系统邮件应用并自动填入收件人与主题。后续版本也将逐步提供应用内反馈入口。
         </p>
+        <div className="mt-ds-xs rounded-ds border border-[#e5d9cc] bg-[#faf6f0] px-3 py-2.5 dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-inset)]">
+          <p className="text-[11px] font-semibold tracking-wide text-[#8a7d72] dark:text-[var(--pss-text-muted)]">
+            开发者邮箱
+          </p>
+          <a
+            href={DEVELOPER_FEEDBACK_MAILTO}
+            className="mt-1 block break-all text-ds-body font-semibold text-[#6B3F2E] underline-offset-2 hover:underline dark:text-[var(--pss-text-primary)]"
+          >
+            {DEVELOPER_FEEDBACK_EMAIL}
+          </a>
+        </div>
         <a
-          href="mailto:support@innermap.app?subject=%E6%99%93%E8%A7%82%E5%8F%8D%E9%A6%88"
-          className="mt-ds-xs inline-flex min-h-11 items-center justify-center rounded-btn-ds border border-[#d8c9b9] bg-paper px-4 text-ds-body font-medium text-ink transition-colors hover:bg-[#f3ece4] dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+          href={DEVELOPER_FEEDBACK_MAILTO}
+          className="mt-ds-xs inline-flex min-h-11 items-center justify-center rounded-btn-ds border border-[#d8c9b9] bg-paper px-4 text-ds-body font-medium text-ink transition-colors hover:bg-[#f3ece4] dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-primary)] dark:hover:bg-[var(--pss-surface-card)]"
         >
           发送邮件反馈
         </a>
@@ -820,9 +836,9 @@ export function MineSection({
         description="各浏览器与设备会单独建立会话。若你怀疑他人使用你的账号，可修改密码并重新登录；更细说明见信任中心。"
         onClose={() => setDeviceDialogOpen(false)}
       >
-        <p className="text-ds-caption leading-relaxed text-soft dark:text-stone-400">
+        <p className="text-ds-caption leading-relaxed text-soft dark:text-[var(--pss-text-muted)]">
           当前版本暂未提供逐设备下线列表；后续将随账户安全能力升级补充。你可前往{" "}
-          <Link href="/privacy-hub" className="font-medium text-ink underline-offset-2 hover:underline dark:text-stone-200">
+          <Link href="/privacy-hub" className="font-medium text-ink underline-offset-2 hover:underline dark:text-[var(--pss-text-body)]">
             信任中心
           </Link>{" "}
           了解数据与账号相关说明。

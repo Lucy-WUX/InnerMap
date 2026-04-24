@@ -15,13 +15,24 @@ html {
 
 html.dark {
   color-scheme: dark;
-  /* 略偏暖的深底，避免纯黑与浅卡对比过硬 */
-  --pss-page-bg: #0c0a09;
-  --pss-elevated: rgba(28, 25, 23, 0.92);
+  /* 暖调深色：与品牌棕系一致，避免「纯黑顶栏 + 米色内容」割裂 */
+  --pss-page-bg: #12100e;
+  --pss-elevated: #1a1816;
+  --pss-bar-bg: #181615;
+  --pss-surface-card: #221f1c;
+  --pss-surface-muted: #2b2724;
+  --pss-surface-inset: #171412;
+  --pss-border-subtle: rgba(232, 220, 206, 0.12);
+  --pss-border-mid: rgba(232, 220, 206, 0.2);
+  /* 深色底上的正文：偏暖的米棕，比冷灰 stone 更贴产品气质 */
+  --pss-text-primary: #f3e9dd;
+  --pss-text-body: #d8cfc2;
+  --pss-text-muted: #b8a99b;
+  --pss-text-faint: #8f8277;
 }
 
 html.dark body {
-  color: #e7e5e4;
+  color: var(--pss-text-body);
   background: var(--pss-page-bg);
 }
 

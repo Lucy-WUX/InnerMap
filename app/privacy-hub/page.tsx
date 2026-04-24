@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { BackNavButton } from "@/components/back-nav-button"
+
 export default function PrivacyHubPage() {
   return (
     <div className="min-h-screen bg-base px-4 py-10 text-ink sm:px-6">
@@ -98,12 +100,7 @@ export default function PrivacyHubPage() {
         </section>
 
         <div className="flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
-          >
-            返回晓观页
-          </Link>
+          <BackNavButton className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]" />
           <Link
             href="/privacy"
             className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-5 py-2 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]"

@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { BackNavButton } from "@/components/back-nav-button"
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-base px-4 py-10 text-ink sm:px-6">
@@ -21,12 +23,7 @@ export default function TermsPage() {
           </li>
           <li>产品形态与功能可能随版本迭代调整，恕不另行通知。</li>
         </ul>
-        <Link
-          href="/"
-          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
-        >
-          返回首页
-        </Link>
+        <BackNavButton className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]" />
       </div>
     </div>
   )

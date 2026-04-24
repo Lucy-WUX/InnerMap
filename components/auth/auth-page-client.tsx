@@ -348,70 +348,72 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
     "w-full rounded-2xl border border-land-input-border bg-white py-3 text-sm text-ink outline-none ring-0 transition-shadow placeholder:text-[#6b5d52] focus:border-[#c4b5a4] focus:shadow-[0_0_0_3px_rgba(121,85,72,0.12)]"
 
   const brandPanel = (
-    <div className="relative flex min-h-[280px] flex-col justify-center px-8 py-12 sm:px-12 lg:min-h-screen lg:py-16">
+    <div className="relative flex min-h-[280px] flex-col justify-center px-8 py-12 [color-scheme:light] sm:px-12 lg:min-h-screen lg:py-16">
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#efe6dc] via-[#e8dfd4] to-[#d9c8b8]"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#efe6dc] via-[#e8dfd4] to-[#d9c8b8] dark:from-[#efe6dc] dark:via-[#e8dfd4] dark:to-[#d9c8b8]"
         aria-hidden
       />
       <Link
         href="/"
-        className="absolute left-8 top-6 z-10 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white/90 px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-[#f8f1e7] sm:left-12"
+        className="absolute left-8 top-6 z-10 inline-flex min-h-11 items-center justify-center rounded-full border border-[#c4a882] bg-[#fffdf9] px-4 py-2 text-sm font-semibold text-[#6B3F2E] shadow-[0_1px_3px_rgba(107,63,46,0.08)] transition-colors hover:border-[#b8956a] hover:bg-[#faf3eb] sm:left-12 dark:border-[#c4a882] dark:bg-[#fffdf9] dark:text-[#6B3F2E]"
       >
         ← 返回封面页
       </Link>
       <div className="relative max-w-lg">
-        <p className="text-lg font-semibold tracking-tight text-[#5d4037]">InnerMap</p>
-        <h1 className="mt-4 text-2xl font-bold leading-snug text-ink sm:text-3xl lg:text-[1.85rem] lg:leading-tight">
+        <p className="text-lg font-semibold tracking-tight text-[#5d4037] dark:text-[#5d4037]">InnerMap</p>
+        <h1 className="mt-4 text-2xl font-bold leading-snug text-[#5d4037] sm:text-3xl lg:text-[1.85rem] lg:leading-tight dark:text-[#5d4037]">
           绘制你的人际地图，导航每一段关系
         </h1>
-        <p className="mt-3 max-w-md text-sm font-medium leading-7 text-ink sm:text-base">
+        <p className="mt-3 max-w-md rounded-xl border border-[#e5d0bf] bg-[#fdf7ef]/95 px-4 py-3 text-sm font-medium leading-7 text-[#6B3F2E] sm:text-base dark:border-[#e5d0bf] dark:bg-[#fdf7ef]/95 dark:text-[#6B3F2E]">
           私密关系认知空间，仅你可见。
         </p>
 
-        <ul className="mt-8 space-y-3 text-sm leading-relaxed text-ink">
+        <ul className="mt-8 space-y-3 text-sm leading-relaxed text-[#5C4B3E] dark:text-[#5C4B3E]">
           <li className="flex gap-3">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8d6e63]" aria-hidden />
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8B5A42]" aria-hidden />
             <span>
-              <strong className="font-semibold">看清每一段关系</strong>
+              <strong className="font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">看清每一段关系</strong>
               ：谁值得深交、谁在消耗你，写下来才不容易自欺。
             </span>
           </li>
           <li className="flex gap-3">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8d6e63]" aria-hidden />
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8B5A42]" aria-hidden />
             <span>
-              <strong className="font-semibold">只属于你</strong>
+              <strong className="font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">只属于你</strong>
               ：记录经加密连接同步，不向其他用户公开；导出与删除由你在「我的」中掌控。
             </span>
           </li>
           <li className="flex gap-3">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8d6e63]" aria-hidden />
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8B5A42]" aria-hidden />
             <span>
-              <strong className="font-semibold">温和复盘</strong>
+              <strong className="font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">温和复盘</strong>
               ：用日记与互动时间轴梳理情绪与边界，为下一次相处做准备。
             </span>
           </li>
         </ul>
 
         <div
-          className="mt-10 hidden max-w-xs text-[#8d6e63] sm:block"
+          className="mt-10 hidden max-w-xs text-[#6B3F2E] sm:block dark:text-[#6B3F2E]"
           aria-hidden
         >
-          <svg viewBox="0 0 320 200" className="h-auto w-full opacity-90" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 320 200" className="h-auto w-full opacity-95" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
               d="M160 36 L248 92 L216 176 L104 176 L72 92 Z"
               stroke="currentColor"
               strokeWidth="1.2"
-              strokeOpacity="0.45"
+              strokeOpacity="0.5"
             />
-            <circle cx="160" cy="36" r="10" fill="currentColor" fillOpacity="0.35" />
-            <circle cx="248" cy="92" r="10" fill="currentColor" fillOpacity="0.28" />
-            <circle cx="216" cy="176" r="10" fill="currentColor" fillOpacity="0.28" />
-            <circle cx="104" cy="176" r="10" fill="currentColor" fillOpacity="0.28" />
-            <circle cx="72" cy="92" r="10" fill="currentColor" fillOpacity="0.28" />
-            <circle cx="160" cy="108" r="14" fill="currentColor" fillOpacity="0.5" />
-            <path d="M160 46 L160 94 M152 100 L96 168 M168 100 L224 168 M138 98 L82 98 M182 98 L238 98" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35" />
+            <circle cx="160" cy="36" r="10" fill="currentColor" fillOpacity="0.42" />
+            <circle cx="248" cy="92" r="10" fill="currentColor" fillOpacity="0.35" />
+            <circle cx="216" cy="176" r="10" fill="currentColor" fillOpacity="0.35" />
+            <circle cx="104" cy="176" r="10" fill="currentColor" fillOpacity="0.35" />
+            <circle cx="72" cy="92" r="10" fill="currentColor" fillOpacity="0.35" />
+            <circle cx="160" cy="108" r="14" fill="currentColor" fillOpacity="0.55" />
+            <path d="M160 46 L160 94 M152 100 L96 168 M168 100 L224 168 M138 98 L82 98 M182 98 L238 98" stroke="currentColor" strokeWidth="1" strokeOpacity="0.45" />
           </svg>
-          <p className="mt-2 text-center text-xs text-[#6d5443]">关系像一张地图：你在中心，连结重要的人与故事。</p>
+          <p className="mt-2 text-center text-xs font-medium text-[#6B3F2E] dark:text-[#6B3F2E]">
+            关系像一张地图：你在中心，连结重要的人与故事。
+          </p>
         </div>
       </div>
     </div>

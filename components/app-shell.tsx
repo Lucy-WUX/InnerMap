@@ -168,9 +168,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="mx-auto min-h-screen max-w-5xl bg-base p-ds-md md:p-ds-lg dark:bg-[var(--pss-page-bg)]">
         <div className="space-y-ds-md animate-pulse">
-          <div className="h-10 w-full rounded-ds bg-[#efe6d9] dark:bg-stone-800" />
-          <div className="h-28 rounded-ds bg-[#f4ecdf] dark:bg-stone-800/80" />
-          <div className="h-64 rounded-ds bg-[#f4ecdf] dark:bg-stone-800/60" />
+          <div className="h-10 w-full rounded-ds bg-[#efe6d9] dark:bg-[var(--pss-surface-card)]" />
+          <div className="h-28 rounded-ds bg-[#f4ecdf] dark:bg-[var(--pss-surface-muted)]" />
+          <div className="h-64 rounded-ds bg-[#f4ecdf] dark:bg-[var(--pss-surface-muted)]" />
         </div>
       </div>
     )
@@ -207,15 +207,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const showEnvBanner = Boolean(envBannerText) && !useLocalQs
 
   return (
-    <div className="min-h-screen bg-base text-ink dark:bg-[var(--pss-page-bg)] dark:text-stone-100">
-      <header className="sticky top-0 z-40 border-b border-warm-base/80 bg-paper/85 backdrop-blur-md supports-[backdrop-filter]:bg-paper/75 dark:border-stone-800/70 dark:bg-stone-950/75 dark:supports-[backdrop-filter]:bg-stone-950/65">
+    <div className="min-h-screen bg-base text-ink dark:bg-[var(--pss-page-bg)] dark:text-[var(--pss-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-warm-base/80 bg-paper/85 backdrop-blur-md supports-[backdrop-filter]:bg-paper/75 dark:border-[var(--pss-border-subtle)] dark:bg-[var(--pss-elevated)]/92 dark:supports-[backdrop-filter]:bg-[var(--pss-elevated)]/88">
         <nav className="mx-auto flex max-w-5xl items-center gap-1 px-3 py-2 sm:gap-ds-xs sm:px-ds-md sm:py-ds-xs">
           <Link
             href={tabHref("home")}
             className={`rounded-[16px] px-4 py-2 text-ds-body font-semibold transition-all ${
               navHome
-                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-stone-800 dark:text-stone-100 dark:shadow-[inset_0_0_0_1px_rgba(120,113,108,0.5)]"
-                : "text-soft hover:bg-[#f4ebdf] dark:text-stone-300 dark:hover:bg-stone-800/80"
+                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-primary)] dark:shadow-[inset_0_0_0_1px_rgba(232,220,206,0.14)]"
+                : "text-soft hover:bg-[#f4ebdf] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-card)]"
             }`}
           >
             晓观
@@ -224,8 +224,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href={tabHref("relations")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
               navRelations
-                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-stone-800 dark:text-stone-100 dark:shadow-[inset_0_0_0_1px_rgba(120,113,108,0.5)]"
-                : "text-soft hover:bg-[#f4ebdf] dark:text-stone-300 dark:hover:bg-stone-800/80"
+                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-primary)] dark:shadow-[inset_0_0_0_1px_rgba(232,220,206,0.14)]"
+                : "text-soft hover:bg-[#f4ebdf] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-card)]"
             }`}
           >
             观系
@@ -234,8 +234,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href={tabHref("mine")}
             className={`rounded-btn-ds px-3 py-1.5 text-ds-body ${
               navMine
-                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-stone-800 dark:text-stone-100 dark:shadow-[inset_0_0_0_1px_rgba(120,113,108,0.5)]"
-                : "text-soft hover:bg-[#f4ebdf] dark:text-stone-300 dark:hover:bg-stone-800/80"
+                ? "bg-[#eadfce] text-ink shadow-[inset_0_0_0_1px_rgba(184,154,121,0.45)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-primary)] dark:shadow-[inset_0_0_0_1px_rgba(232,220,206,0.14)]"
+                : "text-soft hover:bg-[#f4ebdf] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-card)]"
             }`}
           >
             系统
@@ -257,53 +257,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="账户"
               className={
                 useLocalQs
-                  ? "flex h-8 w-8 items-center justify-center rounded-full bg-paper/80 text-ink/65 transition-colors hover:bg-[#f8f1e7] hover:text-ink dark:bg-stone-900/80 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-                  : "flex h-8 w-8 items-center justify-center rounded-full bg-paper text-ds-body font-semibold text-[#6d5433] transition-colors hover:bg-[#f8f1e7] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800"
+                  ? "flex h-8 w-8 items-center justify-center rounded-full bg-paper/80 text-ink/65 transition-colors hover:bg-[#f8f1e7] hover:text-ink dark:bg-[var(--pss-surface-card)] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-muted)] dark:hover:text-[var(--pss-text-primary)]"
+                  : "flex h-8 w-8 items-center justify-center rounded-full bg-paper text-ds-body font-semibold text-[#6d5433] transition-colors hover:bg-[#f8f1e7] dark:bg-[var(--pss-surface-card)] dark:text-[var(--pss-text-body)] dark:hover:bg-[var(--pss-surface-muted)]"
               }
               onClick={() => setShowUserMenu((prev) => !prev)}
             >
               <UserRound className="h-[1rem] w-[1rem]" strokeWidth={1.75} aria-hidden />
             </button>
             {showUserMenu ? (
-              <div className="absolute right-0 top-11 z-[90] w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg dark:border-stone-600 dark:bg-stone-900 dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+              <div className="absolute right-0 top-11 z-[90] w-52 rounded-ds border border-warm-base bg-surface-warm-soft p-1.5 shadow-lg dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-card)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                 {localGuest ? (
                   <>
                     <Link
                       href="/login"
-                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7] dark:text-stone-100 dark:hover:bg-stone-800"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7] dark:text-[var(--pss-text-primary)] dark:hover:bg-[var(--pss-surface-muted)]"
                       onClick={() => setShowUserMenu(false)}
                     >
                       登录
                     </Link>
                     <Link
                       href="/register"
-                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7] dark:text-stone-100 dark:hover:bg-stone-800"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7] dark:text-[var(--pss-text-primary)] dark:hover:bg-[var(--pss-surface-muted)]"
                       onClick={() => setShowUserMenu(false)}
                     >
                       注册 · 多设备同步
                     </Link>
-                    <Link
-                      href="/privacy-hub"
-                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-stone-400 dark:hover:bg-stone-800"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      隐私与信任
-                    </Link>
                   </>
                 ) : (
                   <>
-                    <Link
-                      href="/privacy-hub"
-                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-stone-400 dark:hover:bg-stone-800"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      隐私与信任
-                    </Link>
-                    <button className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-stone-400 dark:hover:bg-stone-800">
+                    <button className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-muted)]">
                       账户设置
                     </button>
                     <button
-                      className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-stone-400 dark:hover:bg-stone-800"
+                      className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-muted)]"
                       onClick={() => {
                         setShowUserMenu(false)
                         router.push("/pricing")
@@ -312,7 +298,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       订阅管理
                     </button>
                     <button
-                      className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-stone-400 dark:hover:bg-stone-800"
+                      className="w-full rounded-btn-ds px-3 py-2 text-left text-ds-body text-soft hover:bg-[#f8f1e7] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-muted)]"
                       onClick={async () => {
                         setShowUserMenu(false)
                         if (isBrowserSupabaseReady()) {
@@ -344,14 +330,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             查看部署指南
           </a>
           <button
-            className="ml-auto hidden rounded-btn-ds border border-[#e2cba4] bg-surface-warm-soft px-2.5 py-1 text-ds-caption hover:bg-[#fff4df] dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700 sm:inline-flex"
+            className="ml-auto hidden rounded-btn-ds border border-[#e2cba4] bg-surface-warm-soft px-2.5 py-1 text-ds-caption hover:bg-[#fff4df] dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-body)] dark:hover:bg-[var(--pss-surface-card)] sm:inline-flex"
             onClick={() => void copyEnvExample()}
           >
             {copiedEnv ? "已复制" : "复制环境变量示例"}
           </button>
         </div>
       ) : null}
-      <main className="mx-auto max-w-5xl bg-transparent p-ds-md pb-24 md:p-ds-lg md:pb-28 dark:bg-[var(--pss-page-bg)]">
+      <main className="mx-auto max-w-5xl bg-transparent p-ds-md pb-24 md:p-ds-lg md:pb-28">
         {children}
       </main>
     </div>

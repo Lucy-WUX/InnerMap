@@ -1,5 +1,10 @@
 import Link from "next/link"
 
+import { BackNavButton } from "@/components/back-nav-button"
+
+const btnClass =
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
+
 export default function PersonalInfoCollectionPage() {
   return (
     <div className="min-h-screen bg-base px-4 py-10 text-ink sm:px-6">
@@ -17,12 +22,12 @@ export default function PersonalInfoCollectionPage() {
           </Link>
           。本页为合规导航入口，随版本补充更细条目。
         </p>
-        <Link
-          href="/privacy"
-          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
-        >
-          阅读隐私政策
-        </Link>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <BackNavButton className={btnClass} />
+          <Link href="/privacy" className={btnClass}>
+            阅读隐私政策
+          </Link>
+        </div>
       </div>
     </div>
   )

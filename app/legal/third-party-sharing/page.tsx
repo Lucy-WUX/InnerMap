@@ -1,5 +1,10 @@
 import Link from "next/link"
 
+import { BackNavButton } from "@/components/back-nav-button"
+
+const btnClass =
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
+
 export default function ThirdPartySharingPage() {
   return (
     <div className="min-h-screen bg-base px-4 py-10 text-ink sm:px-6">
@@ -13,12 +18,12 @@ export default function ThirdPartySharingPage() {
           </Link>{" "}
           与信任中心说明为准。
         </p>
-        <Link
-          href="/privacy-hub"
-          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
-        >
-          前往信任中心
-        </Link>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <BackNavButton className={btnClass} />
+          <Link href="/privacy-hub" className={btnClass}>
+            前往信任中心
+          </Link>
+        </div>
       </div>
     </div>
   )

@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { BackNavButton } from "@/components/back-nav-button"
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-base px-4 py-10 text-ink sm:px-6">
@@ -46,12 +48,7 @@ export default function PrivacyPage() {
         <p className="mt-6 text-sm leading-7 text-soft">
           若本页与具体功能界面表述不一致，以本页及后续更新为准。如有疑问，可通过应用内渠道或仓库联系方式反馈。
         </p>
-        <Link
-          href="/"
-          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"
-        >
-          返回首页
-        </Link>
+        <BackNavButton className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-5 py-2 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]" />
       </div>
     </div>
   )

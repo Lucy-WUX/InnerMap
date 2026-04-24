@@ -1047,12 +1047,12 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
 
   if (!appReady) {
     return (
-      <main className="min-h-screen bg-base px-ds-md pb-ds-lg pt-ds-md">
+      <main className="min-h-screen bg-base px-ds-md pb-ds-lg pt-ds-md dark:bg-[var(--pss-page-bg)]">
         <div className="mx-auto max-w-5xl space-y-ds-md animate-pulse">
-          <div className="h-11 w-full rounded-ds bg-[#efe6d9]" />
+          <div className="h-11 w-full rounded-ds bg-[#efe6d9] dark:bg-[var(--pss-surface-card)]" />
           <div className="grid gap-ds-md lg:grid-cols-[320px_1fr]">
-            <div className="h-56 rounded-ds bg-[#f4ecdf]" />
-            <div className="h-72 rounded-ds bg-[#f4ecdf]" />
+            <div className="h-56 rounded-ds bg-[#f4ecdf] dark:bg-[var(--pss-surface-muted)]" />
+            <div className="h-72 rounded-ds bg-[#f4ecdf] dark:bg-[var(--pss-surface-muted)]" />
           </div>
         </div>
       </main>
@@ -1084,7 +1084,7 @@ function App({ initialTab = "relations" }: { initialTab?: TabKey }) {
           </button>
           <button
             type="button"
-            className="shrink-0 rounded px-2 py-0.5 text-[#795548] hover:bg-[#ece4d8]"
+            className="shrink-0 rounded px-2 py-0.5 text-[#795548] hover:bg-[#ece4d8] dark:text-[var(--pss-text-muted)] dark:hover:bg-[var(--pss-surface-muted)]"
             aria-label="关闭提醒"
             onClick={() => {
               dismissMonthlyBackupBannerForMonth()
