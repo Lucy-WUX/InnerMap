@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState, type FormEvent } from "react"
 
 import { getSupabaseBrowserClient, isBrowserSupabaseReady, isDemoModeEnabled } from "@/lib/supabase-browser"
+import { cn } from "@/src/lib/utils"
+import { Button, buttonVariants } from "@/src/components/ui/button"
 
 const EMAIL_EMPTY = "请输入邮箱地址"
 const EMAIL_INVALID = "请输入有效的邮箱地址"
@@ -505,25 +507,25 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                       >
                         取消
                       </button>
-                      <button
+                      <Button
                         type="button"
                         disabled={forgotSending || missingEnv}
                         onClick={() => void sendPasswordReset()}
-                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-4 py-2 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50"
+                        className="inline-flex min-h-11 rounded-full px-4 py-2 text-sm shadow-sm"
                       >
                         {forgotSending ? "发送中…" : "确认发送"}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : null}
 
-                <button
+                <Button
                   type="submit"
                   disabled={loading || missingEnv}
-                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50"
+                  className="flex min-h-11 w-full justify-center rounded-full px-4 py-2.5 text-sm shadow-sm"
                 >
                   {loading ? "登录中…" : "登录"}
-                </button>
+                </Button>
                 {error ? <p className="mt-3 text-sm text-land-error">{error}</p> : null}
               </form>
 
@@ -608,13 +610,13 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                   </button>
                 </div>
 
-                <button
+                <Button
                   type="submit"
                   disabled={loading || missingEnv}
-                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50"
+                  className="flex min-h-11 w-full justify-center rounded-full px-4 py-2.5 text-sm shadow-sm"
                 >
                   {loading ? "注册中…" : "注册"}
-                </button>
+                </Button>
               </form>
 
               <p className="mt-6 text-center text-sm text-[#5c4d42]">
@@ -669,14 +671,14 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
                       {resendingOtp ? "发送中" : resendCooldown > 0 ? `${resendCooldown}s 后重发` : "重发验证码"}
                     </button>
                   </div>
-                  <button
+                  <Button
                     type="button"
-                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9] disabled:opacity-50 sm:w-auto"
+                    className="mt-3 inline-flex min-h-11 w-full justify-center rounded-full px-4 py-2.5 text-sm shadow-sm sm:w-auto"
                     onClick={() => void verifyEmailOtp()}
                     disabled={verifyingOtp}
                   >
                     {verifyingOtp ? "验证中…" : "验证并登录"}
-                  </button>
+                  </Button>
                 </div>
               ) : null}
 
@@ -691,7 +693,10 @@ export function AuthPageClient({ variant }: { variant: AuthPageVariant }) {
             </p>
             <Link
               href={LOCAL_MODE_HREF}
-              className="mt-5 flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-4 py-3 text-center text-sm font-bold text-[#fffdf9] shadow-lg transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]"
+              className={cn(
+                buttonVariants({ variant: "default", size: "lg" }),
+                "mt-5 flex min-h-12 w-full justify-center rounded-full text-center text-sm font-bold shadow-lg"
+              )}
             >
               直接进入本地模式 →
             </Link>

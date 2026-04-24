@@ -243,7 +243,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="ml-auto" />
           {!useLocalQs ? (
             <button
-              className="mr-1 rounded-[16px] border border-[#b6905e] bg-[#7a5a2e] px-3 py-2 text-ds-body font-semibold text-[#fffdf9] shadow-[0_4px_12px_rgba(122,90,46,0.26)] transition-all hover:-translate-y-0.5 hover:bg-[#694d27] hover:shadow-[0_8px_18px_rgba(122,90,46,0.28)] sm:mr-ds-xs sm:px-4"
+              type="button"
+              className="mr-1 rounded-[16px] border border-[#8B5A42] bg-[#f4e9dd] px-3 py-2 text-ds-body font-semibold text-[#6B3F2E] shadow-[0_4px_12px_rgba(122,90,46,0.14)] transition-all hover:-translate-y-0.5 hover:bg-[#ead9c8] hover:text-[#4a2c20] hover:shadow-[0_8px_18px_rgba(122,90,46,0.18)] dark:border-[var(--pss-border-mid)] dark:bg-[var(--pss-surface-muted)] dark:text-[var(--pss-text-primary)] dark:hover:bg-[#3a3530] sm:mr-ds-xs sm:px-4"
               onClick={() => router.push("/pricing")}
             >
               <span className="sm:hidden">👑</span>
@@ -281,6 +282,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       onClick={() => setShowUserMenu(false)}
                     >
                       注册 · 多设备同步
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="block w-full rounded-btn-ds px-3 py-2 text-left text-ds-body font-semibold text-ink hover:bg-[#f8f1e7] dark:text-[var(--pss-text-primary)] dark:hover:bg-[var(--pss-surface-muted)]"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      👑 升级 Pro · 心意与支持
                     </Link>
                   </>
                 ) : (

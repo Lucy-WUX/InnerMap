@@ -2,6 +2,8 @@ import Link from "next/link"
 
 import { BackNavButton } from "@/components/back-nav-button"
 import { LOCAL_MODE_HREF } from "@/lib/local-mode"
+import { buttonVariants } from "@/src/components/ui/button"
+import { cn } from "@/src/lib/utils"
 
 export default function NotFound() {
   return (
@@ -12,7 +14,12 @@ export default function NotFound() {
         页面不存在或链接已失效。你可以返回上一页，若无历史记录将回到首页；也可直接进入本地模式继续记录。
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <BackNavButton className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 text-sm font-medium text-[#fffdf9] shadow-sm transition-colors hover:bg-[#6d4c41] hover:text-[#fffdf9]" />
+        <BackNavButton
+          className={cn(
+            buttonVariants({ variant: "default" }),
+            "inline-flex min-h-11 rounded-full px-6 py-2.5 text-sm shadow-sm"
+          )}
+        />
         <Link
           href={LOCAL_MODE_HREF}
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#d3c3b1] bg-white px-6 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-[#f8f1e7]"

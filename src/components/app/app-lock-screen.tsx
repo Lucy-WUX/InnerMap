@@ -95,7 +95,7 @@ export function AppLockScreen({ settings, storageScope, onUnlocked }: AppLockScr
             />
             {error ? <p className="mt-ds-xs text-ds-caption text-[#f5a8a0]">{error}</p> : null}
             <Button
-              className="mt-ds-md w-full bg-[#a67c52] text-[#fffdf9] hover:bg-[#956f49]"
+              className="mt-ds-md w-full border-[#c4a882] bg-[#f4e9dd] text-[#6B3F2E] hover:bg-[#ead9c8] hover:text-[#4a2c20]"
               disabled={busy || !pin}
               onClick={() => void submitPassword()}
             >
