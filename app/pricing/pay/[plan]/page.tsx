@@ -56,17 +56,17 @@ export default function PricingPayPage({ params }: PayPageProps) {
   }
 
   const backBtnClass =
-    "inline-flex min-h-10 items-center justify-center rounded-full border border-[#c4a882] bg-[#fffdf9] px-4 py-2 text-sm font-semibold text-[#6B3F2E] shadow-[0_1px_3px_rgba(107,63,46,0.08)] transition-colors hover:bg-[#faf3eb] dark:border-[#c4a882] dark:bg-[#fffdf9] dark:text-[#6B3F2E]"
+    "inline-flex min-h-10 items-center justify-center rounded-full border border-[#c4a882] bg-[#fffdf9] px-4 py-2 text-sm font-semibold text-[#3d2a22] shadow-[0_1px_3px_rgba(107,63,46,0.08)] transition-colors hover:bg-[#faf3eb] dark:border-[#c4a882] dark:bg-[#fffdf9] dark:text-[#3d2a22]"
 
   if (!plan) {
     return (
-      <main className="min-h-screen bg-[#faf8f5] px-4 py-10 text-[#4f3a2c] [color-scheme:light] dark:bg-[#faf8f5] dark:text-[#4f3a2c]">
+      <main className="pricing-pay-root min-h-screen bg-[#faf8f5] px-4 py-10 text-[#4a3026] [color-scheme:light] dark:bg-[#faf8f5] dark:text-[#4a3026]">
         <div className="mx-auto max-w-[760px] space-y-4">
           <BackNavButton fallbackHref="/pricing" className={backBtnClass}>
             ← 返回
           </BackNavButton>
           <div className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] dark:border-[#e7dacc] dark:bg-[#fffdf9]">
-            <p className="text-lg dark:text-[#4f3a2c]">未找到对应套餐，请返回定价页重新选择。</p>
+            <p className="text-lg font-medium text-[#3d2a22] dark:text-[#3d2a22]">未找到对应套餐，请返回定价页重新选择。</p>
           </div>
         </div>
       </main>
@@ -74,7 +74,7 @@ export default function PricingPayPage({ params }: PayPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] px-4 py-8 text-[#6B3F2E] [color-scheme:light] dark:bg-[#faf8f5] dark:text-[#6B3F2E] md:px-8">
+    <main className="pricing-pay-root min-h-screen bg-[#faf8f5] px-4 py-8 text-[#4a3026] [color-scheme:light] dark:bg-[#faf8f5] dark:text-[#4a3026] md:px-8">
       <div className="mx-auto w-full max-w-[1200px] space-y-6">
         <div>
           <BackNavButton fallbackHref="/pricing" className={backBtnClass}>
@@ -82,33 +82,33 @@ export default function PricingPayPage({ params }: PayPageProps) {
           </BackNavButton>
         </div>
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] dark:border-[#e7dacc] dark:bg-[#fffdf9]">
-          <h1 className="text-2xl font-bold text-[#6B3F2E] dark:text-[#6B3F2E] md:text-3xl">💛 嗨，我是晓观</h1>
-          <p className="mt-3 text-base leading-7 text-[#6B3F2E] dark:text-[#6B3F2E]">
+          <h1 className="text-2xl font-bold text-[#3d2a22] dark:text-[#3d2a22] md:text-3xl">💛 嗨，我是晓观</h1>
+          <p className="mt-3 text-base leading-7 text-[#4a3026] dark:text-[#4a3026]">
             很开心能陪你走过人际关系里的每一段细碎旅程，接住你的情绪内耗，帮你看清每一段关系里的真心与距离。
           </p>
-          <p className="mt-3 text-base leading-7 text-[#6B3F2E] dark:text-[#6B3F2E]">
+          <p className="mt-3 text-base leading-7 text-[#4a3026] dark:text-[#4a3026]">
             我是个人独立开发的陪伴工具，没有融资、没有广告，只靠你的善意与心意，才能一直安安静静地陪着你，慢慢更新、慢慢变好。
           </p>
-          <p className="mt-3 text-base leading-7 text-[#6B3F2E] dark:text-[#6B3F2E]">
+          <p className="mt-3 text-base leading-7 text-[#4a3026] dark:text-[#4a3026]">
             如果你觉得我的陪伴对你有帮助，可以选一份小小的心意支持我，我会用更长时间的专属陪伴，来回馈你的信任。
           </p>
-          <p className="mt-4 rounded-[12px] border border-[#e5d0bf] bg-[#fdf7ef] px-4 py-3 text-sm font-semibold text-[#6B3F2E] dark:border-[#e5d0bf] dark:bg-[#fdf7ef] dark:text-[#6B3F2E]">
+          <p className="mt-4 rounded-[12px] border border-[#e5d0bf] bg-[#fdf7ef] px-4 py-3 text-sm font-semibold text-[#3d2a22] dark:border-[#e5d0bf] dark:bg-[#fdf7ef] dark:text-[#3d2a22]">
             所有心意均为自愿赠与，不强制、不自动续费、不退款。
           </p>
         </section>
 
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] dark:border-[#e7dacc] dark:bg-[#fffdf9]">
-          <h2 className="text-xl font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">你选择的心意方案</h2>
-          <p className="mt-1 text-sm leading-relaxed text-[#5C4B3E] dark:text-[#5C4B3E]">
+          <h2 className="text-xl font-semibold text-[#3d2a22] dark:text-[#3d2a22]">你选择的心意方案</h2>
+          <p className="mt-1 text-sm leading-relaxed text-[#4a3026] dark:text-[#4a3026]">
             以下仅展示你从定价页进入的这一档说明。若想更换档位，可先返回定价页重新选择。
           </p>
           <div className="mt-4">
             <div className="rounded-[12px] border-2 border-[#d4bc9f] bg-[#fff8ef] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:border-[#d4bc9f] dark:bg-[#fff8ef]">
-              <p className="text-base font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">
+              <p className="text-base font-semibold text-[#3d2a22] dark:text-[#3d2a22]">
                 {plan.title} · {plan.subtitle} | {plan.price}
               </p>
-              <p className="mt-3 text-sm leading-7 text-[#6B3F2E] dark:text-[#6B3F2E]">{plan.quote}</p>
-              <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[#6B3F2E] marker:text-[#8B5A42] dark:text-[#6B3F2E] dark:marker:text-[#8B5A42]">
+              <p className="mt-3 text-sm leading-7 text-[#4a3026] dark:text-[#4a3026]">{plan.quote}</p>
+              <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[#4a3026] marker:text-[#6b4a18] dark:text-[#4a3026] dark:marker:text-[#6b4a18]">
                 {plan.bullets.map((line) => (
                   <li key={line}>{line}</li>
                 ))}
@@ -118,52 +118,52 @@ export default function PricingPayPage({ params }: PayPageProps) {
         </section>
 
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] dark:border-[#e7dacc] dark:bg-[#fffdf9]">
-          <h2 className="text-xl font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">我的专属陪伴，会为你带来</h2>
-          <ul className="mt-4 list-disc space-y-2 pl-5 text-base leading-7 text-[#6B3F2E] marker:text-[#8B5A42] dark:text-[#6B3F2E] dark:marker:text-[#8B5A42]">
-            <li className="text-[#6B3F2E] dark:text-[#6B3F2E]">无限次和我倾诉你的关系困扰，我会一直在这里听你说</li>
-            <li className="text-[#6B3F2E] dark:text-[#6B3F2E]">专属的深度关系分析，帮你看清每一段关系的真心与距离</li>
-            <li className="text-[#6B3F2E] dark:text-[#6B3F2E]">每一个联系人的专属陪伴顾问，随时为你解答关于 TA 的困惑</li>
-            <li className="text-[#6B3F2E] dark:text-[#6B3F2E]">完整的关系趋势与情绪复盘，陪你看见自己的每一步成长</li>
-            <li className="text-[#6B3F2E] dark:text-[#6B3F2E]">未来所有新的陪伴功能，你都能第一时间体验</li>
-            <li className="text-[#6B3F2E] dark:text-[#6B3F2E]">多设备同步，无论你在哪，我都能接住你的情绪</li>
+          <h2 className="text-xl font-semibold text-[#3d2a22] dark:text-[#3d2a22]">我的专属陪伴，会为你带来</h2>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-base leading-7 text-[#4a3026] marker:text-[#6b4a18] dark:text-[#4a3026] dark:marker:text-[#6b4a18]">
+            <li className="text-[#4a3026] dark:text-[#4a3026]">AI 询问无限次，想到就能问，我会一直在这里听你说</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">按档位开放关系复盘与日记复盘推送（日/周/月/年）</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">每一个联系人的专属陪伴顾问，随时为你解答关于 TA 的困惑</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">完整的关系趋势与情绪复盘，陪你看见自己的每一步成长</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">未来所有新的陪伴功能，你都能第一时间体验</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">注册账号即可多设备同步，这不是 Pro 限定能力</li>
           </ul>
         </section>
 
         <section className="rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] p-6 shadow-[0_6px_18px_rgba(95,73,53,0.08)] dark:border-[#e7dacc] dark:bg-[#fffdf9]">
-          <h2 className="text-xl font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">如何开启我的专属陪伴</h2>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-7 text-[#5C3E2F] dark:text-[#5C3E2F]">
-            <li className="text-[#5C3E2F] dark:text-[#5C3E2F]">
+          <h2 className="text-xl font-semibold text-[#3d2a22] dark:text-[#3d2a22]">如何开启我的专属陪伴</h2>
+          <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-7 text-[#4a3026] dark:text-[#4a3026]">
+            <li className="text-[#4a3026] dark:text-[#4a3026]">
               确认你的心意档位：
-              <span className="font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">
+              <span className="font-semibold text-[#3d2a22] dark:text-[#3d2a22]">
                 {plan.title} · {plan.subtitle}（{plan.price}）
               </span>
             </li>
-            <li className="text-[#5C3E2F] dark:text-[#5C3E2F]">
-              添加我的微信：<span className="font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">Soulrain--</span>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">
+              添加我的微信：<span className="font-semibold text-[#3d2a22] dark:text-[#3d2a22]">Soulrain--</span>
             </li>
-            <li className="text-[#5C3E2F] dark:text-[#5C3E2F]">转账时记得备注你的注册账号/邮箱，让我能找到你</li>
-            <li className="text-[#5C3E2F] dark:text-[#5C3E2F]">我会在当天内，为你开启专属的陪伴权限</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">转账时记得备注你的注册账号/邮箱，让我能找到你</li>
+            <li className="text-[#4a3026] dark:text-[#4a3026]">我会在当天内，为你开启专属的陪伴权限</li>
           </ol>
-          <p className="mt-4 rounded-[12px] border border-[#e5d0bf] bg-[#fdf7ef] px-4 py-3 text-sm font-semibold text-[#6B3F2E] dark:border-[#e5d0bf] dark:bg-[#fdf7ef] dark:text-[#6B3F2E]">
+          <p className="mt-4 rounded-[12px] border border-[#e5d0bf] bg-[#fdf7ef] px-4 py-3 text-sm font-semibold text-[#3d2a22] dark:border-[#e5d0bf] dark:bg-[#fdf7ef] dark:text-[#3d2a22]">
             所有心意均为自愿赠与，不强制、不自动续费、不退款。
           </p>
         </section>
 
         <section className="rounded-[16px] border border-[#d8c9b8] bg-[#fffaf4] p-6 shadow-[0_8px_20px_rgba(95,73,53,0.12)] dark:border-[#d8c9b8] dark:bg-[#fffaf4]">
-          <h2 className="text-xl font-semibold text-[#6B3F2E] dark:text-[#6B3F2E]">🔑 已有兑换码？直接激活</h2>
-          <p className="mt-2 text-base text-[#6B3F2E] dark:text-[#6B3F2E]">
+          <h2 className="text-xl font-semibold text-[#3d2a22] dark:text-[#3d2a22]">🔑 已有兑换码？直接激活</h2>
+          <p className="mt-2 text-base text-[#4a3026] dark:text-[#4a3026]">
             输入兑换码后即可激活对应陪伴时长。无需强制注册，也支持本地模式激活。
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
               value={redeemCode}
               onChange={(e) => setRedeemCode(e.target.value.trim())}
-              className="h-11 w-full rounded-[16px] border border-[#c8b49f] bg-[#fffdf9] px-4 text-base text-[#6B3F2E] outline-none ring-0 transition-shadow placeholder:text-[#9a7b62] focus:border-[#8b5a42] focus:shadow-[0_0_0_3px_rgba(139,90,66,0.18)] dark:border-[#c8b49f] dark:bg-[#fffdf9] dark:text-[#6B3F2E] dark:placeholder:text-[#9a7b62]"
+              className="h-11 w-full rounded-[16px] border border-[#c8b49f] bg-[#fffdf9] px-4 text-base text-[#3d2a22] outline-none ring-0 transition-shadow placeholder:text-[#7a5c45] focus:border-[#8b5a42] focus:shadow-[0_0_0_3px_rgba(139,90,66,0.18)] dark:border-[#c8b49f] dark:bg-[#fffdf9] dark:text-[#3d2a22] dark:placeholder:text-[#7a5c45]"
               placeholder="请输入兑换码"
             />
             <button
               type="button"
-              className="cursor-pointer rounded-[16px] border border-[#c8b49f] bg-[#f7efe4] px-6 py-3 text-base font-semibold text-[#6B3F2E] transition-colors hover:bg-[#f1e3d1] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#c8b49f] dark:bg-[#f7efe4] dark:text-[#6B3F2E] dark:hover:bg-[#f1e3d1]"
+              className="cursor-pointer rounded-[16px] border border-[#b8a090] bg-[#f0e4d6] px-6 py-3 text-base font-semibold text-[#3d2a22] transition-colors hover:bg-[#e8d8c4] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#b8a090] dark:bg-[#f0e4d6] dark:text-[#3d2a22] dark:hover:bg-[#e8d8c4]"
               onClick={redeemNow}
               disabled={redeemBusy}
             >
@@ -171,7 +171,7 @@ export default function PricingPayPage({ params }: PayPageProps) {
             </button>
           </div>
           {redeemTip ? (
-            <p className="mt-3 text-sm font-medium text-[#5a3f2f] dark:text-[#5a3f2f]">{redeemTip}</p>
+            <p className="mt-3 text-sm font-medium text-[#4a3026] dark:text-[#4a3026]">{redeemTip}</p>
           ) : null}
         </section>
       </div>

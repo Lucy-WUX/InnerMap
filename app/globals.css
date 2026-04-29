@@ -48,6 +48,17 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* 全局将白色文字统一替换为品牌棕色，避免浅底白字不可读 */
+:where(
+    .text-white,
+    [class*="text-[#fff"],
+    [class*="text-[#FFF"],
+    [class*="text-[white"],
+    [class*="text-[White"]
+  ) {
+  color: #6b3f2e !important;
+}
+
 /* Lucide：统一线性图标粗细，与文字同色（currentColor） */
 .lucide {
   stroke-width: 1.75;
@@ -104,4 +115,32 @@ html.dark ::-moz-selection {
     width: min(100%, calc(100vw - 1rem));
     max-width: calc(100vw - 1rem);
   }
+}
+
+/**
+ * 定价支付页（/pricing/pay/*）：浅色卡片 + 深棕字。
+ * html.dark 时 body 使用浅色正文；此处仍为浅色背景，若仅继承 body 色会导致正文像「白字」、看不清。
+ */
+.pricing-pay-root {
+  color: #4a3026;
+}
+
+.pricing-pay-root :is(h1, h2) {
+  color: #3d2a22;
+}
+
+.pricing-pay-root :is(p, li) {
+  color: #4a3026;
+}
+
+html.dark .pricing-pay-root :is(p, li) {
+  color: #4a3026 !important;
+}
+
+html.dark .pricing-pay-root :is(h1, h2) {
+  color: #3d2a22 !important;
+}
+
+html.dark .pricing-pay-root input:not([type="checkbox"]):not([type="radio"]) {
+  color: #3d2a22 !important;
 }
