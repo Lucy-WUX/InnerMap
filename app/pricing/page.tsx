@@ -38,6 +38,12 @@ export default function PricingPage() {
         </section>
 
         <section className="overflow-x-auto rounded-[16px] border border-[#e7dacc] bg-[#fffdf9] shadow-[0_6px_18px_rgba(95,73,53,0.08)]">
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#f0e7dd] px-4 py-3 text-xs text-[#6e5c4d]">
+            <span className="inline-flex items-center rounded-full bg-[#f3e3cd] px-2.5 py-1 font-semibold text-[#7a4b2f]">永久</span>
+            <span className="inline-flex items-center rounded-full bg-[#e7f4ea] px-2.5 py-1 font-semibold text-[#1f6a36]">含 / 免费可用</span>
+            <span className="inline-flex items-center rounded-full bg-[#f9e5e4] px-2.5 py-1 font-semibold text-[#9a3329]">不含</span>
+            <span className="ml-auto text-[#8a7564]">一眼看清不同档位权益范围</span>
+          </div>
           <table className="w-full min-w-[760px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#eee2d5] bg-[#f9f2e8] text-sm text-[#3d2a22]">

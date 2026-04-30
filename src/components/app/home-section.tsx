@@ -69,6 +69,8 @@ type ChatMessage = {
   content: string
 }
 
+type ChatPhase = "idle" | "sending" | "retrying"
+
 const DAILY_LIMIT = 15
 
 function usageStorageKey(scope: string) {
@@ -132,6 +134,7 @@ export function HomeSection(props: HomeSectionProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
+  const [chatPhase, setChatPhase] = useState<ChatPhase>("idle")
   const [chatError, setChatError] = useState("")
   const [freeUsed, setFreeUsed] = useState(0)
   const [showDiaryModal, setShowDiaryModal] = useState(false)
@@ -259,34 +262,51 @@ export function HomeSection(props: HomeSectionProps) {
     setChatInput("")
     setChatMessages((prev) => [...prev, { id: `${Date.now()}-u`, role: "user", content: text }])
     setChatLoading(true)
+    setChatPhase("sending")
 
     try {
-      const response = await fetch("/api/ai/contact-advisor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          context: `联系人:${contacts.length}; 预警:${energyAlerts.length}; 日期:${diarySelectedDate}`,
-        }),
-      })
-      const data = (await response.json().catch(() => ({}))) as { reply?: string; error?: string }
-      if (!response.ok || !data.reply) {
-        setChatError(data.error ?? "晓观暂时无法回复，请稍后再试。")
+      let reply: string | null = null
+      let lastError = "晓观暂时无法回复，请稍后再试。"
+
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        if (attempt === 2) setChatPhase("retrying")
+        const response = await fetch("/api/ai/contact-advisor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            context: `联系人:${contacts.length}; 预警:${energyAlerts.length}; 日期:${diarySelectedDate}`,
+          }),
+        })
+        const data = (await response.json().catch(() => ({}))) as { reply?: string; error?: string }
+        if (response.ok && data.reply) {
+          reply = data.reply
+          break
+        }
+        lastError = data.error ?? lastError
+      }
+
+      if (!reply) {
+        setChatError(lastError)
         return
       }
-      setChatMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: "assistant", content: data.reply ?? "" }])
+
+      setChatMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: "assistant", content: reply }])
       if (!isPro) setFreeUsed((prev) => prev + 1)
     } catch {
       setChatError("网络连接异常，请稍后重试。")
     } finally {
       setChatLoading(false)
+      setChatPhase("idle")
     }
   }
 
   return (
     <section className="space-y-ds-md pb-28">
       <Card className="rounded-ds border border-warm-base bg-paper p-ds-lg text-center dark:border-[var(--pss-border-subtle)]">
-        <div className="mx-auto h-20 w-20 rounded-full bg-[#d4b79d] dark:bg-[var(--pss-surface-muted)]" />
+        <div className="mx-auto h-20 w-20 overflow-hidden rounded-full border border-[#d7c4af] bg-[#efe4d6] shadow-[0_2px_6px_rgba(107,63,46,0.12)]">
+          <img src="/xiaoguan-ip-avatar.png" alt="晓观头像" className="h-full w-full object-cover" loading="eager" />
+        </div>
         <h2 className="mt-3 text-ds-title font-semibold text-[#5C4B3E] dark:text-[var(--pss-text-primary)]">晓观 · 你的专属人际关系AI</h2>
         <p className="mt-1 text-ds-body font-medium leading-[1.5] text-[#5C4B3E] dark:text-[var(--pss-text-body)]">
           看清关系，减少内耗，AI陪伴分析
@@ -766,6 +786,11 @@ export function HomeSection(props: HomeSectionProps) {
             ➤
           </button>
         </div>
+        {chatLoading ? (
+          <p className="mt-1 text-center text-ds-caption text-[#7a5a2e]">
+            {chatPhase === "retrying" ? "连接波动，正在重试..." : "晓观正在思考..."}
+          </p>
+        ) : null}
         {!isPro ? (
           <p className="mt-2 text-center text-ds-caption text-[#5C4B3E] dark:text-[var(--pss-text-muted)]">
             {hitLimit ? (

@@ -13,7 +13,14 @@ import { ScoreTrendChart } from "./score-trend-chart"
 
 /** 与晓观首页顶部头像同色、同形 */
 function XiaoguanAvatar({ className = "" }: { className?: string }) {
-  return <div className={`shrink-0 rounded-full bg-[#d4b79d] ${className}`} aria-hidden />
+  return (
+    <div
+      className={`shrink-0 overflow-hidden rounded-full border border-[#d7c4af] bg-[#efe4d6] shadow-[0_2px_6px_rgba(107,63,46,0.12)] ${className}`}
+      aria-hidden
+    >
+      <img src="/xiaoguan-ip-avatar.png" alt="" className="h-full w-full object-cover" loading="lazy" />
+    </div>
+  )
 }
 
 function UserAvatar({ className = "" }: { className?: string }) {
@@ -781,8 +788,8 @@ export function PersonDetailOverlay({
               aria-label="问晓观"
               onClick={openMobileSheet}
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fffdf9] text-sm font-semibold text-[#8B5A42]">
-                观
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[#eadfce] bg-[#fffdf9]">
+                <img src="/xiaoguan-ip-avatar.png" alt="" className="h-full w-full object-cover" loading="lazy" />
               </span>
             </button>
           </div>

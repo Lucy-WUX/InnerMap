@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { coachCorePrompt, consumeDailyQuota, getAiClient, getRecentEntryContext } from "@/lib/ai"
+import { coachCorePrompt, consumeDailyQuota, getAiClient, getAiModel, getRecentEntryContext } from "@/lib/ai"
 import { aiJsonError, logAiRouteEvent, newAiRequestId } from "@/lib/ai-route-helpers"
 import { getUserIdFromRequest } from "@/lib/api-auth"
 
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     )}\n\n按以下结构输出，<=100字：\n- 关系倾向\n- 情感支持度\n- 稳定性\n- 风险提示\n- 互动模式\n- 建议方向\n要求用「可能/倾向/可以考虑」，不替用户做决定；建议方向须指向 JSON 中的具体事件，无细节则说明线索不足。`
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: getAiModel("gpt-4.1-mini"),
       temperature: 0.6,
       messages: [
         { role: "system", content: coachCorePrompt },

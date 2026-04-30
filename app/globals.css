@@ -73,23 +73,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* 全局将白色文字统一替换为品牌棕色，避免浅底白字不可读 */
-:where(
-    .text-white,
-    [class*="text-[#fff"],
-    [class*="text-[#FFF"],
-    [class*="text-[#faf"],
-    [class*="text-[#FAF"],
-    [class*="text-[#fdf"],
-    [class*="text-[#FDF"],
-    [class*="text-[#f5"],
-    [class*="text-[#F5"],
-    [class*="text-[white"],
-    [class*="text-[White"]
-  ) {
-  color: #6b3f2e !important;
-}
-
 /* Lucide：统一线性图标粗细，与文字同色（currentColor） */
 .lucide {
   stroke-width: 1.75;

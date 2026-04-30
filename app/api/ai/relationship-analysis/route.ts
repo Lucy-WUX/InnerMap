@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { structuredCoachPrompt, consumeDailyQuota, getAiClient, getRecentEntryContext } from "@/lib/ai"
+import { structuredCoachPrompt, consumeDailyQuota, getAiClient, getAiModel, getRecentEntryContext } from "@/lib/ai"
 import { aiJsonError, logAiRouteEvent, newAiRequestId } from "@/lib/ai-route-helpers"
 import { getUserIdFromRequest } from "@/lib/api-auth"
 
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     )}\n\n请按固定结构输出：\n【情绪识别】\n【关系模式】\n【可能的另一种视角】\n【风险提示】\n【建议方向】\n\n务必<=100字，不给绝对结论；建议须指向 JSON 中的具体细节，无细节则明确写“线索不足”。`
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: getAiModel("gpt-4.1-mini"),
       temperature: 0.6,
       messages: [
         { role: "system", content: structuredCoachPrompt },

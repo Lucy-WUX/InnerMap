@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { structuredCoachPrompt, consumeDailyQuota, getAiClient, getRecentEntryContext } from "@/lib/ai"
+import { structuredCoachPrompt, consumeDailyQuota, getAiClient, getAiModel, getRecentEntryContext } from "@/lib/ai"
 import { aiJsonError, logAiRouteEvent, newAiRequestId } from "@/lib/ai-route-helpers"
 import { getUserIdFromRequest } from "@/lib/api-auth"
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }))
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAiModel("gpt-4o-mini"),
       temperature: 0.7,
       messages: [
         { role: "system", content: structuredCoachPrompt },

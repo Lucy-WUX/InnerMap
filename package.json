@@ -7,7 +7,8 @@
     "dev": "next dev -p 5173",
     "build": "next build --webpack",
     "lint": "eslint .",
-    "start": "next start -p 5173"
+    "start": "next start -p 5173",
+    "ai:eval": "node scripts/ai-eval.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",

@@ -53,6 +53,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       "NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key",
       "SUPABASE_SERVICE_ROLE_KEY=your-service-role-key",
       "AI_API_KEY=your-ai-api-key",
+      "AI_BASE_URL=https://api.deepseek.com",
+      "AI_MODEL=deepseek-chat",
     ].join("\n")
     await navigator.clipboard.writeText(envExample)
     setCopiedEnv(true)
@@ -200,7 +202,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const envBannerText = hasSupabaseMissing
     ? "⚠️ Supabase 环境变量未配置完整，当前无法使用登录与云端数据。"
     : hasAiMissing
-      ? "⚠️ AI_API_KEY 未配置，AI 功能暂不可用，基础记录功能可继续使用。"
+      ? "⚠️ AI_API_KEY 未配置，AI 功能暂不可用（DeepSeek 请同时配置 AI_BASE_URL 与 AI_MODEL）。"
       : envError || envHint
 
   /** 纯本地访客：不展示云端/部署类提示，顶栏保持极简 */
