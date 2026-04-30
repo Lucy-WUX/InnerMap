@@ -15,20 +15,20 @@ html {
 
 html.dark {
   color-scheme: dark;
-  /* 暖调深色：与品牌棕系一致，避免「纯黑顶栏 + 米色内容」割裂 */
-  --pss-page-bg: #12100e;
-  --pss-elevated: #1a1816;
-  --pss-bar-bg: #181615;
-  --pss-surface-card: #221f1c;
-  --pss-surface-muted: #2b2724;
-  --pss-surface-inset: #171412;
+  /* 暖调深色：整体提亮一档，避免页面落成“黑灰块” */
+  --pss-page-bg: #1b1714;
+  --pss-elevated: #241f1a;
+  --pss-bar-bg: #221d18;
+  --pss-surface-card: #2d2621;
+  --pss-surface-muted: #352d27;
+  --pss-surface-inset: #26201b;
   --pss-border-subtle: rgba(232, 220, 206, 0.12);
-  --pss-border-mid: rgba(232, 220, 206, 0.2);
+  --pss-border-mid: rgba(232, 220, 206, 0.22);
   /* 深色底上的正文：偏暖的米棕，比冷灰 stone 更贴产品气质 */
-  --pss-text-primary: #f3e9dd;
-  --pss-text-body: #d8cfc2;
-  --pss-text-muted: #b8a99b;
-  --pss-text-faint: #8f8277;
+  --pss-text-primary: #efe2d4;
+  --pss-text-body: #d8c9b8;
+  --pss-text-muted: #baa794;
+  --pss-text-faint: #978472;
 }
 
 html.dark body {
